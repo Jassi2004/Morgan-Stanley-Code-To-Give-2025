@@ -1,902 +1,650 @@
-import React, { useState, useContext } from 'react';
-import Stepper, { Step } from '../ui/Stepper';
+import React, { useContext, useState } from 'react';
+import { Formik, Form, Field } from 'formik';
+import * as Yup from 'yup';
 import { Users, Calendar, FileText, Mail, Phone, Briefcase, Heart, Home, BookOpen, AlertCircle } from 'lucide-react';
-import { AppContext } from '../../context/AppContext'; // Adjust this path to your actual AppContext file location
+import { AppContext } from '../../context/AppContext';
+
+// Custom Stepper Component
+const Stepper = ({ activeStep, children }) => {
+  return (
+    <div className="flex items-center justify-between mb-8">
+      {React.Children.map(children, (child, index) => {
+        return React.cloneElement(child, {
+          isActive: index + 1 === activeStep,
+          isCompleted: index + 1 < activeStep,
+        });
+      })}
+    </div>
+  );
+};
+
+// Step Component
+const Step = ({ label, icon, isActive, isCompleted, onClick }) => {
+  return (
+    <div 
+      className={`flex items-center cursor-pointer ${isActive ? 'text-brand' : isCompleted ? 'text-gray-500' : 'text-gray-400'}`}
+      onClick={onClick}
+    >
+      <div className={`flex items-center justify-center w-8 h-8 rounded-full mr-2 ${
+        isActive ? 'bg-brand text-white' : 
+        isCompleted ? 'bg-gray-500 text-white' : 
+        'bg-gray-200 text-gray-500'
+      }`}>
+        {icon}
+      </div>
+      <span className="text-sm font-medium">{label}</span>
+      {!isCompleted && <div className="flex-1 h-0.5 bg-gray-200 mx-4" />}
+    </div>
+  );
+};
+
+Stepper.Step = Step;
+
+// Validation schemas for each step
+const validationSchemas = {
+  step1: Yup.object({
+    firstName: Yup.string().required('First name is required'),
+    lastName: Yup.string().required('Last name is required'),
+    studentEmail: Yup.string().email('Invalid email address').required('Email is required'),
+    password: Yup.string().min(8, 'Password must be at least 8 characters').required('Password is required'),
+    gender: Yup.string().required('Gender is required'),
+    dateOfBirth: Yup.string().required('Date of birth is required'),
+    StudentId: Yup.string().required('Student ID is required'),
+  }),
+  step2: Yup.object({
+    primaryDiagnosis: Yup.string().required('Primary diagnosis is required'),
+    enrollmentYear: Yup.string().required('Enrollment year is required'),
+    sessionType: Yup.string().required('Session type is required'),
+    programs: Yup.array(),
+    numberOfSessions: Yup.number(),
+    timings: Yup.string(),
+    daysOfWeek: Yup.array(),
+    educator: Yup.array(),
+  }),
+  step3: Yup.object({
+    guardianDetails: Yup.object({
+      name: Yup.string().required('Guardian name is required'),
+      relation: Yup.string().required('Guardian relation is required'),
+      contactNumber: Yup.string()
+        .matches(/^[6-9]\d{9}$/, 'Contact number must be a valid 10-digit number')
+        .required('Contact number is required'),
+      parentEmail: Yup.string().email('Invalid email').required('Parent email is required'),
+    }),
+    address: Yup.string().required('Address is required'),
+    transport: Yup.boolean(),
+  }),
+  step4: Yup.object({
+    medicalHistory: Yup.object({
+      medications: Yup.array(),
+      surgeries: Yup.array(),
+      notes: Yup.string(),
+    }),
+    allergies: Yup.array(),
+    strengths: Yup.array(),
+    weaknesses: Yup.array(),
+    comments: Yup.string(),
+    preferredLanguage: Yup.string(),
+    deviceAccess: Yup.array(),
+  }),
+};
 
 export default function AddStudentForm() {
-  // Get dark mode from context
   const { darkMode } = useContext(AppContext);
-  
-  // Initialize student state
-  const [student, setStudent] = useState({
-    StudentId: "",
-    firstName: "",
-    lastName: "",
-    studentEmail: "",
-    password: "",
-    avatar: {
-      public_id: "",
-      secure_url: ""
-    },
-    gender: "",
+  const [currentStep, setCurrentStep] = useState(1);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [UDIDPreview, setUDIDPreview] = useState(null);
+
+  const initialValues = {
+    StudentId: '',
+    firstName: '',
+    lastName: '',
+    studentEmail: '',
+    password: '',
+    avatar: null,
+    gender: '',
     UDID: {
       isAvailable: false,
-      public_id: "",
-      secure_url: ""
+      file: null,
     },
-    dateOfBirth: "",
-    primaryDiagnosis: "",
+    dateOfBirth: '',
+    primaryDiagnosis: '',
     comorbidity: false,
-    enrollmentYear: "",
+    enrollmentYear: '',
     programs: [],
     numberOfSessions: 0,
-    timings: "",
-    daysOfWeek: ["All"],
+    timings: '',
+    daysOfWeek: ['All'],
     educator: [],
-    sessionType: "Offline",
+    sessionType: 'Offline',
     allergies: [],
     transport: false,
-    address: "",
+    address: '',
     strengths: [],
     weaknesses: [],
-    comments: "",
-    status: false,
+    comments: '',
     guardianDetails: {
-      name: "",
-      relation: "",
-      contactNumber: "",
-      parentEmail: ""
+      name: '',
+      relation: '',
+      contactNumber: '',
+      parentEmail: '',
     },
     medicalHistory: {
       medications: [],
       surgeries: [],
-      notes: ""
+      notes: '',
     },
-    preferredLanguage: "English",
-    deviceAccess: []
-  });
-
-  // Form validation states
-  const [errors, setErrors] = useState({});
-  const [currentStep, setCurrentStep] = useState(1);
-  
-  // Handle input changes
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    
-    // Handle nested properties
-    if (name.includes('.')) {
-      const [parent, child] = name.split('.');
-      setStudent(prev => ({
-        ...prev,
-        [parent]: {
-          ...prev[parent],
-          [child]: value
-        }
-      }));
-    } else if (type === 'checkbox') {
-      setStudent(prev => ({
-        ...prev,
-        [name]: checked
-      }));
-    } else {
-      setStudent(prev => ({
-        ...prev,
-        [name]: value
-      }));
-    }
+    preferredLanguage: 'English',
+    deviceAccess: [],
   };
 
-  // Handle array inputs (like allergies, strengths, weaknesses)
-  const handleArrayInput = (field, value) => {
-    if (!value.trim()) return;
-    
-    setStudent(prev => ({
-      ...prev,
-      [field]: [...prev[field], value]
-    }));
-    
-    // Clear the input field
-    document.getElementById(`${field}-input`).value = '';
-  };
-
-  // Remove item from array
-  const handleRemoveArrayItem = (field, index) => {
-    setStudent(prev => ({
-      ...prev,
-      [field]: prev[field].filter((_, i) => i !== index)
-    }));
-  };
-  
-  // Handle days of week selection
-  const handleDaysOfWeekChange = (day) => {
-    setStudent(prev => {
-      // If "All" is selected, remove all other days
-      if (day === "All") {
-        return {
-          ...prev,
-          daysOfWeek: ["All"]
-        };
-      }
-      
-      // If any other day is selected, remove "All"
-      let newDays = prev.daysOfWeek.filter(d => d !== "All");
-      
-      // Toggle the selected day
-      if (newDays.includes(day)) {
-        newDays = newDays.filter(d => d !== day);
-      } else {
-        newDays.push(day);
-      }
-      
-      // If no days are selected, default to "All"
-      if (newDays.length === 0) {
-        newDays = ["All"];
-      }
-      
-      return {
-        ...prev,
-        daysOfWeek: newDays
-      };
-    });
-  };
-  
-  // Handle file upload for avatar
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setStudent({
-          ...student,
-          avatar: {
-            public_id: `avatar_${Date.now()}`,
-            secure_url: reader.result
-          }
-        });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  // Handle file upload for UDID
-  const handleUDIDUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setStudent({
-          ...student,
-          UDID: {
-            isAvailable: true,
-            public_id: `udid_${Date.now()}`,
-            secure_url: reader.result
-          }
-        });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-  
-  // Form validation
-  const validateStep = (step) => {
-    const newErrors = {};
-    
-    switch(step) {
-      case 1: // Basic Information
-        if (!student.firstName.trim()) newErrors.firstName = "First name is required";
-        if (!student.lastName.trim()) newErrors.lastName = "Last name is required";
-        if (!student.studentEmail.trim()) newErrors.studentEmail = "Email is required";
-        else if (!/\S+@\S+\.\S+/.test(student.studentEmail)) newErrors.studentEmail = "Email is invalid";
-        if (!student.password) newErrors.password = "Password is required";
-        else if (student.password.length < 8) newErrors.password = "Password must be at least 8 characters";
-        if (!student.gender) newErrors.gender = "Gender is required";
-        if (!student.dateOfBirth) newErrors.dateOfBirth = "Date of birth is required";
-        break;
-        
-      case 2: // Educational Details
-        if (!student.primaryDiagnosis) newErrors.primaryDiagnosis = "Primary diagnosis is required";
-        if (!student.enrollmentYear) newErrors.enrollmentYear = "Enrollment year is required";
-        if (!student.sessionType) newErrors.sessionType = "Session type is required";
-        if (student.timings && !/^\d{2}:\d{2} - \d{2}:\d{2}$/.test(student.timings)) 
-          newErrors.timings = "Timings must be in HH:MM - HH:MM format";
-        break;
-        
-      case 3: // Guardian Details
-        if (!student.guardianDetails.name) newErrors.guardianName = "Guardian name is required";
-        if (!student.guardianDetails.relation) newErrors.guardianRelation = "Guardian relation is required";
-        if (!student.guardianDetails.contactNumber) newErrors.guardianContactNumber = "Contact number is required";
-        else if (!/^[6-9]\d{9}$/.test(student.guardianDetails.contactNumber)) 
-          newErrors.guardianContactNumber = "Contact number must be a valid 10-digit number";
-        if (!student.guardianDetails.parentEmail) newErrors.parentEmail = "Parent email is required";
-        else if (!/\S+@\S+\.\S+/.test(student.guardianDetails.parentEmail)) 
-          newErrors.parentEmail = "Parent email is invalid";
-        if (!student.address) newErrors.address = "Address is required";
-        break;
-        
-      case 4: // Medical & Additional Information
-        // No required fields in this step
-        break;
-        
-      default:
-        break;
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-  
-  // Handle step change
-  const handleStepChange = (step) => {
-    setCurrentStep(step);
-  };
-  
-  // Handle form submission
-  const handleSubmit = () => {
-    if (validateStep(4)) {
-      // Generate student ID if not provided
-      // const studentId = student.StudentId || `STU${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
-      
-      const finalStudent = {
-        ...student,
-        StudentId: studentId
-      };
-      
-      console.log("Submitting student:", finalStudent);
-      alert("Student added successfully!");
-    }
-  };
-  
-  // Input field component with dynamic styling based on dark/light mode
-  const InputField = ({ label, name, type = "text", value, onChange, error, ...rest }) => (
+  const FormField = ({ label, name, type = "text", ...props }) => (
     <div className="mb-4">
-      <label className={`block text-sm font-medium mb-1 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>{label}</label>
-      <input
-        type={type}
-        name={name}
-        value={value}
-        onChange={onChange}
-        className={`w-full p-2 rounded-lg border ${error ? 'border-red-500' : darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'}`}
-        {...rest}
-      />
-      {error && <p className="mt-1 text-sm text-red-400">{error}</p>}
-    </div>
-  );
-  
-  // Select field component with dynamic styling based on dark/light mode
-  const SelectField = ({ label, name, options, value, onChange, error, ...rest }) => (
-    <div className="mb-4">
-      <label className={`block text-sm font-medium mb-1 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>{label}</label>
-      <select
-        name={name}
-        value={value}
-        onChange={onChange}
-        className={`w-full p-2 rounded-lg border ${error ? 'border-red-500' : darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'}`}
-        {...rest}
-      >
-        <option value="">Select {label}</option>
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-      {error && <p className="mt-1 text-sm text-red-400">{error}</p>}
-    </div>
-  );
-
-  // Checkbox component
-  const CheckboxField = ({ label, name, checked, onChange, ...rest }) => (
-    <div className="mb-4 flex items-center">
-      <input
-        type="checkbox"
-        id={name}
-        name={name}
-        checked={checked}
-        onChange={onChange}
-        className={`h-4 w-4 rounded border-gray-300 ${darkMode ? "text-teal-500 bg-gray-700" : "text-teal-600 bg-gray-100"}`}
-        {...rest}
-      />
-      <label htmlFor={name} className={`ml-2 block text-sm font-medium ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
+      <label htmlFor={name} className={`block text-sm font-medium mb-1 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
         {label}
       </label>
+      <Field
+        id={name}
+        name={name}
+        type={type}
+        className={`w-full p-2 rounded-lg border ${
+          darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'
+        } focus:ring-2 focus:ring-brand focus:border-brand`}
+        {...props}
+      />
     </div>
   );
 
-  // Tag input for array fields
-  const TagInput = ({ label, field, items, onAdd, onRemove, placeholder, error }) => (
+  const ArrayField = ({ label, name, placeholder }) => (
     <div className="mb-4">
-      <label className={`block text-sm font-medium mb-1 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>{label}</label>
-      <div className="flex mb-2">
-        <input
-          type="text"
-          id={`${field}-input`}
-          placeholder={placeholder}
-          className={`flex-grow p-2 rounded-l-lg border ${darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'}`}
-          onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), onAdd(field, e.target.value))}
-        />
-        <button 
-          type="button" 
-          onClick={() => onAdd(field, document.getElementById(`${field}-input`).value)}
-          className="bg-teal-500 hover:bg-teal-600 text-white rounded-r-lg px-4 py-2 transition-colors duration-300"
-        >
-          Add
-        </button>
-      </div>
-      {error && <p className="mt-1 text-sm text-red-400">{error}</p>}
-      <div className="flex flex-wrap gap-2 mt-2">
-        {items.map((item, index) => (
-          <div 
-            key={index} 
-            className={`flex items-center rounded-full px-3 py-1 text-sm ${darkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-200 text-gray-800'}`}
-          >
-            <span>{item}</span>
-            <button 
-              type="button" 
-              onClick={() => onRemove(field, index)}
-              className={`ml-2 rounded-full w-4 h-4 flex items-center justify-center ${darkMode ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-400 hover:bg-gray-500'} text-white`}
-            >
-              ×
-            </button>
+      <label className={`block text-sm font-medium mb-1 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
+        {label}
+      </label>
+      <Field name={name}>
+        {({ field, form }) => (
+          <div>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder={placeholder}
+                className={`w-full p-2 rounded-lg border ${
+                  darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'
+                } focus:ring-2 focus:ring-brand focus:border-brand`}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && e.target.value) {
+                    e.preventDefault();
+                    const values = [...field.value, e.target.value];
+                    form.setFieldValue(name, values);
+                    e.target.value = '';
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const input = document.querySelector(`input[placeholder="${placeholder}"]`);
+                  if (input.value) {
+                    const values = [...field.value, input.value];
+                    form.setFieldValue(name, values);
+                    input.value = '';
+                  }
+                }}
+                className="bg-brand hover:bg-brand-hover text-white px-4 rounded-lg transition-colors duration-300"
+              >
+                Add
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {field.value.map((item, index) => (
+                <div
+                  key={index}
+                  className={`flex items-center gap-2 px-3 py-1 rounded-full ${
+                    darkMode ? 'bg-gray-700 text-white' : 'bg-gray-100'
+                  }`}
+                >
+                  <span>{item}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const values = field.value.filter((_, i) => i !== index);
+                      form.setFieldValue(name, values);
+                    }}
+                    className="text-danger hover:text-danger-light transition-colors duration-300"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
-        ))}
-      </div>
+        )}
+      </Field>
     </div>
   );
-  
+
+  const renderStepContent = (step, errors, touched) => {
+    switch (step) {
+      case 1:
+        return (
+          <>
+            <h2 className={`text-xl font-bold mb-4 flex items-center ${darkMode ? "text-brand-light" : "text-brand"}`}>
+              <Users className="mr-2" size={20} />
+              Basic Information
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <FormField
+                  label="Student ID"
+                  name="StudentId"
+                  placeholder="Enter student ID"
+                />
+                {errors.StudentId && touched.StudentId && (
+                  <div className="text-danger text-sm mt-1">{errors.StudentId}</div>
+                )}
+              </div>
+              <div>
+                <FormField
+                  label="First Name"
+                  name="firstName"
+                  placeholder="Enter first name"
+                />
+                {errors.firstName && touched.firstName && (
+                  <div className="text-danger text-sm mt-1">{errors.firstName}</div>
+                )}
+              </div>
+              <div>
+                <FormField
+                  label="Last Name"
+                  name="lastName"
+                  placeholder="Enter last name"
+                />
+                {errors.lastName && touched.lastName && (
+                  <div className="text-danger text-sm mt-1">{errors.lastName}</div>
+                )}
+              </div>
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
+                  Gender
+                </label>
+                <Field
+                  as="select"
+                  name="gender"
+                  className={`w-full p-2 rounded-lg border ${darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'}`}
+                >
+                  <option value="">Select Gender</option>
+                  <option value="MALE">Male</option>
+                  <option value="FEMALE">Female</option>
+                  <option value="OTHER">Other</option>
+                </Field>
+                {errors.gender && touched.gender && (
+                  <div className="text-danger text-sm mt-1">{errors.gender}</div>
+                )}
+              </div>
+              <div>
+                <FormField
+                  label="Email"
+                  name="studentEmail"
+                  type="email"
+                  placeholder="Enter email address"
+                />
+                {errors.studentEmail && touched.studentEmail && (
+                  <div className="text-danger text-sm mt-1">{errors.studentEmail}</div>
+                )}
+              </div>
+              <div>
+                <FormField
+                  label="Password"
+                  name="password"
+                  type="password"
+                  placeholder="Create password"
+                />
+                {errors.password && touched.password && (
+                  <div className="text-danger text-sm mt-1">{errors.password}</div>
+                )}
+              </div>
+              <div>
+                <FormField
+                  label="Date of Birth"
+                  name="dateOfBirth"
+                  type="date"
+                />
+                {errors.dateOfBirth && touched.dateOfBirth && (
+                  <div className="text-danger text-sm mt-1">{errors.dateOfBirth}</div>
+                )}
+              </div>
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
+                  Avatar
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      setAvatarPreview(URL.createObjectURL(file));
+                    }
+                  }}
+                  className={`w-full p-2 rounded-lg border ${darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'}`}
+                />
+                {avatarPreview && (
+                  <img src={avatarPreview} alt="Avatar preview" className="mt-2 w-20 h-20 rounded-full object-cover" />
+                )}
+              </div>
+            </div>
+          </>
+        );
+      case 2:
+        return (
+          <>
+            <h2 className={`text-xl font-bold mb-4 flex items-center ${darkMode ? "text-brand-light" : "text-brand"}`}>
+              <BookOpen className="mr-2" size={20} />
+              Educational Details
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <FormField
+                  label="Primary Diagnosis"
+                  name="primaryDiagnosis"
+                  placeholder="Enter primary diagnosis"
+                />
+                {errors.primaryDiagnosis && touched.primaryDiagnosis && (
+                  <div className="text-danger text-sm mt-1">{errors.primaryDiagnosis}</div>
+                )}
+              </div>
+              <div>
+                <FormField
+                  label="Enrollment Year"
+                  name="enrollmentYear"
+                  type="number"
+                  min={2000}
+                  max={new Date().getFullYear()}
+                />
+                {errors.enrollmentYear && touched.enrollmentYear && (
+                  <div className="text-danger text-sm mt-1">{errors.enrollmentYear}</div>
+                )}
+              </div>
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
+                  Session Type
+                </label>
+                <Field
+                  as="select"
+                  name="sessionType"
+                  className={`w-full p-2 rounded-lg border ${darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'}`}
+                >
+                  <option value="Offline">Offline</option>
+                  <option value="Online">Online</option>
+                  <option value="Hybrid">Hybrid</option>
+                </Field>
+              </div>
+              <div>
+                <FormField
+                  label="Number of Sessions"
+                  name="numberOfSessions"
+                  type="number"
+                  min={0}
+                />
+              </div>
+              <div>
+                <FormField
+                  label="Timings"
+                  name="timings"
+                  placeholder="HH:MM - HH:MM"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <ArrayField
+                  label="Programs"
+                  name="programs"
+                  placeholder="Add program"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <ArrayField
+                  label="Educators"
+                  name="educator"
+                  placeholder="Add educator"
+                />
+              </div>
+            </div>
+          </>
+        );
+      case 3:
+        return (
+          <>
+            <h2 className={`text-xl font-bold mb-4 flex items-center ${darkMode ? "text-brand-light" : "text-brand"}`}>
+              <Home className="mr-2" size={20} />
+              Guardian Details
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <FormField
+                  label="Guardian Name"
+                  name="guardianDetails.name"
+                  placeholder="Enter guardian name"
+                />
+                {errors.guardianDetails?.name && touched.guardianDetails?.name && (
+                  <div className="text-danger text-sm mt-1">{errors.guardianDetails.name}</div>
+                )}
+              </div>
+              <div>
+                <FormField
+                  label="Relation"
+                  name="guardianDetails.relation"
+                  placeholder="Enter relation"
+                />
+                {errors.guardianDetails?.relation && touched.guardianDetails?.relation && (
+                  <div className="text-danger text-sm mt-1">{errors.guardianDetails.relation}</div>
+                )}
+              </div>
+              <div>
+                <FormField
+                  label="Contact Number"
+                  name="guardianDetails.contactNumber"
+                  type="tel"
+                  placeholder="Enter contact number"
+                />
+                {errors.guardianDetails?.contactNumber && touched.guardianDetails?.contactNumber && (
+                  <div className="text-danger text-sm mt-1">{errors.guardianDetails.contactNumber}</div>
+                )}
+              </div>
+              <div>
+                <FormField
+                  label="Parent Email"
+                  name="guardianDetails.parentEmail"
+                  type="email"
+                  placeholder="Enter parent email"
+                />
+                {errors.guardianDetails?.parentEmail && touched.guardianDetails?.parentEmail && (
+                  <div className="text-danger text-sm mt-1">{errors.guardianDetails.parentEmail}</div>
+                )}
+              </div>
+              <div className="md:col-span-2">
+                <FormField
+                  label="Address"
+                  name="address"
+                  as="textarea"
+                  rows={3}
+                  placeholder="Enter address"
+                />
+                {errors.address && touched.address && (
+                  <div className="text-danger text-sm mt-1">{errors.address}</div>
+                )}
+              </div>
+              <div>
+                <label className={`flex items-center space-x-2 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
+                  <Field type="checkbox" name="transport" />
+                  <span>Requires Transport</span>
+                </label>
+              </div>
+            </div>
+          </>
+        );
+      case 4:
+        return (
+          <>
+            <h2 className={`text-xl font-bold mb-4 flex items-center ${darkMode ? "text-brand-light" : "text-brand"}`}>
+              <Heart className="mr-2" size={20} />
+              Medical & Additional Information
+            </h2>
+            <div className="grid grid-cols-1 gap-4">
+              <div>
+                <ArrayField
+                  label="Medications"
+                  name="medicalHistory.medications"
+                  placeholder="Add medication"
+                />
+              </div>
+              <div>
+                <ArrayField
+                  label="Surgeries"
+                  name="medicalHistory.surgeries"
+                  placeholder="Add surgery"
+                />
+              </div>
+              <div>
+                <FormField
+                  label="Medical Notes"
+                  name="medicalHistory.notes"
+                  as="textarea"
+                  rows={3}
+                  placeholder="Enter medical notes"
+                />
+              </div>
+              <div>
+                <ArrayField
+                  label="Allergies"
+                  name="allergies"
+                  placeholder="Add allergy"
+                />
+              </div>
+              <div>
+                <ArrayField
+                  label="Strengths"
+                  name="strengths"
+                  placeholder="Add strength"
+                />
+              </div>
+              <div>
+                <ArrayField
+                  label="Areas for Improvement"
+                  name="weaknesses"
+                  placeholder="Add area for improvement"
+                />
+              </div>
+              <div>
+                <FormField
+                  label="Additional Comments"
+                  name="comments"
+                  as="textarea"
+                  rows={3}
+                  placeholder="Enter additional comments"
+                />
+              </div>
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
+                  Preferred Language
+                </label>
+                <Field
+                  as="select"
+                  name="preferredLanguage"
+                  className={`w-full p-2 rounded-lg border ${darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'}`}
+                >
+                  <option value="English">English</option>
+                  <option value="Hindi">Hindi</option>
+                  <option value="Other">Other</option>
+                </Field>
+              </div>
+              <div>
+                <ArrayField
+                  label="Device Access"
+                  name="deviceAccess"
+                  placeholder="Add device"
+                />
+              </div>
+            </div>
+          </>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className={darkMode ? "bg-gray-900 text-white" : "bg-gray-50 text-gray-900"}>
       <div className="max-w-3xl mx-auto p-6">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold mb-2">Add New Student</h1>
-        </div>
-        <form
-        onSubmit={(e) => {
-          e.preventDefault(); // Prevent default HTML form submission
-          handleSubmit();     // Call your React handler
-        }}
-      >
-
-        {/* Stepper container with dynamic styling */}
-        <div className={`rounded-xl shadow-xl border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
-          <Stepper
-            initialStep={1}
-            onStepChange={handleStepChange}
-            onFinalStepCompleted={handleSubmit}
-            backButtonText="Previous"
-            nextButtonText="Next"
-            width="100%"
-            height="auto"
-            stepCircleContainerClassName={darkMode ? "bg-gray-800 border-b border-gray-700" : "bg-white border-b border-gray-200"}
-            stepContainerClassName="py-4"
-            contentClassName="px-0"
-            footerClassName={`border-t ${darkMode ? "border-gray-700 bg-gray-800" : "border-gray-200 bg-gray-50"}`}
-            backButtonProps={{ 
-              className: darkMode 
-                ? "text-gray-400 hover:text-white transition-colors duration-300" 
-                : "text-gray-500 hover:text-gray-700 transition-colors duration-300"
-            }}
-            nextButtonProps={{ 
-              className: "bg-teal-500 hover:bg-teal-600 text-white rounded-full px-4 py-2 transition-colors duration-300"
-            }}
-          >
-            {/* Step 1: Basic Information */}
-            <Step>
-              <div className="p-6 h-96 overflow-y-auto">
-                <h2 className={`text-xl font-bold mb-4 flex items-center ${darkMode ? "text-teal-400" : "text-teal-600"}`}>
-                  <Users className="mr-2" size={20} />
-                  Basic Information
-                </h2>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <InputField
-                    label="Student ID (Optional)"
-                    name="StudentId"
-                    value={student.StudentId}
-                    onChange={handleChange}
-                    placeholder="Auto-generated if left blank"
-                  />
-                  
-                  <InputField
-                    label="First Name"
-                    name="firstName"
-                    value={student.firstName}
-                    onChange={handleChange}
-                    error={errors.firstName}
-                    placeholder="Enter first name"
-                  />
-                  
-                  <InputField
-                    label="Last Name"
-                    name="lastName"
-                    value={student.lastName}
-                    onChange={handleChange}
-                    error={errors.lastName}
-                    placeholder="Enter last name"
-                  />
-                  
-                  <SelectField
-                    label="Gender"
-                    name="gender"
-                    value={student.gender}
-                    onChange={handleChange}
-                    error={errors.gender}
-                    options={[
-                      { value: "MALE", label: "Male" },
-                      { value: "FEMALE", label: "Female" },
-                      { value: "OTHER", label: "Other" }
-                    ]}
-                  />
-                  
-                  <InputField
-                    label="Email"
-                    name="studentEmail"
-                    type="email"
-                    value={student.studentEmail}
-                    onChange={handleChange}
-                    error={errors.studentEmail}
-                    placeholder="Enter email address"
-                  />
-                  
-                  <InputField
-                    label="Password"
-                    name="password"
-                    type="password"
-                    value={student.password}
-                    onChange={handleChange}
-                    error={errors.password}
-                    placeholder="Create password"
-                  />
-                  
-                  <InputField
-                    label="Date of Birth"
-                    name="dateOfBirth"
-                    type="date"
-                    value={student.dateOfBirth}
-                    onChange={handleChange}
-                    error={errors.dateOfBirth}
-                  />
-                  
-                  <div className="md:col-span-2">
-                    <label className={`block text-sm font-medium mb-1 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>Profile Picture</label>
-                    <div className="flex items-center">
-                      {student.avatar.secure_url ? (
-                        <div className="mr-4">
-                          <img 
-                            src={student.avatar.secure_url} 
-                            alt="Avatar preview" 
-                            className="w-16 h-16 rounded-full object-cover"
-                          />
-                        </div>
-                      ) : (
-                        <div className={`w-16 h-16 rounded-full flex items-center justify-center mr-4 ${darkMode ? "bg-gray-700" : "bg-gray-200"}`}>
-                          <Users size={24} className={darkMode ? "text-gray-400" : "text-gray-500"} />
-                        </div>
-                      )}
-                      <input
-                        type="file"
-                        onChange={handleFileUpload}
-                        accept="image/*"
-                        className={`p-2 border rounded-lg ${darkMode ? "border-gray-600 bg-gray-700 text-gray-200" : "border-gray-300 bg-gray-100 text-gray-700"}`}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Step>
-            
-            {/* Step 2: Educational Details */}
-            <Step>
-              <div className="p-6 h-96 overflow-y-auto">
-                <h2 className={`text-xl font-bold mb-4 flex items-center ${darkMode ? "text-teal-400" : "text-teal-600"}`}>
-                  <BookOpen className="mr-2" size={20} />
-                  Educational & Diagnostic Details
-                </h2>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <SelectField
-                    label="Primary Diagnosis"
-                    name="primaryDiagnosis"
-                    value={student.primaryDiagnosis}
-                    onChange={handleChange}
-                    error={errors.primaryDiagnosis}
-                    options={[
-                      { value: "Autism", label: "Autism" },
-                      { value: "Down Syndrome", label: "Down Syndrome" },
-                      { value: "ADHD", label: "ADHD" },
-                      { value: "Cerebral Palsy", label: "Cerebral Palsy" },
-                      { value: "Others", label: "Others" }
-                    ]}
-                  />
-                  
-                  <CheckboxField
-                    label="Comorbidity"
-                    name="comorbidity"
-                    checked={student.comorbidity}
-                    onChange={handleChange}
-                  />
-                  
-                  <InputField
-                    label="Enrollment Year"
-                    name="enrollmentYear"
-                    type="date"
-                    value={student.enrollmentYear}
-                    onChange={handleChange}
-                    error={errors.enrollmentYear}
-                  />
-                  
-                  <InputField
-                    label="Number of Sessions"
-                    name="numberOfSessions"
-                    type="number"
-                    value={student.numberOfSessions}
-                    onChange={handleChange}
-                    min="0"
-                  />
-                  
-                  <InputField
-                    label="Session Timings (HH:MM - HH:MM)"
-                    name="timings"
-                    value={student.timings}
-                    onChange={handleChange}
-                    error={errors.timings}
-                    placeholder="09:00 - 10:30"
-                  />
-                  
-                  <SelectField
-                    label="Session Type"
-                    name="sessionType"
-                    value={student.sessionType}
-                    onChange={handleChange}
-                    error={errors.sessionType}
-                    options={[
-                      { value: "Online", label: "Online" },
-                      { value: "Offline", label: "Offline" }
-                    ]}
-                  />
-                  
-                  <div className="md:col-span-2">
-                    <label className={`block text-sm font-medium mb-1 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>Days of Week</label>
-                    <div className="flex flex-wrap gap-2">
-                      {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday", "All"].map((day) => (
-                        <button
-                          key={day}
-                          type="button"
-                          onClick={() => handleDaysOfWeekChange(day)}
-                          className={`px-3 py-1 text-sm rounded-full 
-                            ${student.daysOfWeek.includes(day) 
-                              ? 'bg-teal-500 text-white' 
-                              : darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-                        >
-                          {day}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <div className="md:col-span-2">
-                    <label className={`block text-sm font-medium mb-1 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>UDID Document (Optional)</label>
-                    <div className="flex items-center">
-                      <CheckboxField
-                        label="UDID Available"
-                        name="UDID.isAvailable"
-                        checked={student.UDID.isAvailable}
-                        onChange={handleChange}
-                      />
-                    </div>
-                    
-                    {student.UDID.isAvailable && (
-                      <div className="mt-2">
-                        {student.UDID.secure_url ? (
-                          <div className="flex items-center mb-2">
-                            <FileText size={24} className={`mr-2 ${darkMode ? "text-teal-400" : "text-teal-600"}`} />
-                            <span className={darkMode ? "text-gray-300" : "text-gray-700"}>Document uploaded</span>
-                          </div>
-                        ) : null}
-                        <input
-                          type="file"
-                          onChange={handleUDIDUpload}
-                          accept=".pdf,.jpg,.jpeg,.png"
-                          className={`p-2 border rounded-lg ${darkMode ? "border-gray-600 bg-gray-700 text-gray-200" : "border-gray-300 bg-gray-100 text-gray-700"}`}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </Step>
-            
-            {/* Step 3: Guardian Details */}
-            <Step>
-              <div className="p-6 h-96 overflow-y-auto">
-                <h2 className={`text-xl font-bold mb-4 flex items-center ${darkMode ? "text-teal-400" : "text-teal-600"}`}>
-                  <Users className="mr-2" size={20} />
-                  Guardian & Contact Details
-                </h2>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <InputField
-                    label="Guardian Name"
-                    name="guardianDetails.name"
-                    value={student.guardianDetails.name}
-                    onChange={handleChange}
-                    error={errors.guardianName}
-                    placeholder="Enter guardian's full name"
-                  />
-                  
-                  <InputField
-                    label="Relation to Student"
-                    name="guardianDetails.relation"
-                    value={student.guardianDetails.relation}
-                    onChange={handleChange}
-                    error={errors.guardianRelation}
-                    placeholder="e.g. Mother, Father, Guardian"
-                  />
-                  
-                  <InputField
-                    label="Contact Number"
-                    name="guardianDetails.contactNumber"
-                    value={student.guardianDetails.contactNumber}
-                    onChange={handleChange}
-                    error={errors.guardianContactNumber}
-                    placeholder="10-digit number"
-                  />
-                  
-                  <InputField
-                    label="Parent Email"
-                    name="guardianDetails.parentEmail"
-                    type="email"
-                    value={student.guardianDetails.parentEmail}
-                    onChange={handleChange}
-                    error={errors.parentEmail}
-                    placeholder="Enter parent's email address"
-                  />
-                  
-                  <div className="md:col-span-2">
-                    <InputField
-                      label="Address"
-                      name="address"
-                      value={student.address}
-                      onChange={handleChange}
-                      error={errors.address}
-                      placeholder="Enter full address"
-                    />
-                  </div>
-                  
-                  <CheckboxField
-                    label="Requires Transport"
-                    name="transport"
-                    checked={student.transport}
-                    onChange={handleChange}
-                  />
-                  
-                  <SelectField
-                    label="Preferred Language"
-                    name="preferredLanguage"
-                    value={student.preferredLanguage}
-                    onChange={handleChange}
-                    options={[
-                      { value: "English", label: "English" },
-                      { value: "Hindi", label: "Hindi" },
-                      { value: "Marathi", label: "Marathi" },
-                      { value: "Sign Language", label: "Sign Language" },
-                      { value: "Other", label: "Other" }
-                    ]}
-                  />
-                  
-                  <div className="md:col-span-2">
-                    <label className={`block text-sm font-medium mb-1 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>Device Access</label>
-                    <div className="flex flex-wrap gap-2">
-                      {["Tablet", "Laptop", "Smartphone", "Hearing Aid", "Braille Device"].map((device) => (
-                        <button
-                          key={device}
-                          type="button"
-                          onClick={() => {
-                            setStudent(prev => {
-                              if (prev.deviceAccess.includes(device)) {
-                                return {
-                                  ...prev,
-                                  deviceAccess: prev.deviceAccess.filter(d => d !== device)
-                                };
-                              } else {
-                                return {
-                                  ...prev,
-                                  deviceAccess: [...prev.deviceAccess, device]
-                                };
-                              }
-                            });
-                          }}
-                          className={`px-3 py-1 text-sm rounded-full 
-                            ${student.deviceAccess.includes(device) 
-                              ? 'bg-teal-500 text-white' 
-                              : darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-                        >
-                          {device}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Step>
-            
-            {/* Step 4: Medical & Additional Information */}
-            <Step>
-              <div className="p-6 h-96 overflow-y-auto">
-                <h2 className={`text-xl font-bold mb-4 flex items-center ${darkMode ? "text-teal-400" : "text-teal-600"}`}>
-                  <Heart className="mr-2" size={20} />
-                  Medical & Additional Information
-                </h2>
-                
-                <div className="grid grid-cols-1 gap-4">
-                  <TagInput
-                    label="Allergies"
-                    field="allergies"
-                    items={student.allergies}
-                    onAdd={handleArrayInput}
-                    onRemove={handleRemoveArrayItem}
-                    placeholder="Type allergy and press Enter or Add"
-                  />
-                  
-                  <TagInput
-                    label="Medications"
-                    field="medicalHistory.medications"
-                    items={student.medicalHistory.medications}
-                    onAdd={(field, value) => {
-                      if (!value.trim()) return;
-                      setStudent(prev => ({
-                        ...prev,
-                        medicalHistory: {
-                          ...prev.medicalHistory,
-                          medications: [...prev.medicalHistory.medications, value]
-                        }
-                      }));
-                      document.getElementById(`${field}-input`).value = '';
-                    }}
-                    onRemove={(field, index) => {
-                      setStudent(prev => ({
-                        ...prev,
-                        medicalHistory: {
-                          ...prev.medicalHistory,
-                          medications: prev.medicalHistory.medications.filter((_, i) => i !== index)
-                        }
-                      }));
-                    }}
-                    placeholder="Enter medication and press Enter or Add"
-                  />
-                  
-                  <TagInput
-                    label="Previous Surgeries"
-                    field="medicalHistory.surgeries"
-                    items={student.medicalHistory.surgeries}
-                    onAdd={(field, value) => {
-                      if (!value.trim()) return;
-                      setStudent(prev => ({
-                        ...prev,
-                        medicalHistory: {
-                          ...prev.medicalHistory,
-                          surgeries: [...prev.medicalHistory.surgeries, value]
-                        }
-                      }));
-                      document.getElementById(`${field}-input`).value = '';
-                    }}
-                    onRemove={(field, index) => {
-                      setStudent(prev => ({...prev,
-                        medicalHistory: {
-                          ...prev.medicalHistory,
-                          surgeries: prev.medicalHistory.surgeries.filter((_, i) => i !== index)
-                        }
-                      }));
-                    }}
-                    placeholder="Enter surgery details and press Enter or Add"
-                  />
-                  
-                  <div className="mb-4">
-                    <label className={`block text-sm font-medium mb-1 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>Medical Notes</label>
-                    <textarea
-                      name="medicalHistory.notes"
-                      value={student.medicalHistory.notes}
-                      onChange={handleChange}
-                      rows="3"
-                      className={`w-full p-2 rounded-lg border ${darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'}`}
-                      placeholder="Any additional medical information"
-                    ></textarea>
-                  </div>
-                  
-                  <TagInput
-                    label="Strengths"
-                    field="strengths"
-                    items={student.strengths}
-                    onAdd={handleArrayInput}
-                    onRemove={handleRemoveArrayItem}
-                    placeholder="Enter student's strengths and press Enter or Add"
-                  />
-                  
-                  <TagInput
-                    label="Areas for Improvement"
-                    field="weaknesses"
-                    items={student.weaknesses}
-                    onAdd={handleArrayInput}
-                    onRemove={handleRemoveArrayItem}
-                    placeholder="Enter areas for improvement and press Enter or Add"
-                  />
-                  
-                  <div className="mb-4">
-                    <label className={`block text-sm font-medium mb-1 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>Additional Comments</label>
-                    <textarea
-                      name="comments"
-                      value={student.comments}
-                      onChange={handleChange}
-                      rows="3"
-                      className={`w-full p-2 rounded-lg border ${darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'}`}
-                      placeholder="Any additional information or special instructions"
-                    ></textarea>
-                  </div>
-                  
-                  <div className="md:col-span-2">
-                    <h3 className={`text-lg font-medium mb-2 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>Review Information</h3>
-                    <p className={darkMode ? "text-gray-400 mb-4" : "text-gray-500 mb-4"}>
-                      Please review all the information before submitting. You can go back to previous steps to make changes if needed.
-                    </p>
-                    
-                    {/* Summary of entered information */}
-                    <div className={`p-4 rounded-lg border ${darkMode ? "bg-gray-700 border-gray-600" : "bg-gray-50 border-gray-200"}`}>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        <p className="mb-2">
-                          <strong className={darkMode ? "text-teal-400" : "text-teal-600"}>Name:</strong> 
-                          <span className={darkMode ? "text-gray-200 ml-1" : "text-gray-700 ml-1"}>
-                            {student.firstName} {student.lastName || "Not provided"}
-                          </span>
-                        </p>
-                        <p className="mb-2">
-                          <strong className={darkMode ? "text-teal-400" : "text-teal-600"}>Email:</strong>
-                          <span className={darkMode ? "text-gray-200 ml-1" : "text-gray-700 ml-1"}>
-                            {student.studentEmail || "Not provided"}
-                          </span>
-                        </p>
-                        <p className="mb-2">
-                          <strong className={darkMode ? "text-teal-400" : "text-teal-600"}>Diagnosis:</strong>
-                          <span className={darkMode ? "text-gray-200 ml-1" : "text-gray-700 ml-1"}>
-                            {student.primaryDiagnosis || "Not provided"}
-                          </span>
-                        </p>
-                        <p className="mb-2">
-                          <strong className={darkMode ? "text-teal-400" : "text-teal-600"}>Guardian:</strong>
-                          <span className={darkMode ? "text-gray-200 ml-1" : "text-gray-700 ml-1"}>
-                            {student.guardianDetails.name || "Not provided"}
-                          </span>
-                        </p>
-                        <p className="mb-2">
-                          <strong className={darkMode ? "text-teal-400" : "text-teal-600"}>Enrollment:</strong>
-                          <span className={darkMode ? "text-gray-200 ml-1" : "text-gray-700 ml-1"}>
-                            {student.enrollmentYear ? new Date(student.enrollmentYear).toLocaleDateString() : "Not provided"}
-                          </span>
-                        </p>
-                        <p className="mb-2">
-                          <strong className={darkMode ? "text-teal-400" : "text-teal-600"}>Session Type:</strong>
-                          <span className={darkMode ? "text-gray-200 ml-1" : "text-gray-700 ml-1"}>
-                            {student.sessionType}
-                          </span>
-                        </p>
-                      </div>
-                      
-                      <div className="mt-4">
-                        <CheckboxField
-                          label="Set student status as active"
-                          name="status"
-                          checked={student.status}
-                          onChange={handleChange}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Step>
+          <h1 className="text-2xl font-bold mb-4">Add New Student</h1>
+          <Stepper activeStep={currentStep}>
+            <Stepper.Step
+              label="Basic Information"
+              icon={<Users size={16} />}
+              onClick={() => setCurrentStep(1)}
+            />
+            <Stepper.Step
+              label="Educational Details"
+              icon={<BookOpen size={16} />}
+              onClick={() => setCurrentStep(2)}
+            />
+            <Stepper.Step
+              label="Guardian Details"
+              icon={<Home size={16} />}
+              onClick={() => setCurrentStep(3)}
+            />
+            <Stepper.Step
+              label="Medical Information"
+              icon={<Heart size={16} />}
+              onClick={() => setCurrentStep(4)}
+            />
           </Stepper>
         </div>
-      </form>
 
+        <Formik
+          initialValues={initialValues}
+          validationSchema={validationSchemas[`step${currentStep}`]}
+          onSubmit={(values, { setSubmitting }) => {
+            if (currentStep < 4) {
+              setCurrentStep(currentStep + 1);
+              setSubmitting(false);
+            } else {
+              // Handle final form submission
+              console.log('Form Values:', values);
+              alert('Student information saved successfully!');
+              setSubmitting(false);
+            }
+          }}
+        >
+          {({ errors, touched, isSubmitting }) => (
+            <Form className={`rounded-xl shadow-xl border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+              <div className="p-6">
+                {renderStepContent(currentStep, errors, touched)}
+                
+                <div className="mt-6 flex justify-between">
+                  {currentStep > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => setCurrentStep(currentStep - 1)}
+                      className={`px-4 py-2 rounded-lg ${
+                        darkMode 
+                          ? "bg-gray-700 hover:bg-gray-600 text-white" 
+                          : "bg-gray-200 hover:bg-gray-300 text-gray-700"
+                      } transition-colors duration-300`}
+                    >
+                      Previous
+                    </button>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="bg-brand hover:bg-brand-hover text-white rounded-lg px-4 py-2 transition-colors duration-300 ml-auto"
+                  >
+                    {currentStep === 4 ? 'Submit' : 'Next'}
+                  </button>
+                </div>
+              </div>
+            </Form>
+          )}
+        </Formik>
       </div>
     </div>
   );

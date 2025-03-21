@@ -1,523 +1,530 @@
-import React, { useState, useContext } from 'react';
-import Stepper, { Step } from '../ui/Stepper';
-import { Users, Calendar, FileText, Mail, Phone, Briefcase, Heart } from 'lucide-react';
-import { AppContext } from '../../context/AppContext'; // Adjust this path to your actual AppContext file location
+import React, { useContext, useState } from 'react';
+import { Formik, Form, Field } from 'formik';
+import * as Yup from 'yup';
+import { Users, Calendar, FileText, Mail, Phone, Briefcase, Heart, Home, BookOpen, AlertCircle } from 'lucide-react';
+import { AppContext } from '../../context/AppContext';
+
+// Custom Stepper Component
+const Stepper = ({ activeStep, children }) => {
+  return (
+    <div className="flex items-center justify-between mb-8">
+      {React.Children.map(children, (child, index) => {
+        return React.cloneElement(child, {
+          isActive: index + 1 === activeStep,
+          isCompleted: index + 1 < activeStep,
+        });
+      })}
+    </div>
+  );
+};
+
+// Step Component
+const Step = ({ label, icon, isActive, isCompleted, onClick }) => {
+  return (
+    <div 
+      className={`flex items-center cursor-pointer ${isActive ? 'text-brand' : isCompleted ? 'text-gray-500' : 'text-gray-400'}`}
+      onClick={onClick}
+    >
+      <div className={`flex items-center justify-center w-8 h-8 rounded-full mr-2 ${
+        isActive ? 'bg-brand text-white' : 
+        isCompleted ? 'bg-gray-500 text-white' : 
+        'bg-gray-200 text-gray-500'
+      }`}>
+        {icon}
+      </div>
+      <span className="text-sm font-medium">{label}</span>
+      {!isCompleted && <div className="flex-1 h-0.5 bg-gray-200 mx-4" />}
+    </div>
+  );
+};
+
+Stepper.Step = Step;
+
+// Validation schemas for each step
+const validationSchemas = {
+  step1: Yup.object({
+    employeeId: Yup.string().required('Employee ID is required'),
+    name: Yup.string().required('Name is required'),
+    email: Yup.string().email('Invalid email address').required('Email is required'),
+    password: Yup.string().min(8, 'Password must be at least 8 characters').required('Password is required'),
+    gender: Yup.string().required('Gender is required'),
+    phone: Yup.string()
+      .matches(/^[6-9]\d{9}$/, 'Phone number must be a valid 10-digit number')
+      .required('Phone number is required'),
+  }),
+  step2: Yup.object({
+    designation: Yup.string().required('Designation is required'),
+    department: Yup.string().required('Department is required'),
+    employmentType: Yup.string().required('Employment type is required'),
+    program: Yup.string().required('Program is required'),
+    workLocation: Yup.string().required('Work location is required'),
+  }),
+  step3: Yup.object({
+    DOB: Yup.string().required('Date of birth is required'),
+    dateOfJoining: Yup.string().required('Date of joining is required'),
+    emergencyContact: Yup.object({
+      name: Yup.string().required('Emergency contact name is required'),
+      contact: Yup.string()
+        .matches(/^[6-9]\d{9}$/, 'Contact number must be a valid 10-digit number')
+        .required('Emergency contact number is required'),
+    }),
+  }),
+  step4: Yup.object({
+    bloodGroup: Yup.string().required('Blood group is required'),
+    status: Yup.string().required('Status is required'),
+  }),
+};
 
 export default function AddTeacherForm() {
-  // Get dark mode from context
   const { darkMode } = useContext(AppContext);
-  
-  // Initialize teacher state
-  const [teacher, setTeacher] = useState({
-    employeeId: "",
-    name: "",
-    gender: "",
-    email: "",
-    password: "",
-    avatar: {
-      public_id: "",
-      secure_url: ""
-    },
-    designation: "",
-    department: "",
-    role: "Employee",
-    employmentType: "",
-    program: "",
-    phone: "",
-    DOB: "",
-    dateOfJoining: "",
-    dateOfLeaving: "",
-    status: "Active",
-    tenure: "",
-    workLocation: "",
-    emergencyContact: {
-      name: "",
-      contact: ""
-    },
-    bloodGroup: ""
-  });
-
-  // Form validation states
-  const [errors, setErrors] = useState({});
   const [currentStep, setCurrentStep] = useState(1);
-  
-  // Handle input changes
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    
-    // Handle nested properties
-    if (name.includes('.')) {
-      const [parent, child] = name.split('.');
-      setTeacher(prev => ({
-        ...prev,
-        [parent]: {
-          ...prev[parent],
-          [child]: value
-        }
-      }));
-    } else {
-      setTeacher(prev => ({
-        ...prev,
-        [name]: value
-      }));
-    }
+  const [avatarPreview, setAvatarPreview] = useState(null);
+
+  const initialValues = {
+    employeeId: '',
+    name: '',
+    gender: '',
+    email: '',
+    password: '',
+    avatar: null,
+    designation: 'Educator',
+    department: 'Special Education',
+    role: 'Employee',
+    employmentType: '',
+    program: '',
+    phone: '',
+    DOB: '',
+    dateOfJoining: '',
+    dateOfLeaving: '',
+    status: 'Active',
+    workLocation: '',
+    emergencyContact: {
+      name: '',
+      contact: ''
+    },
+    bloodGroup: ''
   };
-  
-  // Handle file upload for avatar
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setTeacher({
-          ...teacher,
-          avatar: {
-            public_id: `avatar_${Date.now()}`,
-            secure_url: reader.result
-          }
-        });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-  
-  // Form validation
-  const validateStep = (step) => {
-    const newErrors = {};
-    
-    switch(step) {
-      case 1: // Basic Information
-        if (!teacher.name.trim()) newErrors.name = "Name is required";
-        if (!teacher.email.trim()) newErrors.email = "Email is required";
-        else if (!/\S+@\S+\.\S+/.test(teacher.email)) newErrors.email = "Email is invalid";
-        if (!teacher.password) newErrors.password = "Password is required";
-        else if (teacher.password.length < 8) newErrors.password = "Password must be at least 8 characters";
-        if (!teacher.gender) newErrors.gender = "Gender is required";
-        break;
-        
-      case 2: // Employment Details
-        if (!teacher.designation) newErrors.designation = "Designation is required";
-        if (!teacher.department) newErrors.department = "Department is required";
-        if (!teacher.employmentType) newErrors.employmentType = "Employment type is required";
-        if (!teacher.program) newErrors.program = "Program is required";
-        break;
-        
-      case 3: // Personal Details
-        if (!teacher.phone) newErrors.phone = "Phone number is required";
-        else if (!/^\d{10}$/.test(teacher.phone)) newErrors.phone = "Phone number must be 10 digits";
-        if (!teacher.DOB) newErrors.DOB = "Date of birth is required";
-        if (!teacher.dateOfJoining) newErrors.dateOfJoining = "Date of joining is required";
-        break;
-        
-      case 4: // Additional Information
-        if (!teacher.workLocation) newErrors.workLocation = "Work location is required";
-        if (!teacher.emergencyContact.name) newErrors.emergencyContactName = "Emergency contact name is required";
-        if (!teacher.emergencyContact.contact) newErrors.emergencyContactNumber = "Emergency contact number is required";
-        else if (!/^\d{10}$/.test(teacher.emergencyContact.contact)) newErrors.emergencyContactNumber = "Contact number must be 10 digits";
-        break;
-        
-      default:
-        break;
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-  
-  // Handle step change
-  const handleStepChange = (step) => {
-    setCurrentStep(step);
-  };
-  
-  // Handle form submission
-  const handleSubmit = () => {
-    if (validateStep(4)) {
-      // Calculate tenure based on joining date
-      const joiningDate = new Date(teacher.dateOfJoining);
-      const today = new Date();
-      const yearDiff = today.getFullYear() - joiningDate.getFullYear();
-      const monthDiff = today.getMonth() - joiningDate.getMonth();
-      
-      let tenure;
-      if (yearDiff > 0) {
-        tenure = `${yearDiff} Year${yearDiff > 1 ? 's' : ''}`;
-      } else if (monthDiff > 0) {
-        tenure = `${monthDiff} Month${monthDiff > 1 ? 's' : ''}`;
-      } else {
-        tenure = "Less than a month";
-      }
-      
-      // Generate employee ID if not provided
-      const employeeId = teacher.employeeId || `EMP${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
-      
-      const finalTeacher = {
-        ...teacher,
-        employeeId,
-        tenure
-      };
-      
-      console.log("Submitting teacher:", finalTeacher);
-      alert("Teacher added successfully!");
-    }
-  };
-  
-  // Input field component with dynamic styling based on dark/light mode
-  const InputField = ({ label, name, type = "text", value, onChange, error, ...rest }) => (
+
+  const FormField = ({ label, name, type = "text", ...props }) => (
     <div className="mb-4">
-      <label className={`block text-sm font-medium mb-1 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>{label}</label>
-      <input
+      <label htmlFor={name} className={`block text-sm font-medium mb-1 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
+        {label}
+      </label>
+      <Field
+        id={name}
+        name={name}
         type={type}
-        name={name}
-        value={value}
-        onChange={onChange}
-        className={`w-full p-2 rounded-lg border ${error ? 'border-red-500' : darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'}`}
-        {...rest}
+        className={`w-full p-2 rounded-lg border ${
+          darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'
+        } focus:ring-2 focus:ring-brand focus:border-brand`}
+        {...props}
       />
-      {error && <p className="mt-1 text-sm text-red-400">{error}</p>}
     </div>
   );
-  
-  // Select field component with dynamic styling based on dark/light mode
-  const SelectField = ({ label, name, options, value, onChange, error, ...rest }) => (
-    <div className="mb-4">
-      <label className={`block text-sm font-medium mb-1 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>{label}</label>
-      <select
-        name={name}
-        value={value}
-        onChange={onChange}
-        className={`w-full p-2 rounded-lg border ${error ? 'border-red-500' : darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'}`}
-        {...rest}
-      >
-        <option value="">Select {label}</option>
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-      {error && <p className="mt-1 text-sm text-red-400">{error}</p>}
-    </div>
-  );
-  
+
+  const renderStepContent = (step, errors, touched) => {
+    switch (step) {
+      case 1:
+        return (
+          <>
+            <h2 className={`text-xl font-bold mb-4 flex items-center ${darkMode ? "text-brand-light" : "text-brand"}`}>
+              <Users className="mr-2" size={20} />
+              Basic Information
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <FormField
+                  label="Employee ID"
+                  name="employeeId"
+                  placeholder="Enter employee ID"
+                />
+                {errors.employeeId && touched.employeeId && (
+                  <div className="text-danger text-sm mt-1">{errors.employeeId}</div>
+                )}
+              </div>
+              <div>
+                <FormField
+                  label="Full Name"
+                  name="name"
+                  placeholder="Enter full name"
+                />
+                {errors.name && touched.name && (
+                  <div className="text-danger text-sm mt-1">{errors.name}</div>
+                )}
+              </div>
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
+                  Gender
+                </label>
+                <Field
+                  as="select"
+                  name="gender"
+                  className={`w-full p-2 rounded-lg border ${
+                    darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'
+                  } focus:ring-2 focus:ring-brand focus:border-brand`}
+                >
+                  <option value="">Select Gender</option>
+                  <option value="MALE">Male</option>
+                  <option value="FEMALE">Female</option>
+                  <option value="OTHER">Other</option>
+                </Field>
+                {errors.gender && touched.gender && (
+                  <div className="text-danger text-sm mt-1">{errors.gender}</div>
+                )}
+              </div>
+              <div>
+                <FormField
+                  label="Email"
+                  name="email"
+                  type="email"
+                  placeholder="Enter email address"
+                />
+                {errors.email && touched.email && (
+                  <div className="text-danger text-sm mt-1">{errors.email}</div>
+                )}
+              </div>
+              <div>
+                <FormField
+                  label="Password"
+                  name="password"
+                  type="password"
+                  placeholder="Create password"
+                />
+                {errors.password && touched.password && (
+                  <div className="text-danger text-sm mt-1">{errors.password}</div>
+                )}
+              </div>
+              <div>
+                <FormField
+                  label="Phone Number"
+                  name="phone"
+                  placeholder="Enter phone number"
+                />
+                {errors.phone && touched.phone && (
+                  <div className="text-danger text-sm mt-1">{errors.phone}</div>
+                )}
+              </div>
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
+                  Avatar
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      setAvatarPreview(URL.createObjectURL(file));
+                    }
+                  }}
+                  className={`w-full p-2 rounded-lg border ${
+                    darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'
+                  }`}
+                />
+                {avatarPreview && (
+                  <img src={avatarPreview} alt="Avatar preview" className="mt-2 w-20 h-20 rounded-full object-cover" />
+                )}
+              </div>
+            </div>
+          </>
+        );
+      case 2:
+        return (
+          <>
+            <h2 className={`text-xl font-bold mb-4 flex items-center ${darkMode ? "text-brand-light" : "text-brand"}`}>
+              <Briefcase className="mr-2" size={20} />
+              Employment Details
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <FormField
+                  label="Designation"
+                  name="designation"
+                  value="Educator"
+                  disabled
+                />
+              </div>
+              <div>
+                <FormField
+                  label="Department"
+                  name="department"
+                  value="Special Education"
+                  disabled
+                />
+              </div>
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
+                  Employment Type
+                </label>
+                <Field
+                  as="select"
+                  name="employmentType"
+                  className={`w-full p-2 rounded-lg border ${
+                    darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'
+                  } focus:ring-2 focus:ring-brand focus:border-brand`}
+                >
+                  <option value="">Select Employment Type</option>
+                  <option value="Full-Time">Full-Time</option>
+                  <option value="Part-Time">Part-Time</option>
+                  <option value="Contract">Contract</option>
+                </Field>
+                {errors.employmentType && touched.employmentType && (
+                  <div className="text-danger text-sm mt-1">{errors.employmentType}</div>
+                )}
+              </div>
+              <div>
+                <FormField
+                  label="Program"
+                  name="program"
+                  placeholder="Enter program"
+                />
+                {errors.program && touched.program && (
+                  <div className="text-danger text-sm mt-1">{errors.program}</div>
+                )}
+              </div>
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
+                  Work Location
+                </label>
+                <Field
+                  as="select"
+                  name="workLocation"
+                  className={`w-full p-2 rounded-lg border ${
+                    darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'
+                  } focus:ring-2 focus:ring-brand focus:border-brand`}
+                >
+                  <option value="">Select Work Location</option>
+                  <option value="Foundation">Foundation</option>
+                  <option value="Academy">Academy</option>
+                  <option value="Remote">Remote</option>
+                  <option value="Hybrid">Hybrid</option>
+                </Field>
+                {errors.workLocation && touched.workLocation && (
+                  <div className="text-danger text-sm mt-1">{errors.workLocation}</div>
+                )}
+              </div>
+            </div>
+          </>
+        );
+      case 3:
+        return (
+          <>
+            <h2 className={`text-xl font-bold mb-4 flex items-center ${darkMode ? "text-brand-light" : "text-brand"}`}>
+              <Calendar className="mr-2" size={20} />
+              Personal Details
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <FormField
+                  label="Date of Birth"
+                  name="DOB"
+                  type="date"
+                />
+                {errors.DOB && touched.DOB && (
+                  <div className="text-danger text-sm mt-1">{errors.DOB}</div>
+                )}
+              </div>
+              <div>
+                <FormField
+                  label="Date of Joining"
+                  name="dateOfJoining"
+                  type="date"
+                />
+                {errors.dateOfJoining && touched.dateOfJoining && (
+                  <div className="text-danger text-sm mt-1">{errors.dateOfJoining}</div>
+                )}
+              </div>
+              <div>
+                <FormField
+                  label="Date of Leaving"
+                  name="dateOfLeaving"
+                  type="date"
+                />
+              </div>
+              <div>
+                <FormField
+                  label="Emergency Contact Name"
+                  name="emergencyContact.name"
+                  placeholder="Enter emergency contact name"
+                />
+                {errors.emergencyContact?.name && touched.emergencyContact?.name && (
+                  <div className="text-danger text-sm mt-1">{errors.emergencyContact.name}</div>
+                )}
+              </div>
+              <div>
+                <FormField
+                  label="Emergency Contact Number"
+                  name="emergencyContact.contact"
+                  placeholder="Enter emergency contact number"
+                />
+                {errors.emergencyContact?.contact && touched.emergencyContact?.contact && (
+                  <div className="text-danger text-sm mt-1">{errors.emergencyContact.contact}</div>
+                )}
+              </div>
+            </div>
+          </>
+        );
+      case 4:
+        return (
+          <>
+            <h2 className={`text-xl font-bold mb-4 flex items-center ${darkMode ? "text-brand-light" : "text-brand"}`}>
+              <Heart className="mr-2" size={20} />
+              Additional Information
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
+                  Blood Group
+                </label>
+                <Field
+                  as="select"
+                  name="bloodGroup"
+                  className={`w-full p-2 rounded-lg border ${
+                    darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'
+                  } focus:ring-2 focus:ring-brand focus:border-brand`}
+                >
+                  <option value="">Select Blood Group</option>
+                  <option value="A+">A+</option>
+                  <option value="A-">A-</option>
+                  <option value="B+">B+</option>
+                  <option value="B-">B-</option>
+                  <option value="AB+">AB+</option>
+                  <option value="AB-">AB-</option>
+                  <option value="O+">O+</option>
+                  <option value="O-">O-</option>
+                </Field>
+                {errors.bloodGroup && touched.bloodGroup && (
+                  <div className="text-danger text-sm mt-1">{errors.bloodGroup}</div>
+                )}
+              </div>
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
+                  Status
+                </label>
+                <Field
+                  as="select"
+                  name="status"
+                  className={`w-full p-2 rounded-lg border ${
+                    darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'
+                  } focus:ring-2 focus:ring-brand focus:border-brand`}
+                >
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                  <option value="On Leave">On Leave</option>
+                </Field>
+                {errors.status && touched.status && (
+                  <div className="text-danger text-sm mt-1">{errors.status}</div>
+                )}
+              </div>
+            </div>
+          </>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
-    <div className={darkMode ? "bg-gray-900 text-white" : "bg-gray-50 text-gray-900"}>
+    <div className={`min-h-screen ${darkMode ? "bg-gray-900 text-white" : "bg-gray-50 text-gray-900"}`}>
       <div className="max-w-3xl mx-auto p-6">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold mb-2">Add New Teacher</h1>
-          {/* <p className={darkMode ? "text-gray-400" : "text-gray-500"}>Enter teacher details using the form below</p> */}
-        </div>
-        <form
-        onSubmit={(e) => {
-          e.preventDefault(); // Prevent default HTML form submission
-          handleSubmit();     // Call your React handler
-        }}
-      >
-
-        {/* Stepper container with dynamic styling */}
-        <div className={`rounded-xl shadow-xl border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
-          <Stepper
-            initialStep={1}
-            onStepChange={handleStepChange}
-            onFinalStepCompleted={handleSubmit}
-            backButtonText="Previous"
-            nextButtonText="Next"
-            width="100%"
-            height="auto"
-            stepCircleContainerClassName={darkMode ? "bg-gray-800 border-b border-gray-700" : "bg-white border-b border-gray-200"}
-            stepContainerClassName="py-4"
-            contentClassName="px-0"
-            footerClassName={`border-t ${darkMode ? "border-gray-700 bg-gray-800" : "border-gray-200 bg-gray-50"}`}
-            backButtonProps={{ 
-              className: darkMode 
-                ? "text-gray-400 hover:text-white transition-colors duration-300" 
-                : "text-gray-500 hover:text-gray-700 transition-colors duration-300"
-            }}
-            nextButtonProps={{ 
-              className: "bg-teal-500 hover:bg-teal-600 text-white rounded-full px-4 py-2 transition-colors duration-300"
-            }}
-          >
-            {/* Step 1: Basic Information */}
-            <Step>
-              <div className="p-6 h-96 overflow-y-auto">
-                <h2 className={`text-xl font-bold mb-4 flex items-center ${darkMode ? "text-teal-400" : "text-teal-600"}`}>
-                  <Users className="mr-2" size={20} />
-                  Basic Information
-                </h2>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <InputField
-                    label="Full Name"
-                    name="name"
-                    value={teacher.name || ''}
-                    onChange={handleChange}
-                    error={errors.name}
-                    placeholder="Enter full name"
-                  />
-                  
-                  <SelectField
-                    label="Gender"
-                    name="gender"
-                    value={teacher.gender}
-                    onChange={handleChange}
-                    error={errors.gender}
-                    options={[
-                      { value: "MALE", label: "Male" },
-                      { value: "FEMALE", label: "Female" },
-                      { value: "OTHER", label: "Other" }
-                    ]}
-                  />
-                  
-                  <InputField
-                    label="Email"
-                    name="email"
-                    type="email"
-                    value={teacher.email || ''}
-                    onChange={handleChange}
-                    error={errors.email}
-                    placeholder="Enter email address"
-                  />
-                  
-                  <InputField
-                    label="Password"
-                    name="password"
-                    // type="password"
-                    value={teacher.password || ''}
-                    onChange={handleChange}
-                    error={errors.password}
-                    placeholder="Create password"
-                  />
-                  
-                  <div className="md:col-span-2">
-                    <label className={`block text-sm font-medium mb-1 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>Profile Picture</label>
-                    <div className="flex items-center">
-                      {teacher.avatar.secure_url ? (
-                        <div className="mr-4">
-                          <img 
-                            src={teacher.avatar.secure_url} 
-                            alt="Avatar preview" 
-                            className="w-16 h-16 rounded-full object-cover"
-                          />
-                        </div>
-                      ) : (
-                        <div className={`w-16 h-16 rounded-full flex items-center justify-center mr-4 ${darkMode ? "bg-gray-700" : "bg-gray-200"}`}>
-                          <Users size={24} className={darkMode ? "text-gray-400" : "text-gray-500"} />
-                        </div>
-                      )}
-                      <input
-                        type="file"
-                        onChange={handleFileUpload}
-                        accept="image/*"
-                        className={`p-2 border rounded-lg ${darkMode ? "border-gray-600 bg-gray-700 text-gray-200" : "border-gray-300 bg-gray-100 text-gray-700"}`}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Step>
-            
-            {/* Step 2: Employment Details */}
-            <Step>
-              <div className="p-6 h-96 overflow-y-auto">
-                <h2 className={`text-xl font-bold mb-4 flex items-center ${darkMode ? "text-teal-400" : "text-teal-600"}`}>
-                  <Briefcase className="mr-2" size={20} />
-                  Employment Details
-                </h2>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <InputField
-                    label="Employee ID (Optional)"
-                    name="employeeId"
-                    value={teacher.employeeId}
-                    onChange={handleChange}
-                    placeholder="Auto-generated if left blank"
-                  />
-                  
-                  <InputField
-                    label="Designation"
-                    name="designation"
-                    value={teacher.designation}
-                    onChange={handleChange}
-                    error={errors.designation}
-                    placeholder="e.g. Educator, Program Associate"
-                  />
-                  
-                  <InputField
-                    label="Department"
-                    name="department"
-                    value={teacher.department}
-                    onChange={handleChange}
-                    error={errors.department}
-                    placeholder="e.g. Special Education, Design"
-                  />
-                  
-                  <SelectField
-                    label="Employment Type"
-                    name="employmentType"
-                    value={teacher.employmentType}
-                    onChange={handleChange}
-                    error={errors.employmentType}
-                    options={[
-                      { value: "FTE", label: "Full-Time" },
-                      { value: "PTE", label: "Part-Time" },
-                      { value: "Intern", label: "Intern" },
-                      { value: "Consultant", label: "Consultant" }
-                    ]}
-                  />
-                  
-                  <InputField
-                    label="Program"
-                    name="program"
-                    value={teacher.program}
-                    onChange={handleChange}
-                    error={errors.program}
-                    placeholder="e.g. Job Readiness, Spruha"
-                  />
-                  
-                  <SelectField
-                    label="Work Location"
-                    name="workLocation"
-                    value={teacher.workLocation}
-                    onChange={handleChange}
-                    error={errors.workLocation}
-                    options={[
-                      { value: "Academy", label: "Academy" },
-                      { value: "Foundation", label: "Foundation" },
-                      { value: "Remote", label: "Remote" },
-                      { value: "Hybrid", label: "Hybrid" }
-                    ]}
-                  />
-                </div>
-              </div>
-            </Step>
-            
-            {/* Step 3: Personal Details */}
-            <Step>
-              <div className="p-6 h-96 overflow-y-auto">
-                <h2 className={`text-xl font-bold mb-4 flex items-center ${darkMode ? "text-teal-400" : "text-teal-600"}`}>
-                  <Calendar className="mr-2" size={20} />
-                  Personal Details
-                </h2>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <InputField
-                    label="Phone Number"
-                    name="phone"
-                    value={teacher.phone}
-                    onChange={handleChange}
-                    error={errors.phone}
-                    placeholder="10-digit phone number"
-                  />
-                  
-                  <InputField
-                    label="Date of Birth"
-                    name="DOB"
-                    type="date"
-                    value={teacher.DOB}
-                    onChange={handleChange}
-                    error={errors.DOB}
-                  />
-                  
-                  <InputField
-                    label="Date of Joining"
-                    name="dateOfJoining"
-                    type="date"
-                    value={teacher.dateOfJoining}
-                    onChange={handleChange}
-                    error={errors.dateOfJoining}
-                  />
-                  
-                  <InputField
-                    label="Date of Leaving (if applicable)"
-                    name="dateOfLeaving"
-                    type="date"
-                    value={teacher.dateOfLeaving || ""}
-                    onChange={handleChange}
-                  />
-                  
-                  <SelectField
-                    label="Blood Group"
-                    name="bloodGroup"
-                    value={teacher.bloodGroup}
-                    onChange={handleChange}
-                    options={[
-                      { value: "A+", label: "A+" },
-                      { value: "A-", label: "A-" },
-                      { value: "B+", label: "B+" },
-                      { value: "B-", label: "B-" },
-                      { value: "AB+", label: "AB+" },
-                      { value: "AB-", label: "AB-" },
-                      { value: "O+", label: "O+" },
-                      { value: "O-", label: "O-" }
-                    ]}
-                  />
-                </div>
-              </div>
-            </Step>
-            
-            {/* Step 4: Emergency Contact */}
-            <Step>
-              <div className="p-6 h-96 overflow-y-auto">
-                <h2 className={`text-xl font-bold mb-4 flex items-center ${darkMode ? "text-teal-400" : "text-teal-600"}`}>
-                  <Phone className="mr-2" size={20} />
-                  Emergency Contact
-                </h2>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <InputField
-                    label="Emergency Contact Name"
-                    name="emergencyContact.name"
-                    value={teacher.emergencyContact.name}
-                    onChange={handleChange}
-                    error={errors.emergencyContactName}
-                    placeholder="Full name"
-                  />
-                  
-                  <InputField
-                    label="Emergency Contact Number"
-                    name="emergencyContact.contact"
-                    value={teacher.emergencyContact.contact}
-                    onChange={handleChange}
-                    error={errors.emergencyContactNumber}
-                    placeholder="10-digit phone number"
-                  />
-                  
-                  <div className="md:col-span-2">
-                    <h3 className={`text-lg font-medium mb-2 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>Review Information</h3>
-                    <p className={darkMode ? "text-gray-400 mb-4" : "text-gray-500 mb-4"}>
-                      Please review all the information before submitting. The teacher will be added to the system with status "Active".
-                    </p>
-                    
-                    {/* Summary of entered information */}
-                    <div className={`p-4 rounded-lg border ${darkMode ? "bg-gray-700 border-gray-600" : "bg-gray-50 border-gray-200"}`}>
-                      <p className="mb-2">
-                        <strong className={darkMode ? "text-teal-400" : "text-teal-600"}>Name:</strong> 
-                        <span className={darkMode ? "text-gray-200" : "text-gray-700"}>{teacher.name || "Not provided"}</span>
-                      </p>
-                      <p className="mb-2">
-                        <strong className={darkMode ? "text-teal-400" : "text-teal-600"}>Email:</strong>
-                        <span className={darkMode ? "text-gray-200" : "text-gray-700"}>{teacher.email || "Not provided"}</span>
-                      </p>
-                      <p className="mb-2">
-                        <strong className={darkMode ? "text-teal-400" : "text-teal-600"}>Designation:</strong>
-                        <span className={darkMode ? "text-gray-200" : "text-gray-700"}>{teacher.designation || "Not provided"}</span>
-                      </p>
-                      <p className="mb-2">
-                        <strong className={darkMode ? "text-teal-400" : "text-teal-600"}>Department:</strong>
-                        <span className={darkMode ? "text-gray-200" : "text-gray-700"}>{teacher.department || "Not provided"}</span>
-                      </p>
-                      <p className="mb-2">
-                        <strong className={darkMode ? "text-teal-400" : "text-teal-600"}>Program:</strong>
-                        <span className={darkMode ? "text-gray-200" : "text-gray-700"}>{teacher.program || "Not provided"}</span>
-                      </p>
-                      </div>
-                  </div>
-                </div>
-              </div>
-            </Step>
+          <h1 className="text-2xl font-bold mb-4">Add New Teacher</h1>
+          <Stepper activeStep={currentStep}>
+            <Stepper.Step
+              label="Basic Information"
+              icon={<Users size={16} />}
+              onClick={() => setCurrentStep(1)}
+            />
+            <Stepper.Step
+              label="Employment Details"
+              icon={<Briefcase size={16} />}
+              onClick={() => setCurrentStep(2)}
+            />
+            <Stepper.Step
+              label="Personal Details"
+              icon={<Calendar size={16} />}
+              onClick={() => setCurrentStep(3)}
+            />
+            <Stepper.Step
+              label="Additional Information"
+              icon={<Heart size={16} />}
+              onClick={() => setCurrentStep(4)}
+            />
           </Stepper>
         </div>
-      </form>
 
+        <Formik
+          initialValues={initialValues}
+          validationSchema={validationSchemas[`step${currentStep}`]}
+          onSubmit={async (values, { setSubmitting }) => {
+            if (currentStep < 4) {
+              setCurrentStep(currentStep + 1);
+              setSubmitting(false);
+            } else {
+              try {
+                // Prepare form data
+                const formData = new FormData();
+                Object.keys(values).forEach(key => {
+                  if (key === 'avatar') {
+                    if (values[key]) formData.append('avatar', values[key]);
+                  } else if (typeof values[key] === 'object') {
+                    formData.append(key, JSON.stringify(values[key]));
+                  } else {
+                    formData.append(key, values[key]);
+                  }
+                });
+
+                // Make API call to create employee
+                const response = await fetch('/api/employee/create', {
+                  method: 'POST',
+                  body: formData,
+                });
+
+                if (!response.ok) {
+                  throw new Error('Failed to create employee');
+                }
+
+                alert('Teacher added successfully!');
+                // Reset form or redirect
+              } catch (error) {
+                console.error('Error creating employee:', error);
+                alert('Failed to add teacher. Please try again.');
+              }
+              setSubmitting(false);
+            }
+          }}
+        >
+          {({ errors, touched, isSubmitting }) => (
+            <Form className={`rounded-xl shadow-xl border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+              <div className="p-6">
+                {renderStepContent(currentStep, errors, touched)}
+                
+                <div className="mt-6 flex justify-between">
+                  {currentStep > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => setCurrentStep(currentStep - 1)}
+                      className={`px-4 py-2 rounded-lg ${
+                        darkMode 
+                          ? "bg-gray-700 hover:bg-gray-600 text-white" 
+                          : "bg-gray-200 hover:bg-gray-300 text-gray-700"
+                      } transition-colors duration-300`}
+                    >
+                      Previous
+                    </button>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="bg-brand hover:bg-brand-hover text-white rounded-lg px-4 py-2 transition-colors duration-300 ml-auto"
+                  >
+                    {currentStep === 4 ? 'Submit' : 'Next'}
+                  </button>
+                </div>
+              </div>
+            </Form>
+          )}
+        </Formik>
       </div>
     </div>
   );
