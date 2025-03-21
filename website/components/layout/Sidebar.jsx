@@ -78,7 +78,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     >
       <div className="flex flex-col h-full">
         {/* Logo & Toggle */}
-        <div className="flex items-center justify-between h-16 px-4 border-b border-[var(--color-border-primary)] transition-all duration-500">
+        <div className="flex items-center justify-between h-[74.5px] px-4 border-b border-[var(--color-border-primary)] transition-all duration-500">
           <div className="flex items-center">
             <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
               SH
