@@ -1,26 +1,54 @@
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { AppContext } from "../context/AppContext";
 import { Search, Plus, Filter, Eye, Edit, Trash2, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { getAllEmployees } from "../services/employeeServices";
 
 const Teachers = () => {
   const navigate = useNavigate();
-  const { teachers } = useContext(AppContext);
+  const [employees, setEmployees] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filter, setFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [programFilter, setProgramFilter] = useState("all");
 
-  const filteredTeachers = teachers.filter((teacher) => {
+  const fetchEmployees = async () => {
+    try {
+      const response = await getAllEmployees();
+      setEmployees(response.data);
+    } catch (error) {
+      console.error("Error fetching employees:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchEmployees();
+  }, []);
+
+  const programs = [
+    "Multi",
+    "Job Readiness",
+    "Vocation",
+    "Spruha",
+    "Suyog",
+    "Sameti",
+    "Shaale",
+    "Siddhi",
+    "Sattva"
+  ];
+
+  const filteredTeachers = employees.filter((teacher) => {
     const matchesSearch =
       teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       teacher.employeeId.toLowerCase().includes(searchTerm.toLowerCase()) ||
       teacher.designation.toLowerCase().includes(searchTerm.toLowerCase());
 
-    if (filter === "all") return matchesSearch;
-    if (filter === "active")
-      return matchesSearch && teacher.status === "Active";
-    if (filter === "inactive")
-      return matchesSearch && teacher.status === "Inactive";
-    return matchesSearch;
+    const matchesStatus = 
+      statusFilter === "all" || teacher.status === statusFilter;
+
+    const matchesProgram =
+      programFilter === "all" || teacher.program === programFilter;
+
+    return matchesSearch && matchesStatus && matchesProgram;
   });
 
   return (
@@ -46,14 +74,29 @@ const Teachers = () => {
 
           <div className="flex gap-2">
             <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
               className="px-4 py-2 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border-primary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]"
             >
-              <option value="all">All Teachers</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
+              <option value="all">All Status</option>
+              <option value="Active">Active</option>
+              <option value="Discontinued">Discontinued</option>
+              <option value="Temporary Discontinue">Temporary Discontinue</option>
             </select>
+
+            <select
+              value={programFilter}
+              onChange={(e) => setProgramFilter(e.target.value)}
+              className="px-4 py-2 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border-primary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]"
+            >
+              <option value="all">All Programs</option>
+              {programs.map((program) => (
+                <option key={program} value={program}>
+                  {program}
+                </option>
+              ))}
+            </select>
+
             <button
               onClick={() => navigate("/teachers/add")}
               className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center"
@@ -62,9 +105,6 @@ const Teachers = () => {
               <Users className="mr-2" size={16} />
               Add Teacher
             </button>
-            {/* <button className="flex items-center gap-2 px-4 py-2 bg-[var(--color-brand)] text-white rounded-lg hover:bg-opacity-90">
-              <span>Add Teacher</span>
-            </button> */}
           </div>
         </div>
       </div>
@@ -96,7 +136,7 @@ const Teachers = () => {
                 scope="col"
                 className="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-secondary)] uppercase tracking-wider"
               >
-                Designation
+                Program
               </th>
               <th
                 scope="col"
@@ -116,7 +156,7 @@ const Teachers = () => {
             {filteredTeachers.length > 0 ? (
               filteredTeachers.map((teacher, index) => (
                 <tr
-                  key={teacher.employeeId}
+                  key={teacher._id}
                   className={
                     index % 2 === 0
                       ? "bg-[var(--color-bg-primary)]"
@@ -150,12 +190,7 @@ const Teachers = () => {
                     {teacher.department}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--color-text-primary)]">
-                    <div>
-                      <div>{teacher.designation}</div>
-                      <div className="text-xs text-[var(--color-text-secondary)]">
-                        {teacher.employmentType}
-                      </div>
-                    </div>
+                    {teacher.program}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
@@ -201,7 +236,7 @@ const Teachers = () => {
       <div className="flex items-center justify-between">
         <div className="text-sm text-[var(--color-text-secondary)]">
           Showing <span className="font-medium">{filteredTeachers.length}</span>{" "}
-          of <span className="font-medium">{teachers.length}</span> teachers
+          of <span className="font-medium">{employees.length}</span> teachers
         </div>
         <div className="flex gap-2">
           <button className="px-3 py-1 rounded-md border border-[var(--color-border-primary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-secondary)]">

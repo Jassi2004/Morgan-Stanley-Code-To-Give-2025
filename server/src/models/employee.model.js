@@ -36,11 +36,9 @@ const employeeSchema = new Schema({
     avatar : {
         public_id : {
             type : String,
-            required : true,
         },
         secure_url : {
             type : String,
-            required : true
         }
     },
     designation : {
@@ -107,11 +105,9 @@ const employeeSchema = new Schema({
     emergencyContact : {
         name : {
             type : String,
-            required : [true, "Emergency contact name is required"]
         },
         contact : {
             type : String,
-            required : [true, "Emergency contact contact number is required"]
         }
     },
     bloodGroup : {
