@@ -10,7 +10,7 @@ router.post("/login", loginStudent);
 router.post("/logout", logoutStudent);
 
 // Student Profile Routes
-router.get("/profile", profilePage);
+router.post("/profile", profilePage);
 router.put("/change-password", changePassword);
 
 export default router;

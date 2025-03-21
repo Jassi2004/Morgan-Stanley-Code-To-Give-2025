@@ -20,9 +20,12 @@ app.use(express.static("public"));
 // Import routes
 import employeeRouter from "./routes/employee.routes.js";
 import studentRouter from "./routes/student.routes.js";
+import notificationRouter from "./routes/notification.routes.js"
+
 
 app.use("/api/v1/employee", employeeRouter);
 app.use("/api/v1/student", studentRouter);
+app.use("/api/v1/notification", notificationRouter);
 
 
 

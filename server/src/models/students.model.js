@@ -39,11 +39,11 @@ const studentSchema = new mongoose.Schema(
     avatar: {
       public_id: {
         type: String,
-        required: true,
+        default: ""
       },
       secure_url: {
         type: String,
-        required: true,
+        default: ""
       },
     },
     gender: {
@@ -61,9 +61,7 @@ const studentSchema = new mongoose.Schema(
       },
       secure_url: {
         type: String,
-        required: function (){
-            return this.UDID.isAvailable;
-        }
+        default: ""
       },
     },
     dateOfBirth: {
@@ -82,8 +80,8 @@ const studentSchema = new mongoose.Schema(
     enrollmentYear: {
       type: Date,
       required: [true, "enrollment year is required"],
-      min: [2015, "Year must be valid"],
-      max: [new Date().getFullYear(), "Enrollment year cannot be in the future"],
+      min: [new Date("2015-01-01"), "Year must be valid"],
+      max: [new Date(new Date().getFullYear(), 11, 31), "Enrollment year cannot be in the future"], 
     },
     programs: [
       {

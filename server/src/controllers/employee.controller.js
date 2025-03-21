@@ -29,9 +29,9 @@ const generateAccessAndRefreshTokens = async(userId) => {
 
 const createEmployeeAccount = asyncHandler(async (req, res) => {
     try {
-        const { employeeId, name, gender, email, password, designation, department, employmentType, program, phone, DOB, dateOfJoining, status, workLocation, bloodGroup } = req.body;
+        const { employeeId, name, gender, email, password, designation, department, employmentType, program, phone, DOB, dateOfJoining, status, workLocation, emergencyContact, bloodGroup } = req.body;
         
-        if (!employeeId || !name || !email || !password || !designation || !department || !employmentType || !program || !phone || !DOB || !dateOfJoining || !status || !workLocation || !bloodGroup) {
+        if (!employeeId || !name || !email || !password || !designation || !department || !employmentType || !program || !phone || !DOB || !dateOfJoining || !status || !emergencyContact || !workLocation || !bloodGroup) {
             throw new ApiError(400, "All required fields must be provided");
         }
 
@@ -41,23 +41,17 @@ const createEmployeeAccount = asyncHandler(async (req, res) => {
         }
         
 
-        if (req.file) {
-            const avatar = await uploadOnCloudinary(req.file?.path);
-
-            if(!avatar.secure_url){
-                throw new ApiError(500, "Failed to upload avatar");
-            }
 
 
-            const user = await Employee.create({
+        const user = await Employee.create({
                 employeeId,
                 name,
                 gender,
                 email,
                 password,
                 avatar: {
-                    public_id : avatar.public_id,
-                    secure_url : avatar.secure_url
+                    public_id : "",
+                    secure_url :""
                 },
                 designation,
                 department,
@@ -70,7 +64,7 @@ const createEmployeeAccount = asyncHandler(async (req, res) => {
                 workLocation,
                 
                 bloodGroup
-            });
+        });
 
             const newUser = await Employee.findById(user._id).select("-password -refreshToken");
             if(!newUser){
@@ -92,10 +86,6 @@ const createEmployeeAccount = asyncHandler(async (req, res) => {
                 "Employee account created successfully"
                 )
             )
-            
-        }else{
-            throw new ApiError(400, "Avatar is required");
-        }
 
     } catch (err) {
         console.error(`Error occurred while creating employee account: ${err}`);
@@ -180,25 +170,36 @@ const getEmployeeProfile = asyncHandler(async (req, res) => {
 
 const addEducator = asyncHandler(async (req, res) => {
     try {
-        const { employeeId, name, gender, email, password, phone, DOB, dateOfJoining, bloodGroup, designation } = req.body;
+        const { 
+            employeeId, name, gender, email, password, phone, DOB, 
+            dateOfJoining, dateOfLeaving, status, workLocation, 
+            emergencyContact, bloodGroup, designation, department, role, 
+            employmentType, program 
+        } = req.body;
 
         if (!employeeId || !name || !email || !password || !phone || !DOB || !dateOfJoining || !designation || !bloodGroup) {
             throw new ApiError(400, "All required fields must be provided");
         }
 
-        const existingEmployee = await Employee.findOne({ $or: [{ email }, { phone }, { employeeId }] });
+        const existingEmployee = await Employee.findOne({ 
+            $or: [{ email }, { phone }, { employeeId }] 
+        });
+
         if (existingEmployee) {
             throw new ApiError(400, "Employee with the provided email, phone, or employeeId already exists");
         }
 
-        // if (req.file) {
-        //     avatar = await uploadOnCloudinary(req.file.path);
-        //     if (!avatar.secure_url) {
-        //         throw new ApiError(500, "Failed to upload avatar");
-        //     }
-        // } else {
-        //     throw new ApiError(400, "Avatar is required");
-        // }
+        // Upload avatar only if file is provided
+        let avatar = { public_id: "", secure_url: "" };
+        if (req.file) {
+            const uploadedAvatar = await uploadOnCloudinary(req.file.path);
+            if (uploadedAvatar.secure_url) {
+                avatar = {
+                    public_id: uploadedAvatar.public_id,
+                    secure_url: uploadedAvatar.secure_url
+                };
+            }
+        }
 
         const educator = await Employee.create({
             employeeId,
@@ -206,21 +207,22 @@ const addEducator = asyncHandler(async (req, res) => {
             gender,
             email,
             password,
-            avatar: {
-                public_id: "",
-                secure_url: ""
-            },
-            designation: "Educator",
-            department: "Special Education",
-            role: "Employee",
-            employmentType: "Educator",
-            program: "Multi",
+            avatar,
+            designation: designation || "Educator", 
+            department: department || "Special Education",
+            role: role || "Employee",
+            employmentType: employmentType || "Educator",
+            program: program || "Multi",
             phone,
             DOB,
             dateOfJoining,
-            status: "Active",
-            workLocation: "Foundation",
-            emergencyContact,
+            dateOfLeaving: dateOfLeaving || null,
+            status: status || "Active",
+            workLocation: workLocation || "Foundation",
+            emergencyContact: {
+                name: emergencyContact?.name || "",
+                contact: emergencyContact?.contact || ""
+            },
             bloodGroup
         });
 
