@@ -57,7 +57,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     { title: "Notifications", icon: <Bell size={20} />, path: "/notifications" },
     
     { title: "Settings", icon: <Settings size={20} />, path: "/settings", separator: true },
-    { title: "Help & Support", icon: <HelpCircle size={20} />, path: "/help" },
+    { title: "Meet The Developers", icon: <HelpCircle size={20} />, path: "/aboutTeam" },
   ];
 
   return (

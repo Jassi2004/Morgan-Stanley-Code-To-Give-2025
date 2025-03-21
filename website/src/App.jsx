@@ -5,6 +5,7 @@ import Students from "../pages/Students";
 import Teachers from "../pages/Teachers";
 import AddTeacherForm from "../components/form/AddTeacherForm";
 import AddStudentForm from "../components/form/AddStudentForm";
+import Team from "../pages/Team";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
           <Route path="/students/add" element={<AddStudentForm />} />
           <Route path="teachers" element={<Teachers />} />
           <Route path="/teachers/add" element={<AddTeacherForm />} />
+          <Route path="/aboutTeam" element={<Team />} />
 
         </Route>
       </Routes>

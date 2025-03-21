@@ -1,0 +1,474 @@
+/*  */
+  /* PersonBobblehead Styles */
+  .bobblehead-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 180px;
+    margin: 0 16px 40px 16px;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+  }
+  
+  .bobblehead-container:hover {
+    transform: scale(1.20);
+  }
+  
+  .bobblehead-figure {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    width: 100%;
+    height: auto;
+    cursor: pointer;
+    /* filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.2)); */
+  }
+  
+  .bobblehead-head {
+    width: 100px;
+    height: 100px;
+    position: relative;
+    z-index: 10;
+    animation: wobble 3s infinite ease-in-out;
+    transform-origin: bottom center;
+    transition: all 0.3s ease;
+    /* border: 4px solid #fff; */
+    /* border-radius: 50%; */
+    /* box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15); */
+  }
+  
+  /* Default wobble animation (left to right) */
+  @keyframes wobble {
+    0%, 100% { transform: rotate(-3deg); }
+    50% { transform: rotate(3deg); }
+  }
+  
+  /* Larger head size and vigorous bobble animation on hover */
+  .bobblehead-container:hover .bobblehead-head {
+    animation: bobbleVigorously 0.5s infinite ease-in-out;
+    /* box-shadow: 0 12px 25px rgba(0, 0, 0, 0.2); */
+  }
+  
+  @keyframes bobbleVigorously {
+    0%, 100% { transform: translateY(0) rotate(-5deg); }
+    50% { transform: translateY(-10px) rotate(5deg); }
+  }
+  
+  .head-image {
+    width: 100%;
+    height: 130%;
+    object-fit: cover;
+    border-radius: 50%;
+  }
+  
+  .bobblehead-body {
+    width: 100%;
+    height: auto;
+    margin-top: 15px;
+    position: relative;
+    z-index: 5;
+    background-color: transparent;
+    transition: transform 0.3s ease;
+  }
+  
+  .body-image {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    max-height: 300px;
+    /* filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.1)); */
+  }
+  
+  .bobblehead-stand {
+    width: 70px;
+    height: 15px;
+    border-radius: 50%;
+    margin-top: -5px;
+    background: linear-gradient(145deg, #f0f0f0, #e0e0e0);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15), 
+                inset 0 2px 3px rgba(255, 255, 255, 0.5);
+  }
+  
+  .bobblehead-name {
+    margin-top: 15px;
+    font-size: 18px;
+    font-weight: 700;
+    text-align: center;
+    color: #336699;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+    position: relative;
+    padding-bottom: 8px;
+  }
+  
+  .bobblehead-name::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 2px;
+    background-color: #336699;
+    transition: width 0.3s ease;
+  }
+  
+  .bobblehead-container:hover .bobblehead-name::after {
+    width: 80%;
+  }
+  
+  /* MainPage Styles */
+  .main-container {
+    width: 100%;
+    /* max-width: 1200px; */
+    margin: 0;
+    /* padding: 0px 20px; */
+    box-sizing: border-box;
+    /* background: linear-gradient(to bottom, #f8f9fa, #e9ecef);
+    border-radius: 15px;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1); */
+  }
+  
+  .main-title {
+    font-size: clamp(28px, 5vw, 42px);
+    font-weight: 800;
+    text-align: center;
+    color: #336699;
+    margin-bottom: clamp(16px, 3vw, 24px);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+    position: relative;
+    padding-bottom: 15px;
+  }
+  
+  .main-title::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 4px;
+    background: linear-gradient(to right, #336699, #66a3ff);
+    border-radius: 2px;
+  }
+  
+  .main-subtitle {
+    text-align: center;
+    color: #555;
+    margin-bottom: clamp(24px, 5vw, 40px);
+    font-size: clamp(16px, 3vw, 20px);
+    font-weight: 400;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  .team-container {
+    width: 100%;
+    min-height: 500px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 20px 10px;
+    box-sizing: border-box;
+    position: relative;
+    z-index: 1;
+  }
+  
+  .team-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at center, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
+    z-index: -1;
+  }
+  
+  /* Modal Styles */
+  .modal-container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    position: relative;
+    margin-top: 20px;
+  }
+  
+  .hover-modal {
+    width: 450px;
+    padding: 25px;
+    background: linear-gradient(145deg, #ffffff, #f5f8fc);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15), 
+                0 5px 15px rgba(0, 0, 0, 0.08);
+    border-radius: 16px;
+    text-align: left;
+    opacity: 1;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    color: #333;
+    position: relative;
+    border-left: 5px solid #336699;
+    transform: translateY(0);
+    animation: modalFadeIn 0.4s forwards;
+  }
+  
+  @keyframes modalFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .hover-modal h3 {
+    margin-bottom: 15px;
+    font-size: 26px;
+    color: #336699;
+    border-bottom: 2px solid rgba(51, 102, 153, 0.2);
+    padding-bottom: 10px;
+  }
+  
+  .hover-modal p {
+    margin-bottom: 12px;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+  
+  .hover-modal p strong {
+    color: #336699;
+    font-weight: 600;
+  }
+  
+  /* Responsive Breakpoints */
+  @media (max-width: 1024px) {
+    .bobblehead-container {
+      width: 160px;
+      margin: 0 12px 30px 12px;
+    }
+    
+    .bobblehead-head {
+      width: 90px;
+      height: 90px;
+    }
+    
+    .bobblehead-container:hover .bobblehead-head {
+      width: 100px;
+      height: 100px;
+    }
+    
+    .hover-modal {
+      width: 400px;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .main-container {
+      padding: 30px 15px;
+    }
+    
+    .team-container {
+      justify-content: space-around;
+      padding: 15px 5px;
+    }
+    
+    .bobblehead-container {
+      width: 140px;
+      margin: 0 10px 25px 10px;
+    }
+    
+    .bobblehead-head {
+      width: 80px;
+      height: 80px;
+      border-width: 3px;
+    }
+    
+    .bobblehead-container:hover .bobblehead-head {
+      width: 85px;
+      height: 85px;
+    }
+    
+    .bobblehead-stand {
+      width: 60px;
+      height: 12px;
+    }
+    
+    .bobblehead-name {
+      font-size: 16px;
+    }
+    
+    .hover-modal {
+      width: 350px;
+      padding: 20px;
+    }
+    
+    .hover-modal h3 {
+      font-size: 22px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .main-container {
+      padding: 25px 10px;
+    }
+    
+    .bobblehead-container {
+      width: 120px;
+      margin: 0 8px 20px 8px;
+    }
+    
+    .bobblehead-head {
+      width: 70px;
+      height: 70px;
+      border-width: 3px;
+    }
+    
+    .bobblehead-container:hover .bobblehead-head {
+      width: 75px;
+      height: 75px;
+    }
+    
+    .bobblehead-stand {
+      width: 50px;
+      height: 10px;
+    }
+    
+    .bobblehead-name {
+      font-size: 14px;
+      margin-top: 10px;
+    }
+    
+    .hover-modal {
+      width: 300px;
+      padding: 15px;
+    }
+    
+    .hover-modal h3 {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+    
+    .hover-modal p {
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+  }
+  
+  @media (max-width: 360px) {
+    .bobblehead-container {
+      width: 100px;
+      margin: 0 5px 15px 5px;
+    }
+    
+    .bobblehead-head {
+      width: 60px;
+      height: 60px;
+      border-width: 2px;
+    }
+    
+    .bobblehead-container:hover .bobblehead-head {
+      width: 65px;
+      height: 65px;
+    }
+    
+    .team-container {
+      min-height: 400px;
+    }
+    
+    .hover-modal {
+      width: 280px;
+      padding: 12px;
+    }
+    
+    .hover-modal h3 {
+      font-size: 18px;
+    }
+  }
+  
+  /* Spotlight Effect Styles */
+  .team-spotlight-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 100;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  
+  .team-spotlight-active {
+    opacity: 1;
+  }
+  
+  .team-spotlight {
+    position: absolute;
+    width: 300px;
+    height: 600px;
+    background: radial-gradient(ellipse at bottom, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0) 70%);
+    transform-origin: top center;
+    transform: translate(-50%, 0) perspective(500px) rotateX(45deg);
+    pointer-events: none;
+    filter: blur(5px);
+    z-index: 101;
+    top: -100px; /* Position it above the viewport */
+  }
+  /* Enhanced Modal Positioning */
+  .floating-modal-container {
+    position: fixed;
+    bottom: 30px;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    z-index: 200;
+    pointer-events: none;
+  }
+  
+  .floating-modal {
+    width: 450px;
+    padding: 25px;
+    background: linear-gradient(145deg, #ffffff, #f5f8fc);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25), 
+                0 5px 15px rgba(0, 0, 0, 0.15);
+    border-radius: 16px;
+    text-align: left;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    /* color: #333; */
+    position: relative;
+    border-left: 5px solid #336699;
+    pointer-events: auto;
+  }
+  
+  .floating-modal-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  
+  .team-member-wrapper {
+    position: relative;
+    z-index: 10;
+    transition: all 0.3s ease;
+    /* filter: brightness(0.4);  */
+  }
+  
+  .team-member-spotlight {
+    z-index: 150;
+    transform: scale(1.1);
+    filter: brightness(1) drop-shadow(0 0 20px rgba(255, 255, 255, 0.7));
+  }
+  
+  @keyframes spotlightFlicker {
+    0%, 100% { opacity: 0.95; }
+    50% { opacity: 0.85; }
+  }
+  
+  .team-spotlight {
+    animation: spotlightFlicker 3s infinite ease-in-out;
+  }
