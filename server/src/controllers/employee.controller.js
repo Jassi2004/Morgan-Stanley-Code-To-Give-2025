@@ -27,11 +27,11 @@ const generateAccessAndRefreshTokens = async(userId) => {
     }
 }
 
-export const createEmployeeAccount = asyncHandler(async (req, res) => {
+const createEmployeeAccount = asyncHandler(async (req, res) => {
     try {
-        const { employeeId, name, gender, email, password, designation, department, employmentType, program, phone, DOB, dateOfJoining, status, workLocation, emergencyContact, bloodGroup } = req.body;
+        const { employeeId, name, gender, email, password, designation, department, employmentType, program, phone, DOB, dateOfJoining, status, workLocation, bloodGroup } = req.body;
         
-        if (!employeeId || !name || !email || !password || !designation || !department || !employmentType || !program || !phone || !DOB || !dateOfJoining || !status || !workLocation || !emergencyContact || !bloodGroup) {
+        if (!employeeId || !name || !email || !password || !designation || !department || !employmentType || !program || !phone || !DOB || !dateOfJoining || !status || !workLocation || !bloodGroup) {
             throw new ApiError(400, "All required fields must be provided");
         }
 
@@ -42,7 +42,7 @@ export const createEmployeeAccount = asyncHandler(async (req, res) => {
         
 
         if (req.file) {
-            const avatar = await uploadOnCloudinary(req.file.path);
+            const avatar = await uploadOnCloudinary(req.file?.path);
 
             if(!avatar.secure_url){
                 throw new ApiError(500, "Failed to upload avatar");
@@ -68,7 +68,7 @@ export const createEmployeeAccount = asyncHandler(async (req, res) => {
                 dateOfJoining,
                 status,
                 workLocation,
-                emergencyContact,
+                
                 bloodGroup
             });
 
@@ -103,7 +103,7 @@ export const createEmployeeAccount = asyncHandler(async (req, res) => {
     }
 });
 
-export const loginEmployeeAccount = asyncHandler(async (req, res) => {
+const loginEmployeeAccount = asyncHandler(async (req, res) => {
     try {
         const { email, password } = req.body;
 
@@ -155,7 +155,7 @@ export const loginEmployeeAccount = asyncHandler(async (req, res) => {
     }
 });
 
-export const getEmployeeProfile = asyncHandler(async (req, res) => {
+const getEmployeeProfile = asyncHandler(async (req, res) => {
     try {
         const userId = req.user?._id; // Extract userId from authenticated request
 
@@ -178,11 +178,11 @@ export const getEmployeeProfile = asyncHandler(async (req, res) => {
 });
 
 
-export const addEducator = asyncHandler(async (req, res) => {
+const addEducator = asyncHandler(async (req, res) => {
     try {
-        const { employeeId, name, gender, email, password, phone, DOB, dateOfJoining, emergencyContact, bloodGroup, designation } = req.body;
+        const { employeeId, name, gender, email, password, phone, DOB, dateOfJoining, bloodGroup, designation } = req.body;
 
-        if (!employeeId || !name || !email || !password || !phone || !DOB || !dateOfJoining || !designation || !emergencyContact || !bloodGroup) {
+        if (!employeeId || !name || !email || !password || !phone || !DOB || !dateOfJoining || !designation || !bloodGroup) {
             throw new ApiError(400, "All required fields must be provided");
         }
 
@@ -191,15 +191,14 @@ export const addEducator = asyncHandler(async (req, res) => {
             throw new ApiError(400, "Employee with the provided email, phone, or employeeId already exists");
         }
 
-        let avatar;
-        if (req.file) {
-            avatar = await uploadOnCloudinary(req.file.path);
-            if (!avatar.secure_url) {
-                throw new ApiError(500, "Failed to upload avatar");
-            }
-        } else {
-            throw new ApiError(400, "Avatar is required");
-        }
+        // if (req.file) {
+        //     avatar = await uploadOnCloudinary(req.file.path);
+        //     if (!avatar.secure_url) {
+        //         throw new ApiError(500, "Failed to upload avatar");
+        //     }
+        // } else {
+        //     throw new ApiError(400, "Avatar is required");
+        // }
 
         const educator = await Employee.create({
             employeeId,
@@ -208,8 +207,8 @@ export const addEducator = asyncHandler(async (req, res) => {
             email,
             password,
             avatar: {
-                public_id: avatar.public_id,
-                secure_url: avatar.secure_url
+                public_id: "",
+                secure_url: ""
             },
             designation: "Educator",
             department: "Special Education",
@@ -234,7 +233,7 @@ export const addEducator = asyncHandler(async (req, res) => {
 });
 
 
-export const fetchAllEmployees = asyncHandler(async(req, res) => {
+const fetchAllEmployees = asyncHandler(async(req, res) => {
     try{
 
         const employees = await Employee.find({}).select("-password -refreshToken");

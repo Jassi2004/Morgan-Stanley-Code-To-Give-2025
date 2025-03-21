@@ -1,14 +1,16 @@
 
 import { Router } from "express";
-import { addEducator, createEmployeeAccount, fetchAllEmployees, getEmployeeProfile, loginEmployeeAccount } from "../controllers/employee.controller";
-import { verifyAdmin, verifyJWT } from "../middlewares/auth.middleware";
+import { addEducator, createEmployeeAccount, fetchAllEmployees, getEmployeeProfile, loginEmployeeAccount } from "../controllers/employee.controller.js";
+import { verifyAdmin, verifyJWT } from "../middlewares/auth.middleware.js";
+import { upload } from "../middlewares/multer.middleware.js";
+
 
 
 const router = Router();
 
 
 router.route("/create-account")
-.post(createEmployeeAccount);
+.post( upload.single('avatar') ,createEmployeeAccount);
 
 router.route("/login")
 .post(loginEmployeeAccount);
