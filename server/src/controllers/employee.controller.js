@@ -27,7 +27,6 @@ const generateAccessAndRefreshTokens = async(userId) => {
     }
 }
 
-
 export const createEmployeeAccount = asyncHandler(async (req, res) => {
     try {
         const { employeeId, name, gender, email, password, designation, department, employmentType, program, phone, DOB, dateOfJoining, status, workLocation, emergencyContact, bloodGroup } = req.body;
@@ -103,7 +102,6 @@ export const createEmployeeAccount = asyncHandler(async (req, res) => {
         throw new ApiError(500, err?.message || "Internal server error");
     }
 });
-
 
 export const loginEmployeeAccount = asyncHandler(async (req, res) => {
     try {
@@ -235,9 +233,34 @@ export const addEducator = asyncHandler(async (req, res) => {
     }
 });
 
+
+export const fetchAllEmployees = asyncHandler(async(req, res) => {
+    try{
+
+        const employees = await Employee.find({}).select("-password -refreshToken");
+        if(!employees){
+            throw new ApiError(404, "No employees found");
+        }
+
+        return res.status(200)
+        .json(
+            new ApiResponse(
+                200,
+                employees,
+                "All employees fetched successfully"
+            )
+        )
+
+    }catch(err){
+        console.error(`Error occurred while fetching all employees : ${err}`);
+        throw new ApiError(400, "Error occurred while fetching all employees");
+    }
+})
+
 export { 
     createEmployeeAccount,
     loginEmployeeAccount,
     getEmployeeProfile,
-    addEducator
+    addEducator,
+    fetchAllEmployees
 }
