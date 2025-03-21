@@ -61,7 +61,9 @@ const studentSchema = new mongoose.Schema(
       },
       secure_url: {
         type: String,
-        required: true,
+        required: function (){
+            return this.UDID.isAvailable;
+        }
       },
     },
     dateOfBirth: {
@@ -80,6 +82,8 @@ const studentSchema = new mongoose.Schema(
     enrollmentYear: {
       type: Date,
       required: [true, "enrollment year is required"],
+      min: [2015, "Year must be valid"],
+      max: [new Date().getFullYear(), "Enrollment year cannot be in the future"],
     },
     programs: [
       {
@@ -150,8 +154,9 @@ const studentSchema = new mongoose.Schema(
       type: String,
     },
     status: {
-      type: Boolean,
-      default: false,
+        type: String,
+        enum: ["Active", "Graduated"],
+        default: "Pending",
     },
     guardianDetails: {
       name: { type: String, required: [true, "Guardian name is required"] },
@@ -218,33 +223,7 @@ const studentSchema = new mongoose.Schema(
         },
     }],
 
-    grades: [{
-        educator: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Employee",
-            required: true,
-        },
-        program: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Program",
-            required: true,
-        },
-        rating:{
-            type: Number,
-            required: true,
-            min: [1, "Rating must be atleast 1"],
-            max: [5, "Rating can be at most 5"],
-        },
-        feedback: {
-            type: String,
-            required: true,
-            maxLength: 500,
-        },
-        date: {
-            type: Date,
-            default: Date.now
-        }
-    }],
+    
   },
   { timestamps: true }
 );
