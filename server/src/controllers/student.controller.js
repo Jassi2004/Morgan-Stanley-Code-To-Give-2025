@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Student } from "../models/students.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import bcrypt from "bcryptjs";
 
 const generateAccessAndRefreshToken = async (studentId) => {
   try {
@@ -61,19 +62,19 @@ const registerStudent = asyncHandler(async (req, res) => {
     throw new ApiError(409, "Student with the same email or ID already exists");
   }
 
-  const avatarLocalPath = req.files?.avatar?.[0]?.path;
-  if (!avatarLocalPath) {
-    throw new ApiError(400, "Avatar is required");
-  }
-  const avatar = await uploadOnCloudinary(avatarLocalPath);
-  if (!avatar) {
-    throw new ApiError(500, "Failed to upload avatar");
-  }
+  // const avatarLocalPath = req.files?.avatar?.[0]?.path;
+  // if (!avatarLocalPath) {
+  //   throw new ApiError(400, "Avatar is required");
+  // }
+  // const avatar = await uploadOnCloudinary(avatarLocalPath);
+  // if (!avatar) {
+  //   throw new ApiError(500, "Failed to upload avatar");
+  // }
 
-  let UDIDUrls = {};
-  if (UDID?.isAvailable && req.files?.UDID?.[0]?.path) {
-    UDIDUrls = await uploadOnCloudinary(req.files.UDID[0].path);
-  }
+  // let UDIDUrls = {};
+  // if (UDID?.isAvailable && req.files?.UDID?.[0]?.path) {
+  //   UDIDUrls = await uploadOnCloudinary(req.files.UDID[0].path);
+  // }
 
   const student = await Student.create({
     StudentId,
@@ -81,10 +82,10 @@ const registerStudent = asyncHandler(async (req, res) => {
     lastName,
     studentEmail,
     password,
-    avatar: {
-      public_id: avatar.public_id,
-      secure_url: avatar.secure_url,
-    },
+    // avatar: {
+    //   public_id: avatar.public_id,
+    //   secure_url: avatar.secure_url,
+    // },
     gender,
     dateOfBirth,
     primaryDiagnosis,
@@ -95,8 +96,8 @@ const registerStudent = asyncHandler(async (req, res) => {
     transport: transport || false,
     UDID: {
       isAvailable: UDID?.isAvailable || false,
-      public_id: UDIDUrls?.public_id || "",
-      secure_url: UDIDUrls?.secure_url || "",
+      // public_id: UDIDUrls?.public_id || "",
+      // secure_url: UDIDUrls?.secure_url || "",
     },
   });
 
@@ -173,7 +174,7 @@ const logoutStudent = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Student ID is required for logout");
   }
 
-  const student = await Student.findById(studentId);
+  const student = await Student.findOne({StudentId:studentId});
   if (!student) {
     throw new ApiError(404, "Student not found");
   }
@@ -193,7 +194,7 @@ const profilePage = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Student ID is required for fetching profile data");
   }
 
-  const student = await Student.findById(studentId).select(
+  const student = await Student.findOne({StudentId:studentId}).select(
     "-password -refreshToken"
   );
 
@@ -230,7 +231,7 @@ const changePassword = asyncHandler(async (req, res) => {
     );
   }
 
-  const student = await Student.findById(studentId).select("+password");
+  const student = await Student.findOne({StudentId:studentId}).select("+password");
   if (!student) {
     throw new ApiError(404, "Student not found");
   }
