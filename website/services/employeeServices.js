@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // You can adjust the base URL depending on your environment
-const BASE_URL = 'http://localhost:5000/api/v1/'; // Example, change to your backend
+const BASE_URL = 'http://localhost:8000/api/v1/employee'; // Example, change to your backend
 
 /**
  * Add Educator Service
@@ -50,5 +50,19 @@ export const addEducator = async (educatorData) => {
   } catch (error) {
     console.error('Error adding educator:', error);
     throw error?.response?.data || { message: 'Something went wrong!' };
+  }
+};
+
+/**
+ * Fetch All Employees Service
+ * @returns {Promise<Array>} - Array of all employees
+ */
+export const getAllEmployees = async () => {
+  try {
+    const response = await axios.get(`${BASE_URL}/fetch-all-employees`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching employees:', error);
+    throw error?.response?.data || { message: 'Failed to fetch employees' };
   }
 };

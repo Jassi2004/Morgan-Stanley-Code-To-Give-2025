@@ -17,7 +17,7 @@ router.route("/login")
 
 
 
-router.use(verifyJWT); 
+// router.use(verifyJWT); 
 
 router.route("/get-my-profile")
 .get(getEmployeeProfile);
@@ -25,7 +25,7 @@ router.route("/get-my-profile")
 
 // Admin Routes
 
-router.use(verifyAdmin);
+// router.use(verifyAdmin);
 
 router.route("/add-educator")
 .post(addEducator);
