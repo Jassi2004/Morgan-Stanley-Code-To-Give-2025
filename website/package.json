@@ -12,6 +12,7 @@
   "dependencies": {
     "@tabler/icons-react": "^3.31.0",
     "@tailwindcss/vite": "^4.0.14",
+    "axios": "^1.8.4",
     "classnames": "^2.5.1",
     "clsx": "^2.1.1",
     "formik": "^2.4.6",
@@ -22,6 +23,7 @@
     "react-dom": "^19.0.0",
     "react-icons": "^5.5.0",
     "react-router-dom": "^7.4.0",
+    "react-toastify": "^11.0.5",
     "recharts": "^2.15.1",
     "tailwind-merge": "^3.0.2",
     "yup": "^1.6.1"
