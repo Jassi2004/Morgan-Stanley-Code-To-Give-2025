@@ -1,38 +1,14 @@
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, PanResponder, Animated } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { FontAwesome } from '@expo/vector-icons';
-import { BarChart, Grid } from 'react-native-svg-charts';
 import React, { useState, useRef } from 'react';
+import Navbar from '../components/Navbar';
 
 export default function Home() {
     const navigation = useNavigation();
     const [fontScale, setFontScale] = useState(1);
     const [controlsVisible, setControlsVisible] = useState(true);
     const pan = useRef(new Animated.ValueXY()).current;
-    
-    // Updated data with new categories
-    const data = [
-        {
-            value: 85,
-            label: 'Painting Skills',
-            svg: { fill: '#4CAF50' }
-        },
-        {
-            value: 78,
-            label: 'Cognitive Dev.',
-            svg: { fill: '#2196F3' }
-        },
-        {
-            value: 90,
-            label: 'Motor Skills',
-            svg: { fill: '#9C27B0' }
-        },
-        {
-            value: 82,
-            label: 'Academics',
-            svg: { fill: '#FF9800' }
-        }
-    ];
 
     const panResponder = useRef(
         PanResponder.create({
@@ -57,7 +33,7 @@ export default function Home() {
 
     // Helper function to scale font sizes
     const scaledFont = (size) => size * fontScale;
-    
+
     // Toggle button to show controls
     const showControls = () => {
         setControlsVisible(true);
@@ -67,7 +43,7 @@ export default function Home() {
         <View style={styles.container}>
             {/* Show Controls Button (only visible when controls are hidden) */}
             {!controlsVisible && (
-                <TouchableOpacity 
+                <TouchableOpacity
                     style={styles.showControlsButton}
                     onPress={showControls}
                 >
@@ -77,26 +53,26 @@ export default function Home() {
 
             {/* Font Size Controls */}
             {controlsVisible && (
-                <Animated.View 
+                <Animated.View
                     style={[
                         styles.fontControls,
                         { transform: [{ translateX: pan.x }, { translateY: pan.y }] }
                     ]}
                     {...panResponder.panHandlers}
                 >
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={styles.closeButton}
                         onPress={() => setControlsVisible(false)}
                     >
                         <FontAwesome name="times" size={16} color="#666" />
                     </TouchableOpacity>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={styles.fontButton}
                         onPress={decreaseFontSize}
                     >
                         <Text style={styles.fontButtonText}>A-</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={styles.fontButton}
                         onPress={increaseFontSize}
                     >
@@ -110,47 +86,13 @@ export default function Home() {
                 <Text style={[styles.headerTitle, { fontSize: scaledFont(20) }]}>Welcome Back, Soumya</Text>
                 <TouchableOpacity 
                     style={styles.menuButton}
-                    onPress={() => navigation.navigate('Menu')}
+                    onPress={() => navigation.navigate('Notifications')}
                 >
-                    <FontAwesome name="bars" size={24} color="#001F3F" />
+                    <FontAwesome name="bell" size={24} color="#001F3F" />
                 </TouchableOpacity>
             </View>
 
             <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
-                {/* Progress Report */}
-                <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { fontSize: scaledFont(18) }]}>Here is your Monthly Progress Chart</Text>
-                    <View style={styles.chartContainer}>
-                        <BarChart 
-                            style={{ height: 200 }}
-                            data={data.map(item => item.value)}
-                            svg={{ fill: '#4CAF50' }}
-                            contentInset={{ top: 20, bottom: 20, left: 10, right: 10 }}
-                        >
-                            <Grid />
-                        </BarChart>
-                        <View style={styles.labelContainer}>
-                            {data.map((item, index) => (
-                                <View key={index} style={styles.labelItem}>
-                                    <View style={[styles.labelDot, { backgroundColor: item.svg.fill }]} />
-                                    <Text style={[styles.labelText, { fontSize: scaledFont(12) }]}>
-                                        {item.label}
-                                    </Text>
-                                </View>
-                            ))}
-                        </View>
-                    </View>
-                    <Text style={[styles.progressText, { fontSize: scaledFont(14) }]}>This was 10% better than last month. Way to go!</Text>
-                    <View style={styles.analysisButtons}>
-                        <TouchableOpacity style={styles.analysisButton}>
-                            <Text style={[styles.buttonText, { fontSize: scaledFont(16) }]}>Check Daily Analysis</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.analysisButton}>
-                            <Text style={[styles.buttonText, { fontSize: scaledFont(16) }]}>Check Weekly Analysis</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-
                 {/* Schedule Section */}
                 <View style={styles.section}>
                     <Text style={[styles.sectionTitle, { fontSize: scaledFont(18) }]}>Hmmm, you seem tightly packed! Let's go through your schedule:</Text>
@@ -189,46 +131,175 @@ export default function Home() {
                         </View>
                         <FontAwesome name="chevron-right" size={20} color="#666" />
                     </TouchableOpacity>
+
+                    <TouchableOpacity 
+                        style={[styles.attendanceButton, { marginTop: 15 }]}
+                        onPress={() => navigation.navigate('AttendanceReport')}
+                    >
+                        <FontAwesome name="calendar-check-o" size={20} color="#FFF" style={styles.attendanceIcon} />
+                        <Text style={[styles.buttonText, { fontSize: scaledFont(16) }]}>Check My Attendance Report</Text>
+                    </TouchableOpacity>
                 </View>
-                
+
+                {/* Upcoming Events Timeline */}
+                <View style={styles.section}>
+                    <Text style={[styles.sectionTitle, { fontSize: scaledFont(18) }]}>Upcoming Events</Text>
+                    <View style={styles.timeline}>
+                        <View style={styles.timelineEvent}>
+                            <View style={[styles.timelineDot, { backgroundColor: '#4CAF50' }]} />
+                            <View style={styles.timelineLine} />
+                            <View style={styles.timelineContent}>
+                                <Text style={[styles.timelineDate, { fontSize: scaledFont(14) }]}>May 15th</Text>
+                                <Text style={[styles.timelineTitle, { fontSize: scaledFont(16) }]}>Sensory-Friendly Movie Screening</Text>
+                                <Text style={[styles.timelineDescription, { fontSize: scaledFont(12) }]}>
+                                    Special screening with adjusted sound and lighting. Bring your comfort items!
+                                </Text>
+                            </View>
+                        </View>
+
+                        <View style={styles.timelineEvent}>
+                            <View style={[styles.timelineDot, { backgroundColor: '#2196F3' }]} />
+                            <View style={styles.timelineLine} />
+                            <View style={styles.timelineContent}>
+                                <Text style={[styles.timelineDate, { fontSize: scaledFont(14) }]}>May 18th</Text>
+                                <Text style={[styles.timelineTitle, { fontSize: scaledFont(16) }]}>Social Skills Workshop</Text>
+                                <Text style={[styles.timelineDescription, { fontSize: scaledFont(12) }]}>
+                                    Interactive group session focusing on friendship and communication.
+                                </Text>
+                            </View>
+                        </View>
+
+                        <View style={styles.timelineEvent}>
+                            <View style={[styles.timelineDot, { backgroundColor: '#9C27B0' }]} />
+                            <View style={styles.timelineLine} />
+                            <View style={styles.timelineContent}>
+                                <Text style={[styles.timelineDate, { fontSize: scaledFont(14) }]}>May 22nd</Text>
+                                <Text style={[styles.timelineTitle, { fontSize: scaledFont(16) }]}>Art Therapy Exhibition</Text>
+                                <Text style={[styles.timelineDescription, { fontSize: scaledFont(12) }]}>
+                                    Showcase your artwork and meet other young artists. Quiet room available.
+                                </Text>
+                            </View>
+                        </View>
+
+                        <View style={styles.timelineEvent}>
+                            <View style={[styles.timelineDot, { backgroundColor: '#FF9800' }]} />
+                            <View style={styles.timelineContent}>
+                                <Text style={[styles.timelineDate, { fontSize: scaledFont(14) }]}>May 25th</Text>
+                                <Text style={[styles.timelineTitle, { fontSize: scaledFont(16) }]}>Music & Movement Day</Text>
+                                <Text style={[styles.timelineDescription, { fontSize: scaledFont(12) }]}>
+                                    Fun rhythmic activities and music therapy. Noise-canceling headphones provided.
+                                </Text>
+                            </View>
+                        </View>
+                    </View>
+                </View>
+
+                {/* Upcoming Appointments */}
+                <View style={styles.section}>
+                    <Text style={[styles.sectionTitle, { fontSize: scaledFont(18) }]}>Upcoming Appointments</Text>
+                    <View style={styles.appointmentsContainer}>
+                        <TouchableOpacity style={styles.appointmentCard}>
+                            <View style={[styles.appointmentType, { backgroundColor: '#E3F2FD' }]}>
+                                <Text style={[styles.appointmentTypeText, { color: '#1976D2' }]}>Therapist</Text>
+                            </View>
+                            <View style={styles.appointmentInfo}>
+                                <Text style={[styles.appointmentDate, { fontSize: scaledFont(14) }]}>May 16th, 2024</Text>
+                                <Text style={[styles.appointmentTime, { fontSize: scaledFont(14) }]}>10:30 AM</Text>
+                                <Text style={[styles.appointmentPerson, { fontSize: scaledFont(16) }]}>Dr. Sarah Johnson</Text>
+                                <Text style={[styles.appointmentSpecialty, { fontSize: scaledFont(12) }]}>Speech Therapy</Text>
+                            </View>
+                            <FontAwesome name="chevron-right" size={20} color="#666" />
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.appointmentCard}>
+                            <View style={[styles.appointmentType, { backgroundColor: '#F3E5F5' }]}>
+                                <Text style={[styles.appointmentTypeText, { color: '#7B1FA2' }]}>Faculty</Text>
+                            </View>
+                            <View style={styles.appointmentInfo}>
+                                <Text style={[styles.appointmentDate, { fontSize: scaledFont(14) }]}>May 17th, 2024</Text>
+                                <Text style={[styles.appointmentTime, { fontSize: scaledFont(14) }]}>2:00 PM</Text>
+                                <Text style={[styles.appointmentPerson, { fontSize: scaledFont(16) }]}>Prof. Michael Chen</Text>
+                                <Text style={[styles.appointmentSpecialty, { fontSize: scaledFont(12) }]}>Art Education</Text>
+                            </View>
+                            <FontAwesome name="chevron-right" size={20} color="#666" />
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.appointmentCard}>
+                            <View style={[styles.appointmentType, { backgroundColor: '#E8F5E9' }]}>
+                                <Text style={[styles.appointmentTypeText, { color: '#388E3C' }]}>Therapist</Text>
+                            </View>
+                            <View style={styles.appointmentInfo}>
+                                <Text style={[styles.appointmentDate, { fontSize: scaledFont(14) }]}>May 19th, 2024</Text>
+                                <Text style={[styles.appointmentTime, { fontSize: scaledFont(14) }]}>11:00 AM</Text>
+                                <Text style={[styles.appointmentPerson, { fontSize: scaledFont(16) }]}>Dr. Emily Parker</Text>
+                                <Text style={[styles.appointmentSpecialty, { fontSize: scaledFont(12) }]}>Occupational Therapy</Text>
+                            </View>
+                            <FontAwesome name="chevron-right" size={20} color="#666" />
+                        </TouchableOpacity>
+                    </View>
+                </View>
+
+                {/* Articles Section */}
+                <View style={styles.section}>
+                    <Text style={[styles.sectionTitle, { fontSize: scaledFont(18) }]}>Articles</Text>
+                    <Text style={[styles.sectionSubtitle, { fontSize: scaledFont(14) }]}>Today's Top Picks For You</Text>
+                    <ScrollView 
+                        horizontal={true}
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.articlesContainer}
+                    >
+                        <TouchableOpacity style={styles.articleCard}>
+                            <View style={[styles.articleImage, { backgroundColor: '#E3F2FD' }]}>
+                                <FontAwesome name="book" size={24} color="#1976D2" />
+                            </View>
+                            <View style={styles.articleContent}>
+                                <Text style={[styles.articleTitle, { fontSize: scaledFont(14) }]}>Understanding Sensory Processing</Text>
+                                <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>Learn about sensory challenges and effective coping strategies...</Text>
+                                <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>5 min read • Expert Article</Text>
+                            </View>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.articleCard}>
+                            <View style={[styles.articleImage, { backgroundColor: '#F3E5F5' }]}>
+                                <FontAwesome name="heart" size={24} color="#7B1FA2" />
+                            </View>
+                            <View style={styles.articleContent}>
+                                <Text style={[styles.articleTitle, { fontSize: scaledFont(14) }]}>Building Social Connections</Text>
+                                <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>Tips for helping your child develop meaningful friendships...</Text>
+                                <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>7 min read • Parent Guide</Text>
+                            </View>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.articleCard}>
+                            <View style={[styles.articleImage, { backgroundColor: '#E8F5E9' }]}>
+                                <FontAwesome name="lightbulb-o" size={24} color="#388E3C" />
+                            </View>
+                            <View style={styles.articleContent}>
+                                <Text style={[styles.articleTitle, { fontSize: scaledFont(14) }]}>Creative Expression Through Art</Text>
+                                <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>How art therapy can help with emotional expression...</Text>
+                                <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>4 min read • Therapy Insights</Text>
+                            </View>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.articleCard}>
+                            <View style={[styles.articleImage, { backgroundColor: '#FFF3E0' }]}>
+                                <FontAwesome name="star" size={24} color="#F57C00" />
+                            </View>
+                            <View style={styles.articleContent}>
+                                <Text style={[styles.articleTitle, { fontSize: scaledFont(14) }]}>Success Stories</Text>
+                                <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>Inspiring journeys of children who overcame challenges...</Text>
+                                <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>6 min read • Community Stories</Text>
+                            </View>
+                        </TouchableOpacity>
+                    </ScrollView>
+                </View>
+
                 {/* Add padding at bottom to ensure content is visible above footer */}
                 <View style={{ height: 80 }} />
             </ScrollView>
 
             {/* Footer Navigation */}
-            <View style={styles.footer}>
-                <TouchableOpacity 
-                    style={styles.footerTab}
-                    onPress={() => navigation.navigate('Home')}
-                >
-                    <FontAwesome name="home" size={24} color="#001F3F" />
-                    <Text style={styles.footerText}>Home</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity 
-                    style={styles.footerTab}
-                    onPress={() => navigation.navigate('Messages')}
-                >
-                    <FontAwesome name="comments" size={24} color="#666" />
-                    <Text style={styles.footerText}>Messages</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity 
-                    style={styles.footerTab}
-                    onPress={() => navigation.navigate('Chatbot')}
-                >
-                    <FontAwesome name="robot" size={24} color="#666" />
-                    <Text style={styles.footerText}>Chatbot</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity 
-                    style={styles.footerTab}
-                    onPress={() => navigation.navigate('Profile')}
-                >
-                    <FontAwesome name="user" size={24} color="#666" />
-                    <Text style={styles.footerText}>Profile</Text>
-                </TouchableOpacity>
-            </View>
+            <Navbar />
         </View>
     );
 }
@@ -280,24 +351,6 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginBottom: 10,
     },
-    progressText: {
-        fontSize: 14,
-        color: '#4CAF50',
-        marginTop: 10,
-        textAlign: 'center',
-    },
-    analysisButtons: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginTop: 25,
-        paddingHorizontal: 10,
-    },
-    analysisButton: {
-        backgroundColor: '#4CAF50',
-        padding: 15,
-        borderRadius: 8,
-        width: '45%',
-    },
     buttonText: {
         color: '#FFF',
         fontWeight: 'bold',
@@ -343,28 +396,158 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: '#888',
     },
-    footer: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        backgroundColor: '#FFF',
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        paddingVertical: 10,
-        borderTopWidth: 1,
-        borderTopColor: '#eee',
-        elevation: 5,
+    timeline: {
+        paddingLeft: 20,
+        marginTop: 15,
     },
-    footerTab: {
+    timelineEvent: {
+        position: 'relative',
+        marginBottom: 25,
+    },
+    timelineDot: {
+        width: 12,
+        height: 12,
+        borderRadius: 6,
+        position: 'absolute',
+        left: -6,
+        top: 5,
+    },
+    timelineLine: {
+        position: 'absolute',
+        left: 0,
+        top: 15,
+        bottom: -15,
+        width: 2,
+        backgroundColor: '#E0E0E0',
+    },
+    timelineContent: {
+        marginLeft: 20,
+        backgroundColor: '#F8F9FA',
+        padding: 15,
+        borderRadius: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 2,
+    },
+    timelineDate: {
+        color: '#666',
+        marginBottom: 5,
+        fontWeight: '500',
+    },
+    timelineTitle: {
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 8,
+    },
+    timelineDescription: {
+        color: '#666',
+        lineHeight: 18,
+    },
+    sectionSubtitle: {
+        color: '#666',
+        marginBottom: 15,
+    },
+    articlesContainer: {
+        paddingRight: 20,
+    },
+    articleCard: {
+        width: 250,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 12,
+        marginLeft: 15,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+        overflow: 'hidden',
+    },
+    articleImage: {
+        height: 100,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    articleContent: {
+        padding: 15,
+    },
+    articleTitle: {
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 8,
+    },
+    articlePreview: {
+        color: '#666',
+        marginBottom: 8,
+        lineHeight: 18,
+    },
+    articleMeta: {
+        color: '#888',
+        fontStyle: 'italic',
+    },
+    appointmentsContainer: {
+        marginTop: 10,
+    },
+    appointmentCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FFFFFF',
+        padding: 15,
+        borderRadius: 12,
+        marginVertical: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 2,
+    },
+    appointmentType: {
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 8,
+        marginRight: 15,
+    },
+    appointmentTypeText: {
+        fontWeight: '600',
+        fontSize: 12,
+    },
+    appointmentInfo: {
+        flex: 1,
+    },
+    appointmentDate: {
+        color: '#333',
+        fontWeight: '500',
+        marginBottom: 2,
+    },
+    appointmentTime: {
+        color: '#666',
+        marginBottom: 4,
+    },
+    appointmentPerson: {
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 2,
+    },
+    appointmentSpecialty: {
+        color: '#666',
+        fontStyle: 'italic',
+    },
+    attendanceButton: {
+        backgroundColor: '#4CAF50',
+        padding: 15,
+        borderRadius: 8,
+        flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingVertical: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 2,
     },
-    footerText: {
-        fontSize: 12,
-        marginTop: 4,
-        color: '#666',
+    attendanceIcon: {
+        marginRight: 10,
     },
     fontControls: {
         position: 'absolute',
@@ -416,31 +599,5 @@ const styles = StyleSheet.create({
         color: '#FFF',
         fontSize: 16,
         fontWeight: 'bold',
-    },
-    chartContainer: {
-        marginVertical: 10,
-    },
-    labelContainer: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'space-around',
-        paddingHorizontal: 10,
-        marginTop: 15,
-    },
-    labelItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginVertical: 5,
-        marginHorizontal: 5,
-    },
-    labelDot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        marginRight: 6,
-    },
-    labelText: {
-        color: '#666',
-        fontSize: 12,
     },
 });
