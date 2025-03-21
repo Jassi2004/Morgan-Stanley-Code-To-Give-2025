@@ -1,8 +1,11 @@
 import { useContext, useState } from "react";
 import { AppContext } from "../context/AppContext";
 import { Search, Plus, Filter, Eye, Edit, Trash2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Students = () => {
+
+  const navigate = useNavigate();
   const { students } = useContext(AppContext);
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState("all");
@@ -45,10 +48,17 @@ const Students = () => {
               <option value="inactive">Inactive</option>
             </select>
             
-            <button className="flex items-center gap-2 px-4 py-2 bg-[var(--color-brand)] text-white rounded-lg hover:bg-opacity-90">
+            {/* <button className="flex items-center gap-2 px-4 py-2 bg-[var(--color-brand)] text-white rounded-lg hover:bg-opacity-90">
               <Plus size={18} />
               <span>Add Student</span>
-            </button>
+            </button> */}
+            <button 
+          onClick={() => navigate('/students/add')}
+          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center"
+        >
+              <Plus size={18} />
+          Add Student
+        </button>
           </div>
         </div>
       </div>

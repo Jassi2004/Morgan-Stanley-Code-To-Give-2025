@@ -1,11 +1,12 @@
-import React, { useState, Children, useRef, useLayoutEffect } from "react";
+import React, { useState, Children, useRef, useLayoutEffect, useContext } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { AppContext } from "../../context/AppContext"; // Adjust this path to your actual AppContext file location
 
 export default function Stepper({
   children,
   initialStep = 1,
-  onStepChange = () => { },
-  onFinalStepCompleted = () => { },
+  onStepChange = () => {},
+  onFinalStepCompleted = () => {},
   stepCircleContainerClassName = "",
   stepContainerClassName = "",
   contentClassName = "",
@@ -16,6 +17,8 @@ export default function Stepper({
   nextButtonText = "Continue",
   disableStepIndicators = false,
   renderStepIndicator,
+  // width = "100px",         // Added width prop
+  // height = "20px",        // Added height prop
   ...rest
 }) {
   const [currentStep, setCurrentStep] = useState(initialStep);
@@ -24,6 +27,9 @@ export default function Stepper({
   const totalSteps = stepsArray.length;
   const isCompleted = currentStep > totalSteps;
   const isLastStep = currentStep === totalSteps;
+  
+  // Get dark mode from context
+  const { darkMode } = useContext(AppContext);
 
   const updateStep = (newStep) => {
     setCurrentStep(newStep);
@@ -51,13 +57,16 @@ export default function Stepper({
   };
 
   return (
-    <div
-      className="flex min-h-full flex-1 flex-col items-center justify-center p-4 sm:aspect-[4/3] md:aspect-[2/1]"
-      {...rest}
-    >
+    // <div
+    //   className="flex flex-col items-center justify-center p-4 "
+    //   style={{ width, height }}  // Apply custom width and height
+    //   {...rest}
+    // >
       <div
-        className={`mx-auto w-full max-w-md rounded-4xl shadow-xl ${stepCircleContainerClassName}`}
-        style={{ border: "1px solid #222" }}
+        className={`mx-auto min-w-[50rem] max-w-md rounded-xl shadow-xl  ${
+          darkMode ? "bg-gray-900 border-gray-700" : "bg-white border-gray-200"
+        } ${stepCircleContainerClassName}`}
+        style={{ border: darkMode ? "1px solid #333" : "1px solid #eee" }}
       >
         <div className={`${stepContainerClassName} flex w-full items-center p-8`}>
           {stepsArray.map((_, index) => {
@@ -79,6 +88,7 @@ export default function Stepper({
                     step={stepNumber}
                     disableStepIndicators={disableStepIndicators}
                     currentStep={currentStep}
+                    darkMode={darkMode}
                     onClickStep={(clicked) => {
                       setDirection(clicked > currentStep ? 1 : -1);
                       updateStep(clicked);
@@ -86,7 +96,7 @@ export default function Stepper({
                   />
                 )}
                 {isNotLastStep && (
-                  <StepConnector isComplete={currentStep > stepNumber} />
+                  <StepConnector isComplete={currentStep > stepNumber} darkMode={darkMode} />
                 )}
               </React.Fragment>
             );
@@ -109,10 +119,13 @@ export default function Stepper({
               {currentStep !== 1 && (
                 <button
                   onClick={handleBack}
-                  className={`duration-350 rounded px-2 py-1 transition ${currentStep === 1
+                  className={`duration-350 rounded px-2 py-1 transition ${
+                    currentStep === 1
                     ? "pointer-events-none opacity-50 text-neutral-400"
-                    : "text-neutral-400 hover:text-neutral-700"
-                    }`}
+                    : darkMode 
+                      ? "text-neutral-400 hover:text-neutral-300" 
+                      : "text-neutral-500 hover:text-neutral-700"
+                  }`}
                   {...backButtonProps}
                 >
                   {backButtonText}
@@ -120,7 +133,7 @@ export default function Stepper({
               )}
               <button
                 onClick={isLastStep ? handleComplete : handleNext}
-                className="duration-350 flex items-center justify-center rounded-full bg-green-500 py-1.5 px-3.5 font-medium tracking-tight text-white transition hover:bg-green-600 active:bg-green-700"
+                className="duration-350 flex items-center justify-center rounded-full bg-teal-500 py-1.5 px-3.5 font-medium tracking-tight text-white transition hover:bg-teal-600 active:bg-teal-700"
                 {...nextButtonProps}
               >
                 {isLastStep ? "Complete" : nextButtonText}
@@ -129,7 +142,7 @@ export default function Stepper({
           </div>
         )}
       </div>
-    </div>
+    // </div>
   );
 }
 
@@ -200,7 +213,7 @@ export function Step({ children }) {
   return <div className="px-8">{children}</div>;
 }
 
-function StepIndicator({ step, currentStep, onClickStep, disableStepIndicators }) {
+function StepIndicator({ step, currentStep, onClickStep, disableStepIndicators, darkMode }) {
   const status = currentStep === step ? "active" : currentStep < step ? "inactive" : "complete";
 
   const handleClick = () => {
@@ -216,9 +229,21 @@ function StepIndicator({ step, currentStep, onClickStep, disableStepIndicators }
     >
       <motion.div
         variants={{
-          inactive: { scale: 1, backgroundColor: "#222", color: "#a3a3a3" },
-          active: { scale: 1, backgroundColor: "#00d8ff", color: "#00d8ff" },
-          complete: { scale: 1, backgroundColor: "#00d8ff", color: "#3b82f6" },
+          inactive: { 
+            scale: 1, 
+            backgroundColor: darkMode ? "#222" : "#f3f4f6", 
+            color: darkMode ? "#a3a3a3" : "#9ca3af" 
+          },
+          active: { 
+            scale: 1, 
+            backgroundColor: "#00d8ff", 
+            color: "#00d8ff" 
+          },
+          complete: { 
+            scale: 1, 
+            backgroundColor: "#00d8ff", 
+            color: "#3b82f6" 
+          },
         }}
         transition={{ duration: 0.3 }}
         className="flex h-8 w-8 items-center justify-center rounded-full font-semibold"
@@ -235,14 +260,22 @@ function StepIndicator({ step, currentStep, onClickStep, disableStepIndicators }
   );
 }
 
-function StepConnector({ isComplete }) {
+function StepConnector({ isComplete, darkMode }) {
   const lineVariants = {
-    incomplete: { width: 0, backgroundColor: "transparent" },
-    complete: { width: "100%", backgroundColor: "#00d8ff" },
+    incomplete: { 
+      width: 0, 
+      backgroundColor: "transparent" 
+    },
+    complete: { 
+      width: "100%", 
+      backgroundColor: "#00d8ff" 
+    },
   };
 
   return (
-    <div className="relative mx-2 h-0.5 flex-1 overflow-hidden rounded bg-neutral-600">
+    <div className={`relative mx-2 h-0.5 flex-1 overflow-hidden rounded ${
+      darkMode ? "bg-neutral-600" : "bg-neutral-200"
+    }`}>
       <motion.div
         className="absolute left-0 top-0 h-full"
         variants={lineVariants}
