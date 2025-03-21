@@ -93,7 +93,7 @@ const studentSchema = new mongoose.Schema(
     ],
     numberOfSessions: {
       type: Number,
-      required: true,
+      // required: true,
       default: 0,
     },
     timings: {
@@ -156,7 +156,7 @@ const studentSchema = new mongoose.Schema(
     status: {
         type: String,
         enum: ["Active", "Graduated"],
-        default: "Pending",
+        default: "Active",
     },
     guardianDetails: {
       name: { type: String, required: [true, "Guardian name is required"] },
