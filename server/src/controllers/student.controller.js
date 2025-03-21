@@ -259,10 +259,20 @@ const changePassword = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, null, "Password changed successfully"));
 });
 
+const fetchAllStudents = asyncHandler(async (req, res) => {
+  const students = await Student.find().select("-password -refreshToken");
+  
+  return res
+    .status(200)
+    .json(new ApiResponse(200, { students }, "Students fetched successfully"));
+});
+
+
 export {
   registerStudent,
   loginStudent,
   logoutStudent,
   profilePage,
   changePassword,
+  fetchAllStudents
 };
