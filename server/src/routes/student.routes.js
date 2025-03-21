@@ -1,5 +1,5 @@
 import express from "express";
-import { registerStudent, loginStudent, logoutStudent, profilePage, changePassword } from "../controllers/student.controller.js";
+import { registerStudent, loginStudent, logoutStudent, profilePage, changePassword, fetchAllStudents } from "../controllers/student.controller.js";
 
 
 const router = express.Router();
@@ -12,5 +12,5 @@ router.post("/logout", logoutStudent);
 // Student Profile Routes
 router.post("/profile", profilePage);
 router.put("/change-password", changePassword);
-
+router.get("/fetchAllStudents", fetchAllStudents);
 export default router;
