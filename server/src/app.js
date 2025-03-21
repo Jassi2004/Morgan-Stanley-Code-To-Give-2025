@@ -15,4 +15,11 @@ app.use(cookieParser());
 app.use(express.static("public"));
 
 
+// Import routes
+import employeeRouter from "./routes/employee.routes.js";
+
+app.use("/api/v1/employee", employeeRouter);
+
+
+
 export { app };
