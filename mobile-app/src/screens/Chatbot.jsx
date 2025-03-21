@@ -3,6 +3,7 @@ import {
   View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, KeyboardAvoidingView, Platform 
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { FontAwesome } from "@expo/vector-icons";
 
 export default function Chatbot() {
   const [messages, setMessages] = useState([]);
@@ -16,74 +17,130 @@ export default function Chatbot() {
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
-      {/* Back Button */}
-      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-        <Text style={styles.backButtonText}>← Back</Text>
-      </TouchableOpacity>
-
-      <ScrollView style={styles.messagesContainer}>
-        {messages.map((msg, index) => (
-          <View 
-            key={index} 
-            style={[
-              styles.messageWrapper,
-              msg.sender === "user" ? styles.userMessageWrapper : styles.botMessageWrapper
-            ]}
-          >
-            <View style={[
-              styles.message,
-              msg.sender === "user" ? styles.userMessage : styles.botMessage
-            ]}>
-              <Text style={msg.sender === "user" ? styles.userMessageText : styles.botMessageText}>
-                {msg.text}
-              </Text>
-            </View>
-          </View>
-        ))}
-      </ScrollView>
-
-      {/* Input Section */}
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          value={input}
-          onChangeText={setInput}
-          placeholder="Type a message..."
-          placeholderTextColor="#666"
-        />
-        <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
-          <Text style={styles.sendButtonText}>Send</Text>
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Chatbot</Text>
+        <TouchableOpacity 
+          style={styles.menuButton}
+          onPress={() => navigation.navigate('Menu')}
+        >
+          <FontAwesome name="bars" size={24} color="#001F3F" />
         </TouchableOpacity>
       </View>
-    </KeyboardAvoidingView>
+
+      <KeyboardAvoidingView 
+        style={styles.contentContainer} 
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <ScrollView style={styles.messagesContainer}>
+          {messages.map((msg, index) => (
+            <View 
+              key={index} 
+              style={[
+                styles.messageWrapper,
+                msg.sender === "user" ? styles.userMessageWrapper : styles.botMessageWrapper
+              ]}
+            >
+              <View style={[
+                styles.message,
+                msg.sender === "user" ? styles.userMessage : styles.botMessage
+              ]}>
+                <Text style={msg.sender === "user" ? styles.userMessageText : styles.botMessageText}>
+                  {msg.text}
+                </Text>
+              </View>
+            </View>
+          ))}
+        </ScrollView>
+
+        {/* Input Section */}
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            value={input}
+            onChangeText={setInput}
+            placeholder="Type a message..."
+            placeholderTextColor="#666"
+          />
+          <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
+            <FontAwesome name="paper-plane" size={20} color="#FFF" />
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+
+      {/* Footer Navigation */}
+      <View style={styles.footer}>
+        <TouchableOpacity 
+          style={styles.footerTab}
+          onPress={() => navigation.navigate('Home')}
+        >
+          <FontAwesome name="home" size={24} color="#666" />
+          <Text style={styles.footerText}>Home</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.footerTab}
+          onPress={() => navigation.navigate('Feedback')}
+        >
+          <FontAwesome name="comments" size={24} color="#666" />
+          <Text style={styles.footerText}>Feedback</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.footerTab}
+        >
+          <FontAwesome name="robot" size={24} color="#001F3F" />
+          <Text style={[styles.footerText, { color: '#001F3F' }]}>Chatbot</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.footerTab}
+          onPress={() => navigation.navigate('Profile')}
+        >
+          <FontAwesome name="user" size={24} color="#666" />
+          <Text style={styles.footerText}>Profile</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 50, // Added top padding
+    backgroundColor: "#F5F5F5",
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 15,
+    backgroundColor: '#FFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    paddingTop: 45,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#001F3F',
+    flex: 1,
+    textAlign: 'center',
+  },
+  menuButton: {
+    position: 'absolute',
+    right: 15,
+    top: 45,
+    padding: 5,
+  },
+  contentContainer: {
+    flex: 1,
     paddingHorizontal: 16,
-    backgroundColor: '#fff',
-  },
-  backButton: {
-    marginBottom: 10,
-    padding: 8,
-    backgroundColor: "#001F3F",
-    borderRadius: 8,
-    alignSelf: "flex-start",
-  },
-  backButtonText: {
-    color: "#fff",
-    fontSize: 16,
   },
   messagesContainer: {
     flex: 1,
-    marginBottom: 8,
+    marginVertical: 16,
   },
   messageWrapper: {
     marginBottom: 8,
@@ -97,44 +154,73 @@ const styles = StyleSheet.create({
   },
   message: {
     maxWidth: '70%',
-    padding: 8,
-    borderRadius: 12,
+    padding: 12,
+    borderRadius: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
   },
   userMessage: {
     backgroundColor: '#001F3F',
   },
   botMessage: {
-    backgroundColor: '#E8E8E8',
+    backgroundColor: '#FFF',
   },
   userMessageText: {
-    color: '#fff',
+    color: '#FFF',
+    fontSize: 16,
   },
   botMessageText: {
-    color: '#000',
+    color: '#333',
+    fontSize: 16,
   },
   inputContainer: {
     flexDirection: 'row',
     gap: 8,
-    paddingBottom: 16,
+    paddingVertical: 16,
     alignItems: "center",
+    backgroundColor: '#FFF',
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+    paddingHorizontal: 16,
   },
   input: {
     flex: 1,
-    padding: 10,
+    padding: 12,
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
+    borderColor: '#ddd',
+    borderRadius: 24,
+    fontSize: 16,
+    backgroundColor: '#F5F5F5',
   },
   sendButton: {
-    backgroundColor: '#001F3F',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
+    backgroundColor: '#4CAF50',
+    padding: 12,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
+    width: 48,
+    height: 48,
   },
-  sendButtonText: {
-    color: '#fff',
-    fontSize: 16,
+  footer: {
+    backgroundColor: '#FFF',
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+    elevation: 5,
+  },
+  footerTab: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 5,
+  },
+  footerText: {
+    fontSize: 12,
+    marginTop: 4,
+    color: '#666',
   },
 });

@@ -8,8 +8,12 @@ import GetStarted from "./src/screens/GetStarted";
 import Login from "./src/screens/Login";
 import Home from "./src/screens/Home";
 import Profile from "./src/screens/Profile";
-import Messages from "./src/screens/Messages";
+import Feedback from "./src/screens/Feedback";
 import Menu from "./src/screens/Menu";
+import Chatbot from "./src/screens/Chatbot";
+import PrimaryEducator from "./src/screens/PrimaryEducator";
+import SecondaryEducator from "./src/screens/SecondaryEducator";
+import Notifications from "./src/screens/Notifications";
 
 const Stack = createStackNavigator();
 
@@ -22,8 +26,12 @@ export default function App() {
           <Stack.Screen name="Login" component={Login} />
           <Stack.Screen name="Home" component={Home} />
           <Stack.Screen name="Profile" component={Profile} />
-          <Stack.Screen name="Messages" component={Messages} />
+          <Stack.Screen name="Feedback" component={Feedback} />
           <Stack.Screen name="Menu" component={Menu} />
+          <Stack.Screen name="Chatbot" component={Chatbot} />
+          <Stack.Screen name="PrimaryEducator" component={PrimaryEducator} />
+          <Stack.Screen name="SecondaryEducator" component={SecondaryEducator} />
+          <Stack.Screen name="Notifications" component={Notifications} />
         </Stack.Navigator>
       </NavigationContainer>
     </I18nextProvider>
