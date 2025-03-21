@@ -180,3 +180,37 @@ html {
 #3b8b4f
 #3b8b4f
 #f6f8f9 */
+
+/* Basic scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px; /* Width of the scrollbar */
+  height: 8px; /* Height for horizontal scroll */
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: transparent; /* Or add a subtle color like #f1f1f1 */
+}
+
+/* Thumb */
+::-webkit-scrollbar-thumb {
+  background-color: rgba(100, 100, 100, 0.3); /* Light gray thumb */
+  border-radius: 4px; /* Rounded edges */
+  transition: background-color 0.3s ease;
+}
+
+/* Thumb hover */
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(100, 100, 100, 0.6); /* Darker on hover */
+}
+
+/* Optional: Buttons (rarely used, but for completeness) */
+::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* Firefox (limited support, but good for colors) */
+* {
+  scrollbar-width: thin; /* Options: auto, thin, none */
+  scrollbar-color: rgba(100, 100, 100, 0.3) transparent; /* thumb color, track color */
+}

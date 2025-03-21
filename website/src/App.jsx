@@ -4,6 +4,7 @@ import Dashboard from "../pages/Dashboard";
 import Students from "../pages/Students";
 import Teachers from "../pages/Teachers";
 import AddTeacherForm from "../components/teacher/AddTeacherForm";
+import AddStudentForm from "../components/teacher/AddStudentForm";
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
           <Route index element={<Dashboard />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="students" element={<Students />} />
+          <Route path="/students/add" element={<AddStudentForm />} />
           <Route path="teachers" element={<Teachers />} />
           <Route path="/teachers/add" element={<AddTeacherForm />} />
 
