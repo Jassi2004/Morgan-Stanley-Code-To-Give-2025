@@ -5,15 +5,24 @@ const BASE_URL = 'http://localhost:8000/api/v1/student'; // Example, change to y
 
 
 /**
- * Fetch All Employees Service
- * @returns {Promise<Array>} - Array of all employees
+ * Fetch All Students Service
+ * @returns {Promise<Object>} - Response containing students data
  */
 export const getAllStudents = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/fetch-all-employees`);
-    return response.data;
+    const response = await axios.get(`${BASE_URL}/fetchAllStudents`);
+    // Log the response to check its structure
+    console.log("API Response in service:", response);
+    return response;
   } catch (error) {
-    console.error('Error fetching employees:', error);
-    throw error?.response?.data || { message: 'Failed to fetch employees' };
+    console.error('Error fetching students:', error);
+    // Return a consistent structure even in case of error
+    throw error?.response?.data || { 
+      success: false,
+      message: 'Failed to fetch students',
+      data: []
+    };
   }
 };
+
+// Add other student-related services here as needed

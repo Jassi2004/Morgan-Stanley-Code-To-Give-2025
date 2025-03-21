@@ -1,28 +1,14 @@
-import { useContext, useEffect, useState } from "react";
-import { AppContext } from "../context/AppContext";
+import { useContext, useState } from "react";
 import { Search, Plus, Filter, Eye, Edit, Trash2, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { getAllEmployees } from "../services/employeeServices";
+import { AppContext } from "../context/AppContext";
 
 const Teachers = () => {
   const navigate = useNavigate();
-  const [employees, setEmployees] = useState([]);
+  const { employees: teachers, loading, error, refreshEmployees: refreshTeachers } = useContext(AppContext);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [programFilter, setProgramFilter] = useState("all");
-
-  const fetchEmployees = async () => {
-    try {
-      const response = await getAllEmployees();
-      setEmployees(response.data);
-    } catch (error) {
-      console.error("Error fetching employees:", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchEmployees();
-  }, []);
 
   const programs = [
     "Multi",
@@ -36,11 +22,11 @@ const Teachers = () => {
     "Sattva"
   ];
 
-  const filteredTeachers = employees.filter((teacher) => {
+  const filteredTeachers = teachers.filter((teacher) => {
     const matchesSearch =
-      teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      teacher.employeeId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      teacher.designation.toLowerCase().includes(searchTerm.toLowerCase());
+      teacher.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      teacher.employeeId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      teacher.designation?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus = 
       statusFilter === "all" || teacher.status === statusFilter;
@@ -50,6 +36,28 @@ const Teachers = () => {
 
     return matchesSearch && matchesStatus && matchesProgram;
   });
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-48">
+        <div className="text-lg text-[var(--color-text-secondary)]">Loading teachers...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-48 gap-4">
+        <div className="text-lg text-red-500">{error}</div>
+        <button 
+          onClick={refreshTeachers}
+          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -171,8 +179,8 @@ const Teachers = () => {
                       <div className="h-10 w-10 flex-shrink-0">
                         <div className="h-10 w-10 rounded-full bg-[var(--color-brand)] flex items-center justify-center text-white">
                           <span className="font-medium">
-                            {teacher.name.split(" ")[0].charAt(0)}
-                            {teacher.name.split(" ")[1]?.charAt(0) || ""}
+                            {teacher.name?.split(" ")[0]?.charAt(0)}
+                            {teacher.name?.split(" ")[1]?.charAt(0) || ""}
                           </span>
                         </div>
                       </div>
@@ -236,7 +244,7 @@ const Teachers = () => {
       <div className="flex items-center justify-between">
         <div className="text-sm text-[var(--color-text-secondary)]">
           Showing <span className="font-medium">{filteredTeachers.length}</span>{" "}
-          of <span className="font-medium">{employees.length}</span> teachers
+          of <span className="font-medium">{teachers.length}</span> teachers
         </div>
         <div className="flex gap-2">
           <button className="px-3 py-1 rounded-md border border-[var(--color-border-primary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-secondary)]">
