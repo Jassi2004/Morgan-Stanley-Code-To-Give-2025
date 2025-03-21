@@ -3,8 +3,8 @@ import Layout from "../components/layout/Layout";
 import Dashboard from "../pages/Dashboard";
 import Students from "../pages/Students";
 import Teachers from "../pages/Teachers";
-import AddTeacherForm from "../components/teacher/AddTeacherForm";
-import AddStudentForm from "../components/teacher/AddStudentForm";
+import AddTeacherForm from "../components/form/AddTeacherForm";
+import AddStudentForm from "../components/form/AddStudentForm";
 
 function App() {
   return (

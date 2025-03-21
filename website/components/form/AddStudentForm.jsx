@@ -235,7 +235,7 @@ export default function AddStudentForm() {
   const handleSubmit = () => {
     if (validateStep(4)) {
       // Generate student ID if not provided
-      const studentId = student.StudentId || `STU${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
+      // const studentId = student.StudentId || `STU${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
       
       const finalStudent = {
         ...student,
@@ -350,7 +350,13 @@ export default function AddStudentForm() {
         <div className="mb-6">
           <h1 className="text-2xl font-bold mb-2">Add New Student</h1>
         </div>
-        
+        <form
+        onSubmit={(e) => {
+          e.preventDefault(); // Prevent default HTML form submission
+          handleSubmit();     // Call your React handler
+        }}
+      >
+
         {/* Stepper container with dynamic styling */}
         <div className={`rounded-xl shadow-xl border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
           <Stepper
@@ -889,6 +895,8 @@ export default function AddStudentForm() {
             </Step>
           </Stepper>
         </div>
+      </form>
+
       </div>
     </div>
   );
