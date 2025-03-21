@@ -1,6 +1,6 @@
 
 import { Router } from "express";
-import { addEducator, createEmployeeAccount, getEmployeeProfile, loginEmployeeAccount } from "../controllers/employee.controller";
+import { addEducator, createEmployeeAccount, fetchAllEmployees, getEmployeeProfile, loginEmployeeAccount } from "../controllers/employee.controller";
 import { verifyAdmin, verifyJWT } from "../middlewares/auth.middleware";
 
 
@@ -27,6 +27,9 @@ router.use(verifyAdmin);
 
 router.route("/add-educator")
 .post(addEducator);
+
+router.route("/fetch-all-employees")
+.get(fetchAllEmployees);
 
 
 export default router;
