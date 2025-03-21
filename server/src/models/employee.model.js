@@ -118,6 +118,10 @@ const employeeSchema = new Schema({
         type : String,
         enum : ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
         required : [true, "Blood Group is required"]
+    },
+    refreshToken : {
+        type : String,
+        select : false
     }
 
 }, {

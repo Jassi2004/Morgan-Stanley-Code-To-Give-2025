@@ -61,7 +61,6 @@ const registerStudent = asyncHandler(async (req, res) => {
     throw new ApiError(409, "Student with the same email or ID already exists");
   }
 
-
   const avatarLocalPath = req.files?.avatar?.[0]?.path;
   if (!avatarLocalPath) {
     throw new ApiError(400, "Avatar is required");
@@ -114,14 +113,18 @@ const registerStudent = asyncHandler(async (req, res) => {
   }
 
   return res.status(201).json(
-    new ApiResponse(201, {
-      student: createdStudent,
-      tokens: { accessToken, refreshToken },
-    }, "Student registered successfully")
+    new ApiResponse(
+      201,
+      {
+        student: createdStudent,
+        tokens: { accessToken, refreshToken },
+      },
+      "Student registered successfully"
+    )
   );
 });
 
-const loginStudent = asyncHandler(async (req, res)=>{
+const loginStudent = asyncHandler(async (req, res) => {
   const { studentEmail, password } = req.body;
 
   if (!studentEmail || !password) {
@@ -149,16 +152,19 @@ const loginStudent = asyncHandler(async (req, res)=>{
   );
 
   return res.status(200).json(
-    new ApiResponse(200, {
-      student: responseStudent,
-      tokens: {
-        accessToken,
-        refreshToken,
+    new ApiResponse(
+      200,
+      {
+        student: responseStudent,
+        tokens: {
+          accessToken,
+          refreshToken,
+        },
       },
-    }, "Student logged in successfully")
+      "Student logged in successfully"
+    )
   );
-})
-
+});
 
 const logoutStudent = asyncHandler(async (req, res) => {
   const { studentId } = req.body;
@@ -175,16 +181,88 @@ const logoutStudent = asyncHandler(async (req, res) => {
   student.refreshToken = null;
   await student.save({ validateBeforeSave: false });
 
-
   return res
     .status(200)
     .json(new ApiResponse(200, null, "Student logged out successfully"));
 });
 
-export { registerStudent, loginStudent, logoutStudent};
+const profilePage = asyncHandler(async (req, res) => {
+  const { studentId } = req.body;
 
+  if (!studentId) {
+    throw new ApiError(400, "Student ID is required for fetching profile data");
+  }
 
+  const student = await Student.findById(studentId).select(
+    "-password -refreshToken"
+  );
 
+  if (!student) {
+    throw new ApiError(404, "Student not found");
+  }
 
+  const profileData = {
+    name: `${student.firstName} ${student.lastName}`,
+    email: student.studentEmail,
+    gender: student.gender,
+    primaryDiagnosis: student.primaryDiagnosis,
+    enrollmentYear: student.enrollmentYear.getFullYear(),
+    primaryEducator: student.educator[0]?.name || "Not Assigned",
+    secondaryEducator: student.educator[1]?.name || "Not Assigned",
+    programEnrolled: student.programs.map((program) => ({
+      name: program.name,
+      description: program.description,
+    })),
+  };
 
+  return res
+    .status(200)
+    .json(new ApiResponse(200, profileData, "Profile fetched successfully"));
+});
 
+const changePassword = asyncHandler(async (req, res) => {
+  const { studentId, oldPassword, newPassword } = req.body;
+
+  if (!studentId || !oldPassword || !newPassword) {
+    throw new ApiError(
+      400,
+      "Student ID, old password, and new password are required"
+    );
+  }
+
+  const student = await Student.findById(studentId).select("+password");
+  if (!student) {
+    throw new ApiError(404, "Student not found");
+  }
+
+  const isOldPasswordCorrect = await student.isPasswordCorrect(oldPassword);
+  if (!isOldPasswordCorrect) {
+    throw new ApiError(401, "Old password is incorrect");
+  }
+
+  if (oldPassword === newPassword) {
+    throw new ApiError(
+      400,
+      "New password cannot be the same as the old password"
+    );
+  }
+
+  if (newPassword.length < 8) {
+    throw new ApiError(400, "New password must be at least 8 characters long");
+  }
+
+  student.password = await bcrypt.hash(newPassword, 10);
+  await student.save({ validateBeforeSave: false });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, null, "Password changed successfully"));
+});
+
+export {
+  registerStudent,
+  loginStudent,
+  logoutStudent,
+  profilePage,
+  changePassword,
+};
