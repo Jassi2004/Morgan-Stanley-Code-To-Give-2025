@@ -9,6 +9,8 @@ import Team from "../pages/Team";
 import AddEducatorForm from "../components/form/AddEducatorForm";
 import EditStudent from "../components/student/EditStudent";
 import StudentProfile from "../components/student/StudentProfile";
+import AdminLogin from "../pages/AdminLogin";
+import EmployeeRegister from "../pages/EmplooyeeRegister";
 
 function App() {
   return (
@@ -28,6 +30,8 @@ function App() {
           <Route path="/teachers/add" element={<AddEducatorForm />} />
           {/* <Route path="/teachers/add" element={<AddTeacherForm />} /> */}
           <Route path="/aboutTeam" element={<Team />} />
+          <Route path="/login/admin" element={<AdminLogin />} />
+          <Route path="/register/employee" element={<EmployeeRegister />} />
 
         </Route>
       </Routes>
