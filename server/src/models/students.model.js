@@ -87,12 +87,17 @@ const studentSchema = new mongoose.Schema(
       min: [new Date("2015-01-01"), "Year must be valid"],
       max: [new Date(new Date().getFullYear(), 11, 31), "Enrollment year cannot be in the future"], 
     },
-    programs: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Program",
-      },
-    ],
+    program : {
+      type : String,
+      enum : ["Multi", "Job Readiness", "Vocation", "Spruha", "Suyog", "Sameti", "Shaale", "Siddhi", "Sattva"],
+      required : [true, "Program is required"]
+  },
+    // programs: [
+    //   {
+    //     type: mongoose.Schema.Types.ObjectId,
+    //     ref: "Program",
+    //   },
+    // ],
     numberOfSessions: {
       type: Number,
       // required: true,
@@ -100,12 +105,12 @@ const studentSchema = new mongoose.Schema(
     },
     timings: {
         type: String,
-        validate: {
-          validator: function (v) {
-            return /^\d{2}:\d{2} - \d{2}:\d{2}$/.test(v); 
-          },
-          message: "Timings must be in HH:MM - HH:MM format",
-        },
+        // validate: {
+        //   validator: function (v) {
+        //     return /^\d{2}:\d{2} - \d{2}:\d{2}$/.test(v); 
+        //   },
+        //   message: "Timings must be in HH:MM - HH:MM format",
+        // },
     },
     daysOfWeek: {
       type: [String],
@@ -121,12 +126,18 @@ const studentSchema = new mongoose.Schema(
       ],
       default: ["All"],
     },
-    educator: [
-      {
+    educators: {
+      primary: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Employee",
+        required: [true, "Primary educator is required"],
       },
-    ],
+      secondary: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Employee",
+        required: [true, "Secondary educator is required"],
+      },
+    },    
     sessionType: {
       type: String,
       enum: ["Online", "Offline"],

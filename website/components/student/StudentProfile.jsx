@@ -1,21 +1,24 @@
-
-
 import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Save } from 'lucide-react';
 import { AppContext } from '../../context/AppContext';
+import { updateStudent } from '../../services/studentServices';
 
 const StudentProfile = () => {
   const { studentId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const isEditMode = location.pathname.includes('/edit');
-  const { students, fetchData } = useContext(AppContext);
-  
+  const { students, fetchData, employees } = useContext(AppContext);
+
+
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [student, setStudent] = useState(null);
   const [formData, setFormData] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
 
   useEffect(() => {
     if (students.length > 0) {
@@ -66,7 +69,7 @@ const StudentProfile = () => {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    
+
     if (name.includes('.')) {
       // Handle nested objects (like guardianDetails.name)
       const [parent, child] = name.split('.');
@@ -95,7 +98,7 @@ const StudentProfile = () => {
   const handleArrayInputChange = (e, field) => {
     const value = e.target.value;
     const array = value ? value.split(',').map(item => item.trim()) : [];
-    
+
     setFormData(prev => ({
       ...prev,
       [field]: array
@@ -107,7 +110,7 @@ const StudentProfile = () => {
     const selectedValues = Array.from(options)
       .filter(option => option.selected)
       .map(option => option.value);
-    
+
     setFormData(prev => ({
       ...prev,
       [name]: selectedValues
@@ -116,11 +119,112 @@ const StudentProfile = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Here you would implement the API call to update student data
-    console.log('Updating student with data:', formData);
-    
-    // For now, let's just navigate back to view mode
-    navigate(`/students/${studentId}`);
+    try {
+      // Show loading state
+      setLoading(true);
+      setIsSubmitting(true);
+
+      // Format dates properly
+      const formattedData = {
+        ...formData,
+        dateOfBirth: new Date(formData.dateOfBirth).toISOString(),
+        enrollmentYear: new Date(formData.enrollmentYear).toISOString(),
+      };
+
+      // Get file inputs if they exist
+      const avatarInput = document.querySelector('input[name="avatar"]');
+      const udidInput = document.querySelector('input[name="UDID"]');
+
+      const files = {
+        avatar: avatarInput?.files[0],
+        UDID: udidInput?.files[0]
+      };
+
+      // Only include files if they exist
+      const hasFiles = files.avatar || files.UDID;
+
+      // Call the update service
+      const response = await updateStudent(
+        studentId,
+        formattedData,
+        hasFiles ? files : null
+      );
+
+      if (response.success) {
+        // Update local state
+        setStudent(response.data);
+        // Refresh the students list in context
+        await fetchData();
+        // Navigate back to view mode
+        navigate(`/students/${studentId}`);
+        // Show success message (you can implement your own toast/notification system)
+        alert('Profile updated successfully');
+      } else {
+        throw new Error(response.message || 'Failed to update profile');
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      setError(error.message || 'Failed to update profile');
+      setSubmitError(error.message || 'Failed to update profile');
+      // Show error message to user
+      alert(error.message || 'Failed to update profile');
+    } finally {
+      setLoading(false);
+      setIsSubmitting(false);
+    }
+  };
+
+
+  const ProgramSelect = ({ value, onChange }) => {
+    const { darkMode } = useContext(AppContext);
+
+    return (
+      <div>
+        <select
+          name="program"
+          id='program'
+          value={value}
+          onChange={handleInputChange}
+          className="w-full p-2 border border-[var(--color-border-primary)] rounded-md bg-[var(--color-bg-primary)]"
+        >
+          <option value="">Select Program</option>
+          <option value="Multi">Multi</option>
+          <option value="Job Readiness">Job Readiness</option>
+          <option value="Vocation">Vocation</option>
+          <option value="Spruha">Spruha</option>
+          <option value="Suyog">Suyog</option>
+          <option value="Sameti">Sameti</option>
+          <option value="Shaale">Shaale</option>
+          <option value="Siddhi">Siddhi</option>
+          <option value="Sattva">Sattva</option>
+        </select>
+      </div>
+    );
+  };
+
+  const EducatorSelect = ({ name, label, educators, value, onChange }) => {
+    const { darkMode } = useContext(AppContext);
+
+    return (
+
+      <div>
+        <select
+          name={name}
+          id={name}
+          value={value}
+          onChange={handleInputChange}
+          className="w-full p-2 border border-[var(--color-border-primary)] rounded-md bg-[var(--color-bg-primary)]"
+        >
+         <option value="">Select {label}</option>
+          {educators.map((educator) => (
+            <option key={educator.id} value={educator.id}>
+              {educator.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      
+    );
   };
 
   if (loading) return <div className="p-8 text-center">Loading student data...</div>;
@@ -130,7 +234,7 @@ const StudentProfile = () => {
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <div className="flex items-center mb-6">
-        <button 
+        <button
           onClick={() => navigate('/students')}
           className="mr-4 p-2 rounded-md hover:bg-[var(--color-bg-secondary)]"
         >
@@ -145,6 +249,48 @@ const StudentProfile = () => {
         {isEditMode ? (
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Personal Information */}
+
+            <section>
+              <h2 className="text-xl font-semibold mb-4 text-[var(--color-brand)]">
+                Program & Educator Information
+              </h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block mb-1">Program</label>
+                  <ProgramSelect
+                    value={formData.program}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border border-[var(--color-border-primary)] rounded-md bg-[var(--color-bg-primary)]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block mb-1">Primary Educator</label>
+                  <EducatorSelect
+                    name="primaryEducator"
+                    label="Primary Educator"
+                    educators={employees}
+                    value={formData.primaryEducator}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border border-[var(--color-border-primary)] rounded-md bg-[var(--color-bg-primary)]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block mb-1">Secondary Educator</label>
+                  <EducatorSelect
+                    name="secondaryEducator"
+                    label="Secondary Educator"
+                    educators={employees}
+                    value={formData.secondaryEducator}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border border-[var(--color-border-primary)] rounded-md bg-[var(--color-bg-primary)]"
+                  />
+                </div>
+              </div>
+            </section>
+
             <section>
               <h2 className="text-xl font-semibold mb-4 text-[var(--color-brand)]">
                 Personal Information
@@ -536,19 +682,36 @@ const StudentProfile = () => {
             </section>
 
             <div className="mt-8 flex justify-end">
+              {submitError && (
+                <div className="mr-auto text-red-500">
+                  {submitError}
+                </div>
+              )}
               <button
                 type="button"
                 onClick={() => navigate(`/students/${studentId}`)}
                 className="px-4 py-2 mr-2 rounded-md border border-[var(--color-border-primary)]"
+                disabled={isSubmitting}
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 rounded-md bg-[var(--color-brand)] text-white flex items-center"
+                className={`px-4 py-2 rounded-md bg-[var(--color-brand)] text-white flex items-center ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                disabled={isSubmitting}
               >
-                <Save size={18} className="mr-2" />
-                Save Changes
+                {isSubmitting ? (
+                  <>
+                    <span className="animate-spin mr-2">⌛</span>
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save size={18} className="mr-2" />
+                    Save Changes
+                  </>
+                )}
               </button>
             </div>
           </form>
@@ -564,7 +727,7 @@ const StudentProfile = () => {
                 Edit Profile
               </button>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Personal Information */}
               <section>
@@ -602,7 +765,7 @@ const StudentProfile = () => {
                   </div>
                 </div>
               </section>
-              
+
               {/* Guardian Information */}
               <section>
                 <h2 className="text-xl font-semibold mb-4 text-[var(--color-brand)]">
@@ -627,7 +790,7 @@ const StudentProfile = () => {
                   </div>
                 </div>
               </section>
-              
+
               {/* Additional Information */}
               <section className="md:col-span-2">
                 <h2 className="text-xl font-semibold mb-4 text-[var(--color-brand)]">
@@ -641,7 +804,7 @@ const StudentProfile = () => {
                   <div>
                     <span className="font-medium">Preferred Language:</span>
                     <p>{student.preferredLanguage || 'English'}</p>
-                    
+
                     <div className="mt-3">
                       <span className="font-medium">Transport Required:</span>
                       <p>{student.transport ? 'Yes' : 'No'}</p>
