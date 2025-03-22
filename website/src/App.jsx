@@ -8,6 +8,7 @@ import AddStudentForm from "../components/form/AddStudentForm";
 import Team from "../pages/Team";
 import AddEducatorForm from "../components/form/AddEducatorForm";
 import EditStudent from "../components/student/EditStudent";
+import StudentProfile from "../components/student/StudentProfile";
 
 function App() {
   return (
@@ -19,7 +20,9 @@ function App() {
           
           <Route path="students" element={<Students />} />
           <Route path="/students/add" element={<AddStudentForm />} />
-          <Route path="/students/edit" element={<EditStudent />} />
+          {/* <Route path="/students/edit" element={<EditStudent />} /> */}
+          <Route path="students/:studentId" element={<StudentProfile />} />
+          <Route path="students/:studentId/edit" element={<StudentProfile />} />
 
           <Route path="teachers" element={<Teachers />} />
           <Route path="/teachers/add" element={<AddEducatorForm />} />

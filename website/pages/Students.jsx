@@ -30,12 +30,12 @@ const Students = () => {
   ];
 
   const filteredStudents = students.filter(student => {
-    const matchesSearch = 
+    const matchesSearch =
       (student.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) || '') ||
       (student.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) || '') ||
       (student.StudentId?.toLowerCase().includes(searchTerm.toLowerCase()) || '');
-    
-    const matchesDiagnosis = 
+
+    const matchesDiagnosis =
       diagnosisFilter === "all" || student.primaryDiagnosis === diagnosisFilter;
 
     const matchesProgram =
@@ -68,7 +68,7 @@ const Students = () => {
     return (
       <div className="flex flex-col items-center justify-center h-48 gap-4">
         <div className="text-lg text-red-500">{error}</div>
-        <button 
+        <button
           onClick={refreshStudents}
           className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
         >
@@ -93,7 +93,7 @@ const Students = () => {
             />
             <Search className="absolute left-3 top-2.5 text-[var(--color-text-accent)]" size={18} />
           </div>
-          
+
           <div className="flex gap-2">
             <select
               value={diagnosisFilter}
@@ -120,8 +120,8 @@ const Students = () => {
                 </option>
               ))}
             </select>
-            
-            <button 
+
+            <button
               onClick={() => navigate('/students/add')}
               className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center"
             >
@@ -131,7 +131,7 @@ const Students = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Students Table */}
       <div className="overflow-x-auto rounded-lg border border-[var(--color-border-primary)]">
         <table className="min-w-full divide-y divide-[var(--color-border-primary)]">
@@ -190,7 +190,7 @@ const Students = () => {
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--color-text-primary)]">
-                    {student.programs && student.programs.length > 0 
+                    {student.programs && student.programs.length > 0
                       ? student.programs.join(", ")
                       : "No programs assigned"}
                   </td>
@@ -204,21 +204,22 @@ const Students = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--color-text-primary)]">
                     <div className="flex space-x-2">
-                      <button 
+                      <button
                         className="p-1 rounded-md text-[var(--color-text-secondary)] hover:text-[var(--color-brand)] hover:bg-[var(--color-bg-secondary)]"
-                        onClick={() => navigate(`/students/$page..`)}
+                        onClick={() => navigate(`/students/${student.StudentId}`)}
                       >
                         <Eye size={18} />
                       </button>
-                      <button 
+
+                      <button
                         className="p-1 rounded-md text-[var(--color-text-secondary)] hover:text-[var(--color-brand)] hover:bg-[var(--color-bg-secondary)]"
-                        onClick={() => handleEdit(student)}
+                        onClick={() => navigate(`/students/${student.StudentId}/edit`)}
                       >
                         <Edit size={18} />
                       </button>
-                      <button 
+                      <button
                         className="p-1 rounded-md text-[var(--color-text-secondary)] hover:text-red-500 hover:bg-[var(--color-bg-secondary)]"
-                        onClick={() => {/* Handle delete */}}
+                        onClick={() => {/* Handle delete */ }}
                       >
                         <Trash2 size={18} />
                       </button>
@@ -236,7 +237,7 @@ const Students = () => {
           </tbody>
         </table>
       </div>
-      
+
       {/* Pagination */}
       {/* <div className="flex items-center justify-between">
         <div className="text-sm text-[var(--color-text-secondary)]">
