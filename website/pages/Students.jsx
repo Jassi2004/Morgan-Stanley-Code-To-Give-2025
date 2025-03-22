@@ -1,7 +1,9 @@
 import { useContext, useState } from "react";
-import { Search, Plus, Filter, Eye, Edit, Trash2 } from "lucide-react";
+import { Search, Plus, Eye, Edit, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
+import EditStudent from "../components/student/EditStudent";
+import { toast } from 'react-toastify';
 
 const Students = () => {
   const navigate = useNavigate();
@@ -9,6 +11,8 @@ const Students = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [diagnosisFilter, setDiagnosisFilter] = useState("all");
   const [programFilter, setProgramFilter] = useState("all");
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Get unique diagnoses from students
   const diagnoses = [...new Set(students.map(student => student.primaryDiagnosis))].filter(Boolean);
@@ -39,6 +43,18 @@ const Students = () => {
 
     return matchesSearch && matchesDiagnosis && matchesProgram;
   });
+
+  const handleEdit = (student) => {
+    setSelectedStudent(student);
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditComplete = () => {
+    refreshStudents();
+    setIsEditModalOpen(false);
+    setSelectedStudent(null);
+    toast.success('Student details updated successfully');
+  };
 
   if (loading) {
     return (
@@ -188,13 +204,22 @@ const Students = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--color-text-primary)]">
                     <div className="flex space-x-2">
-                      <button className="p-1 rounded-md text-[var(--color-text-secondary)] hover:text-[var(--color-brand)] hover:bg-[var(--color-bg-secondary)]">
+                      <button 
+                        className="p-1 rounded-md text-[var(--color-text-secondary)] hover:text-[var(--color-brand)] hover:bg-[var(--color-bg-secondary)]"
+                        onClick={() => navigate(`/students/$page..`)}
+                      >
                         <Eye size={18} />
                       </button>
-                      <button className="p-1 rounded-md text-[var(--color-text-secondary)] hover:text-[var(--color-brand)] hover:bg-[var(--color-bg-secondary)]">
+                      <button 
+                        className="p-1 rounded-md text-[var(--color-text-secondary)] hover:text-[var(--color-brand)] hover:bg-[var(--color-bg-secondary)]"
+                        onClick={() => handleEdit(student)}
+                      >
                         <Edit size={18} />
                       </button>
-                      <button className="p-1 rounded-md text-[var(--color-text-secondary)] hover:text-red-500 hover:bg-[var(--color-bg-secondary)]">
+                      <button 
+                        className="p-1 rounded-md text-[var(--color-text-secondary)] hover:text-red-500 hover:bg-[var(--color-bg-secondary)]"
+                        onClick={() => {/* Handle delete */}}
+                      >
                         <Trash2 size={18} />
                       </button>
                     </div>
@@ -213,7 +238,7 @@ const Students = () => {
       </div>
       
       {/* Pagination */}
-      <div className="flex items-center justify-between">
+      {/* <div className="flex items-center justify-between">
         <div className="text-sm text-[var(--color-text-secondary)]">
           Showing <span className="font-medium">{filteredStudents.length}</span> of <span className="font-medium">{students.length}</span> students
         </div>
@@ -228,7 +253,19 @@ const Students = () => {
             Next
           </button>
         </div>
-      </div>
+      </div> */}
+
+      {/* Edit Modal */}
+      {isEditModalOpen && selectedStudent && (
+        <EditStudent
+          studentId={selectedStudent.StudentId}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setSelectedStudent(null);
+          }}
+          onUpdate={handleEditComplete}
+        />
+      )}
     </div>
   );
 };

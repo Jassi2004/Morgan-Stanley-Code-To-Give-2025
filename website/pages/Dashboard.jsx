@@ -1,5 +1,6 @@
-import React, { useContext } from 'react';
-import { Users, GraduationCap, FileText, TrendingUp, UserCheck, School } from 'lucide-react';
+import React, { useContext, useState, useEffect } from 'react';
+import { Users, GraduationCap, FileText, TrendingUp, UserCheck, School, Bell, Trash2 } from 'lucide-react';
+import { toast, ToastContainer } from 'react-toastify';
 import DashboardCard from '../components/dashboardComponents/DashboardCard';
 import AttendanceChart from '../components/dashboardComponents/AttendanceChart';
 import SessionSchedule from '../components/dashboardComponents/SessionSchedule';
@@ -10,7 +11,12 @@ import { AppContext } from "../context/AppContext";
 
 function DashBoard() {
   const navigate = useNavigate();
-  const { counts, loading, error } = useContext(AppContext);
+  const { counts, loading, error, addNotification } = useContext(AppContext);
+  // console.log(notifications);
+  
+  const [noticeText, setNoticeText] = useState('');
+  const [publishLoading, setPublishLoading] = useState(false);
+  const [notificationError, setNotificationError] = useState(null);
   
   const stats = [
     {
@@ -28,8 +34,53 @@ function DashBoard() {
       color: "bg-purple-500",
     }
   ];
-  console.log(stats);
-  
+
+  const handlePublishNotice = async () => {
+    if (!noticeText.trim()) {
+      toast.error('Please enter a notification message');
+      return;
+    }
+
+    setPublishLoading(true);
+    try {
+      await addNotification({
+        message: noticeText,
+        type: 'GENERAL',
+        priority: 'NORMAL'
+      });
+      setNoticeText('');
+      toast.success('Notification published successfully!', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+    } catch (error) {
+      toast.error('Failed to publish notification. Please try again.', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+    } finally {
+      setPublishLoading(false);
+    }
+  };
+
+  const handleDeleteNotification = async (notificationId) => {
+    try {
+      await removeNotification(notificationId);
+      setNotificationError(null);
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+      setNotificationError('Failed to delete notification');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-48">
@@ -109,45 +160,49 @@ function DashBoard() {
             </div>
           </div>
           {/* Notice Board */}
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 p-6 rounded-xl border border-blue-100 dark:border-gray-700 shadow-lg transform transition-all">
+          <div className="bg-[var(--color-bg-secondary)] p-6 rounded-xl border border-[var(--color-border-primary)] shadow-lg">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-[var(--color-text-primary)] flex items-center gap-2">
-                <span className="bg-blue-500 p-2 rounded-lg">
-                  📢
+                <span className="bg-[var(--color-brand)] p-2 rounded-lg">
+                  <Bell className="w-5 h-5 text-white" />
                 </span>
                 Publish Notice
               </h2>
             </div>
+            {notificationError && (
+              <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg">
+                {notificationError}
+              </div>
+            )}
             <div className="space-y-6">
               <div className="relative">
-                
                 <textarea
                   id="notice"
                   rows={4}
-                  className="w-full p-4 rounded-xl bg-white dark:bg-gray-800 border-2 border-blue-100 dark:border-gray-700 text-[var(--color-text-primary)] focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 transition-all placeholder-gray-400 text-base"
+                  value={noticeText}
+                  onChange={(e) => setNoticeText(e.target.value)}
+                  className="w-full p-4 rounded-xl bg-[var(--color-bg-secondary)] border-2 border-[var(--color-border-primary)] text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-brand)] focus:ring-2 focus:ring-[var(--color-brand-light)] transition-all placeholder-[var(--color-text-secondary)] text-base"
                   placeholder="Type your important message here..."
                 />
               </div>
               <div className="flex gap-3">
                 <button
-                  className="flex-1 py-3 px-6 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-xl transition-all transform hover:translate-y-[-2px] hover:shadow-lg flex items-center justify-center gap-2"
+                  onClick={handlePublishNotice}
+                  disabled={publishLoading || !noticeText.trim()}
+                  className={`flex-1 py-3 px-6 bg-[var(--color-brand)] text-white font-medium rounded-xl transition-all transform hover:translate-y-[-2px] hover:shadow-lg flex items-center justify-center gap-2 ${
+                    (publishLoading || !noticeText.trim()) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[var(--color-brand-dark)]'
+                  }`}
                 >
-                  <span>Publish Notice</span>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                  </svg>
+                  <span>{publishLoading ? 'Publishing...' : 'Publish Notice'}</span>
+                  {!publishLoading && (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                  )}
                 </button>
-                
               </div>
             </div>
           </div>
-          {/* Recent Activity */}
-          {/* <div className="bg-[var(--color-bg-secondary)] p-6 rounded-lg border border-[var(--color-border-primary)]">
-            <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">Recent Activity</h2>
-            <div className="space-y-4">
-              <p className="text-[var(--color-text-secondary)]">No recent activity to display</p>
-            </div>
-          </div> */}
         </div>
 
         {/* Charts and Data */}
@@ -161,7 +216,20 @@ function DashBoard() {
           <NotificationPanel />
         </div>
       </main>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
     </div>
+
   );
 }
 

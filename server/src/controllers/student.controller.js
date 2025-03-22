@@ -268,6 +268,121 @@ const fetchAllStudents = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, { students }, "Students fetched successfully"));
 });
 
+const updateProfile = asyncHandler(async (req, res) => {
+  const { studentId } = req.body;
+
+  if (!studentId) {
+    throw new ApiError(400, "Student ID is required for updating profile");
+  }
+
+  const allowedUpdates = {
+    firstName: req.body.firstName,
+    lastName: req.body.lastName,
+    gender: req.body.gender,
+    address: req.body.address,
+    primaryDiagnosis: req.body.primaryDiagnosis,
+    comorbidity: req.body.comorbidity,
+    allergies: req.body.allergies,
+    transport: req.body.transport,
+    strengths: req.body.strengths,
+    weaknesses: req.body.weaknesses,
+    comments: req.body.comments,
+    preferredLanguage: req.body.preferredLanguage,
+    deviceAccess: req.body.deviceAccess,
+    guardianDetails: req.body.guardianDetails,
+    medicalHistory: req.body.medicalHistory
+  };
+
+  // Remove undefined values
+  Object.keys(allowedUpdates).forEach(key => 
+    allowedUpdates[key] === undefined && delete allowedUpdates[key]
+  );
+
+  // Validate guardian details if provided
+  if (allowedUpdates.guardianDetails) {
+    const { name, relation, contactNumber, parentEmail } = allowedUpdates.guardianDetails;
+    
+    if (contactNumber && !/^[6-9]\d{9}$/.test(contactNumber)) {
+      throw new ApiError(400, "Invalid guardian contact number format");
+    }
+    
+    if (parentEmail && !/^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/.test(parentEmail)) {
+      throw new ApiError(400, "Invalid guardian email format");
+    }
+  }
+
+  // Validate primary diagnosis if provided
+  if (allowedUpdates.primaryDiagnosis && 
+      !["Autism", "Down Syndrome", "ADHD", "Cerebral Palsy", "Others"].includes(allowedUpdates.primaryDiagnosis)) {
+    throw new ApiError(400, "Invalid primary diagnosis");
+  }
+
+  // Validate preferred language if provided
+  if (allowedUpdates.preferredLanguage && 
+      !["English", "Hindi", "Marathi", "Sign Language", "Other"].includes(allowedUpdates.preferredLanguage)) {
+    throw new ApiError(400, "Invalid preferred language");
+  }
+
+  // Validate device access if provided
+  if (allowedUpdates.deviceAccess) {
+    const validDevices = ["Tablet", "Laptop", "Smartphone", "Hearing Aid", "Braille Device"];
+    if (!allowedUpdates.deviceAccess.every(device => validDevices.includes(device))) {
+      throw new ApiError(400, "Invalid device access options");
+    }
+  }
+
+  // Handle file uploads if present
+  if (req.files?.avatar?.[0]?.path) {
+    const avatar = await uploadOnCloudinary(req.files.avatar[0].path);
+    if (avatar) {
+      allowedUpdates.avatar = {
+        public_id: avatar.public_id,
+        secure_url: avatar.secure_url
+      };
+    }
+  }
+
+  if (req.files?.UDID?.[0]?.path) {
+    const UDID = await uploadOnCloudinary(req.files.UDID[0].path);
+    if (UDID) {
+      allowedUpdates.UDID = {
+        isAvailable: true,
+        public_id: UDID.public_id,
+        secure_url: UDID.secure_url
+      };
+    }
+  }
+
+  try {
+    const updatedStudent = await Student.findOneAndUpdate(
+      { StudentId: studentId },
+      { $set: allowedUpdates },
+      { 
+        new: true,
+        runValidators: true,
+        select: '-password -refreshToken'
+      }
+    );
+
+    if (!updatedStudent) {
+      throw new ApiError(404, "Student not found");
+    }
+
+    return res
+      .status(200)
+      .json(new ApiResponse(
+        200,
+        updatedStudent,
+        "Profile updated successfully"
+      ));
+
+  } catch (error) {
+    if (error.name === 'ValidationError') {
+      throw new ApiError(400, error.message);
+    }
+    throw error;
+  }
+});
 
 export {
   registerStudent,
@@ -275,5 +390,6 @@ export {
   logoutStudent,
   profilePage,
   changePassword,
-  fetchAllStudents
+  fetchAllStudents,
+  updateProfile
 };

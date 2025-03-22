@@ -1,12 +1,14 @@
 import { createContext, useState, useEffect } from "react";
 import { getAllStudents } from "../services/studentServices";
 import { getAllEmployees } from "../services/employeeServices";
+import { getAllNotifications, publishNotification } from "../services/notificationServices";
 
 export const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
     const [students, setStudents] = useState([]);
     const [employees, setEmployees] = useState([]);
+    const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [counts, setCounts] = useState({
@@ -15,6 +17,8 @@ export const AppProvider = ({ children }) => {
         totalTeachers: 0,
         activeTeachers: 0
     });
+    
+
 
     // Theme management
     const prefersDarkMode = window.matchMedia &&
@@ -37,102 +41,87 @@ export const AppProvider = ({ children }) => {
     }, [darkMode]);
 
     const updateCounts = (studentsData, employeesData) => {
+        // Ensure we have arrays to work with
+        const students = Array.isArray(studentsData) ? studentsData : [];
+        const employees = Array.isArray(employeesData) ? employeesData : [];
+
+        const activeStudents = students.filter(student => student.status === 'Active').length;
+        const activeTeachers = employees.filter(employee => employee.status === 'Active').length;
+
         setCounts({
-            totalStudents: studentsData.length,
-            activeStudents: studentsData.filter(student => student.status === "Active").length,
-            totalTeachers: employeesData.length,
-            activeTeachers: employeesData.filter(teacher => teacher.status === "Active").length
+            totalStudents: students.length,
+            activeStudents,
+            totalTeachers: employees.length,
+            activeTeachers
         });
     };
 
-    const fetchStudents = async () => {
+    const fetchData = async () => {
+        setLoading(true);
+        setError(null);
         try {
-            const response = await getAllStudents();
-            const studentsData = response.data?.data?.students || [];
+            const [studentsResponse, employeesResponse, notificationsResponse] = await Promise.all([
+                getAllStudents(),
+                getAllEmployees(),
+                getAllNotifications()
+            ]);
+
+            // Extract students data from the nested structure
+            const studentsData = studentsResponse.data?.data?.students || [];
+            // Extract employees data
+            const employeesData = employeesResponse.data || [];
+            // Extract notifications data
+            const notificationsData = notificationsResponse.data || [];
+
             setStudents(studentsData);
-            updateCounts(studentsData, employees);
-            setError(null);
-        } catch (error) {
-            console.error("Error fetching students:", error);
-            setError("Failed to fetch students");
+            setEmployees(employeesData);
+            setNotifications(notificationsData);
+            updateCounts(studentsData, employeesData);
+        } catch (err) {
+            setError('Failed to fetch data');
+            console.error('Error fetching data:', err);
+            // Set empty arrays as fallback
             setStudents([]);
+            setEmployees([]);
+            setNotifications([]);
+            updateCounts([], []);
+        } finally {
+            setLoading(false);
         }
     };
 
-    const fetchEmployees = async () => {
+    const addNotification = async (notificationData) => {
         try {
-            const response = await getAllEmployees();
-            const employeesData = response.data || [];
-            setEmployees(employeesData);
-            // Update counts with current students and new employees data
-            updateCounts(students, employeesData);
-            setError(null);
+            await publishNotification(notificationData);
+            // Refresh notifications after publishing
+            const response = await getAllNotifications();
+            setNotifications(response.data || []);
+            return { success: true };
         } catch (error) {
-            console.error("Error fetching employees:", error);
-            setError("Failed to fetch employees");
-            setEmployees([]);
+            console.error('Error publishing notification:', error);
+            throw error;
         }
     };
 
     useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true);
-            try {
-                // Fetch both sets of data first
-                const [studentsResponse, employeesResponse] = await Promise.all([
-                    getAllStudents(),
-                    getAllEmployees()
-                ]);
-
-                // Extract the data
-                const studentsData = studentsResponse.data?.data?.students || [];
-                const employeesData = employeesResponse.data || [];
-
-                // Set both states
-                setStudents(studentsData);
-                setEmployees(employeesData);
-
-                // Update counts with both sets of data
-                updateCounts(studentsData, employeesData);
-                
-                setError(null);
-            } catch (error) {
-                console.error("Error fetching data:", error);
-                setError("Failed to fetch data");
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchData();
     }, []);
 
-    const refreshStudents = async () => {
-        setLoading(true);
-        await fetchStudents();
-        setLoading(false);
-    };
-
-    const refreshEmployees = async () => {
-        setLoading(true);
-        await fetchEmployees();
-        setLoading(false);
+    const contextValue = {
+        darkMode,
+        setDarkMode,
+        students,
+        employees,
+        notifications,
+        loading,
+        error,
+        counts,
+        addNotification,
+        fetchData
     };
 
     return (
-        <AppContext.Provider
-            value={{
-                darkMode,
-                setDarkMode,
-                students,
-                employees,
-                loading,
-                error,
-                counts,
-                refreshStudents,
-                refreshEmployees
-            }}
-        >
+        <AppContext.Provider value={contextValue}>
             {children}
         </AppContext.Provider>
     );
