@@ -19,8 +19,11 @@ const uploadOnCloudinary = async (localFilePath) => {
 
 
         const cloudinaryResponse = await cloudinary.uploader.upload(localFilePath, {
-            resource_type: "auto"
-        });
+            resource_type: "auto",
+            folder : "code-to-give"
+        }).catch((err) => {
+            console.log("Cloudinary error : ", err);
+        })
 
 
         if (fs.existsSync(localFilePath)) {

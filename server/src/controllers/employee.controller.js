@@ -318,6 +318,45 @@ const approveStudentAccount = asyncHandler(async(req, res) => {
     }
 })
 
+const uploadProfilePicture = asyncHandler(async(req, res) => {
+    try{
+
+        const userId = req.user?._id;
+        // console.log("User-Id : ", userId);
+        if(req.file){
+            const localPath = req.file?.path;
+            const avatar = await uploadOnCloudinary(localPath);
+            // console.log("Avatar : ", avatar);
+
+            if(!avatar.secure_url){
+                throw new ApiError(400, "Please try again, file not uploaded");
+            }
+
+            const user = await Employee.findById(userId);
+
+            user.avatar.public_id = avatar.public_id;
+            user.avatar.secure_url = avatar.secure_url;
+
+            await user.save({ validateBeforeSave : false})
+
+            return res.status(200)
+            .json(
+                new ApiResponse(
+                    200,
+                    user,
+                    "User Avatar uploaded successfully"
+                )
+            )
+        }else{
+            throw new ApiError(400, "Please upload avatar file");
+        }
+
+    }catch(err){
+        console.error(`Error occurred while uploading profile picture : ${err}`);
+        throw new ApiError(400, "Error occurred while uploading profile picutre");
+    }
+})
+
 
 const deleteEmployeeAccount = asyncHandler(async(req, res) => {
     try{
@@ -355,5 +394,6 @@ export {
     addEducator,
     fetchAllEmployees,
     approveStudentAccount,
+    uploadProfilePicture,
     deleteEmployeeAccount
 }
