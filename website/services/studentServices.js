@@ -3,27 +3,55 @@ import axios from 'axios';
 // You can adjust the base URL depending on your environment
 const BASE_URL = 'http://localhost:8000/api/v1/student'; // Example, change to your backend
 
+// Add request interceptor for common headers
+axios.interceptors.request.use(
+  (config) => {
+    // Add any auth tokens if needed
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor for common error handling
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const customError = {
+      success: false,
+      message: error?.response?.data?.message || 'Something went wrong',
+      data: null
+    };
+    return Promise.reject(customError);
+  }
+);
 
 /**
  * Fetch All Students Service
  * @returns {Promise<Object>} - Response containing students data
  */
-export const getAllStudents = async () => {
+const getAllStudents = async () => {
   try {
     const response = await axios.get(`${BASE_URL}/fetchAllStudents`);
-    // Log the response to check its structure
-    console.log("API Response in service:", response);
-    return response;
+    return {
+      success: true,
+      message: 'Students fetched successfully',
+      data: response.data.data
+    };
   } catch (error) {
     console.error('Error fetching students:', error);
-    // Return a consistent structure even in case of error
-    throw error?.response?.data || { 
+    throw {
       success: false,
-      message: 'Failed to fetch students',
+      message: error.message || 'Failed to fetch students',
       data: []
     };
   }
-};
+}; 
 
 /**
  * Update Student Profile Service
@@ -32,11 +60,11 @@ export const getAllStudents = async () => {
  * @param {Object} files - Optional files to upload (avatar, UDID)
  * @returns {Promise<Object>} - Response containing updated student data
  */
-export const updateStudent = async (studentId, updateData, files = null) => {
+const updateStudent = async (studentId, updateData, files = null) => {
   try {
     let formData;
-    
-    // If files are provided, use FormData
+    let config = {};
+
     if (files) {
       formData = new FormData();
       
@@ -50,39 +78,50 @@ export const updateStudent = async (studentId, updateData, files = null) => {
       
       // Append other data
       formData.append('studentId', studentId);
-      Object.keys(updateData).forEach(key => {
-        if (updateData[key] !== undefined) {
-          // Handle nested objects (like guardianDetails or medicalHistory)
-          if (typeof updateData[key] === 'object' && updateData[key] !== null) {
-            formData.append(key, JSON.stringify(updateData[key]));
+      
+      // Handle nested objects and arrays properly
+      Object.entries(updateData).forEach(([key, value]) => {
+        if (value !== undefined) {
+          if (Array.isArray(value)) {
+            // Handle arrays
+            formData.append(key, JSON.stringify(value));
+          } else if (typeof value === 'object' && value !== null) {
+            // Handle nested objects
+            formData.append(key, JSON.stringify(value));
           } else {
-            formData.append(key, updateData[key]);
+            // Handle primitive values
+            formData.append(key, value);
           }
         }
       });
 
-      // Set headers for multipart/form-data
-      const config = {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+      config.headers = {
+        'Content-Type': 'multipart/form-data'
       };
-
-      const response = await axios.put(`${BASE_URL}/updateProfile`, formData, config);
-      return response.data;
-    } else {
-      // If no files, send regular JSON
-      const response = await axios.put(`${BASE_URL}/updateProfile`, {
-        studentId,
-        ...updateData
-      });
-      return response.data;
     }
+
+    const response = await axios.put(
+      `${BASE_URL}/update-profile`,
+      files ? formData : { studentId, ...updateData },
+      config
+    );
+
+    console.log(response.data);
+    
+
+    // Ensure consistent response format
+    return {
+      success: true,
+      message: 'Profile updated successfully',
+      data: response.data.data
+    };
+
   } catch (error) {
     console.error('Error updating student:', error);
-    throw error?.response?.data || {
+    throw {
       success: false,
       message: error.message || 'Failed to update student profile',
+      data: null
     };
   }
 };
@@ -92,45 +131,25 @@ export const updateStudent = async (studentId, updateData, files = null) => {
  * @param {string} studentId - The ID of the student
  * @returns {Promise<Object>} - Response containing student profile data
  */
-export const getStudentProfile = async (studentId) => {
+const getStudentProfile = async (studentId) => {
   try {
     const response = await axios.post(`${BASE_URL}/profile`, { studentId });
-    return response.data;
+    return {
+      success: true,
+      message: 'Profile fetched successfully',
+      data: response.data.data
+    };
   } catch (error) {
     console.error('Error fetching student profile:', error);
-    throw error?.response?.data || {
+    throw {
       success: false,
-      message: 'Failed to fetch student profile',
+      message: error.message || 'Failed to fetch student profile',
+      data: null
     };
   }
 };
-
-// Example usage of updateStudent:
-/*
-// Without files:
-updateStudent('STU123', {
-  firstName: 'John',
-  lastName: 'Doe',
-  gender: 'Male',
-  address: '123 Main St',
-  primaryDiagnosis: 'ADHD',
-  guardianDetails: {
-    name: 'Jane Doe',
-    relation: 'Mother',
-    contactNumber: '9876543210',
-    parentEmail: 'jane@example.com'
-  }
-});
-
-// With files:
-const files = {
-  avatar: avatarFile, // File object from input
-  UDID: udidFile     // File object from input
+export {
+  updateStudent,
+  getStudentProfile,
+  getAllStudents
 };
-updateStudent('STU123', {
-  firstName: 'John',
-  deviceAccess: ['Tablet', 'Laptop']
-}, files);
-*/
-
-// Add other student-related services here as needed

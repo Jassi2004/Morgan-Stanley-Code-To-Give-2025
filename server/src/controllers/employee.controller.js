@@ -146,6 +146,36 @@ const loginEmployeeAccount = asyncHandler(async (req, res) => {
     }
 });
 
+const logoutEmployee = asyncHandler(async(req, res) => {
+    try{
+        const userId = req.user?._id;
+
+        const employee = await Employee.findById(userId);
+        if(!employee){
+            throw new ApiError(404, "Employee not found");
+        }
+
+        employee.refreshToken = "";
+        await employee.save({ validateBeforeSave : false });
+
+        return res.status(200)
+        .clearCookie("accessToken", cookieOptions)
+        .clearCookie("refreshToken", cookieOptions)
+        .json(
+            new ApiResponse(
+                200,
+                {},
+                "Employee logged out successfully"
+            )
+        )
+
+
+    }catch(err){
+        console.error(`Error occurred while logging out employee: ${err}`);
+        throw new ApiError(500, err?.message || "Internal server error");
+    }
+})
+
 const getEmployeeProfile = asyncHandler(async (req, res) => {
     try {
         const userId = req.user?._id; // Extract userId from authenticated request
@@ -288,11 +318,82 @@ const approveStudentAccount = asyncHandler(async(req, res) => {
     }
 })
 
+const uploadProfilePicture = asyncHandler(async(req, res) => {
+    try{
+
+        const userId = req.user?._id;
+        // console.log("User-Id : ", userId);
+        if(req.file){
+            const localPath = req.file?.path;
+            const avatar = await uploadOnCloudinary(localPath);
+            // console.log("Avatar : ", avatar);
+
+            if(!avatar.secure_url){
+                throw new ApiError(400, "Please try again, file not uploaded");
+            }
+
+            const user = await Employee.findById(userId);
+
+            user.avatar.public_id = avatar.public_id;
+            user.avatar.secure_url = avatar.secure_url;
+
+            await user.save({ validateBeforeSave : false})
+
+            return res.status(200)
+            .json(
+                new ApiResponse(
+                    200,
+                    user,
+                    "User Avatar uploaded successfully"
+                )
+            )
+        }else{
+            throw new ApiError(400, "Please upload avatar file");
+        }
+
+    }catch(err){
+        console.error(`Error occurred while uploading profile picture : ${err}`);
+        throw new ApiError(400, "Error occurred while uploading profile picutre");
+    }
+})
+
+
+const deleteEmployeeAccount = asyncHandler(async(req, res) => {
+    try{
+        const userId = req.user?._id;
+
+        const employee = await Employee.findById(userId);
+        if(!employee){
+            throw new ApiError(404, "Employee not found");
+        }
+
+        await employee.deleteOne();
+
+        return res.status(200)
+        .json(
+            new ApiResponse(
+                200,
+                {},
+                "Employee account deleted successfully"
+            )
+        )
+
+    }catch(err){
+        console.error(`Error occurred while deleting employee account : ${err}`);
+        throw new ApiError(400, "Error occurred while deleting employee account");
+    }
+})
+
+
+
 export { 
     createEmployeeAccount,
     loginEmployeeAccount,
+    logoutEmployee,
     getEmployeeProfile,
     addEducator,
     fetchAllEmployees,
-    approveStudentAccount
+    approveStudentAccount,
+    uploadProfilePicture,
+    deleteEmployeeAccount
 }
