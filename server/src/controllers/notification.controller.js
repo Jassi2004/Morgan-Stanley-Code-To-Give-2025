@@ -5,7 +5,7 @@ import { Notification } from "../models/notification.model.js"
 
 const getNotification = asyncHandler(async (req, res) => {
   const notifications = await Notification.find().sort({ createdAt: -1 }); 
-
+  console.log(notifications)
   return res
     .status(200)
     .json(

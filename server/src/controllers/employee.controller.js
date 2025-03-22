@@ -146,6 +146,36 @@ const loginEmployeeAccount = asyncHandler(async (req, res) => {
     }
 });
 
+const logoutEmployee = asyncHandler(async(req, res) => {
+    try{
+        const userId = req.user?._id;
+
+        const employee = await Employee.findById(userId);
+        if(!employee){
+            throw new ApiError(404, "Employee not found");
+        }
+
+        employee.refreshToken = "";
+        await employee.save({ validateBeforeSave : false });
+
+        return res.status(200)
+        .clearCookie("accessToken", cookieOptions)
+        .clearCookie("refreshToken", cookieOptions)
+        .json(
+            new ApiResponse(
+                200,
+                {},
+                "Employee logged out successfully"
+            )
+        )
+
+
+    }catch(err){
+        console.error(`Error occurred while logging out employee: ${err}`);
+        throw new ApiError(500, err?.message || "Internal server error");
+    }
+})
+
 const getEmployeeProfile = asyncHandler(async (req, res) => {
     try {
         const userId = req.user?._id; // Extract userId from authenticated request
@@ -288,11 +318,42 @@ const approveStudentAccount = asyncHandler(async(req, res) => {
     }
 })
 
+
+const deleteEmployeeAccount = asyncHandler(async(req, res) => {
+    try{
+        const userId = req.user?._id;
+
+        const employee = await Employee.findById(userId);
+        if(!employee){
+            throw new ApiError(404, "Employee not found");
+        }
+
+        await employee.deleteOne();
+
+        return res.status(200)
+        .json(
+            new ApiResponse(
+                200,
+                {},
+                "Employee account deleted successfully"
+            )
+        )
+
+    }catch(err){
+        console.error(`Error occurred while deleting employee account : ${err}`);
+        throw new ApiError(400, "Error occurred while deleting employee account");
+    }
+})
+
+
+
 export { 
     createEmployeeAccount,
     loginEmployeeAccount,
+    logoutEmployee,
     getEmployeeProfile,
     addEducator,
     fetchAllEmployees,
-    approveStudentAccount
+    approveStudentAccount,
+    deleteEmployeeAccount
 }
