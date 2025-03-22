@@ -11,6 +11,10 @@ const studentSchema = new mongoose.Schema(
       index: true,
       trim: true,
     },
+    isApproved : {
+      type : Boolean, 
+      default : false
+    },
     firstName: {
       type: String,
       required: [true, "first name is required"],
@@ -152,6 +156,7 @@ const studentSchema = new mongoose.Schema(
       type: String,
     },
     status: {
+
         type: String,
         enum: ["Active", "Graduated"],
         default: "Active",

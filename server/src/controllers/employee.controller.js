@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Employee } from "../models/employee.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { Student } from "../models/students.model.js";
 
 
 
@@ -258,10 +259,40 @@ const fetchAllEmployees = asyncHandler(async(req, res) => {
     }
 })
 
+const approveStudentAccount = asyncHandler(async(req, res) => {
+    try{
+        const { studentId } = req.body;
+        
+        const student = await Student.findOne({ StudentId : studentId });
+        if(!student){
+            throw new ApiError(404, "No student exists with that id");
+        }
+        if(student.isApproved){
+            throw new ApiError(400, "Student already approved");
+        }
+
+        student.isApproved = true;
+        await student.save();
+
+        return res.status(200)
+        .json(
+            new ApiResponse(
+                200,
+                student,
+                "Student successfully approved"
+            )
+        )
+    }catch(err){
+        console.error(`Error occurred while approving student account`);
+        throw new ApiError(400, "Error occurred while approving student account");
+    }
+})
+
 export { 
     createEmployeeAccount,
     loginEmployeeAccount,
     getEmployeeProfile,
     addEducator,
-    fetchAllEmployees
+    fetchAllEmployees,
+    approveStudentAccount
 }

@@ -71,7 +71,8 @@ body {
 /* Smooth transitions for theme switching */
 * {
   transition-property: background-color, border-color, color, fill, stroke;
-  transition-duration: 200ms;
+  transition-duration: 50ms;
+  /* transition-timing-function:cubic-bezier(1, 0, 0, 1) */
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
