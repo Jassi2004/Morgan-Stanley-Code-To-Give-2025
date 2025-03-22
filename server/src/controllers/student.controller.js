@@ -141,6 +141,10 @@ const loginStudent = asyncHandler(async (req, res) => {
   if (!isPasswordCorrect) {
     throw new ApiError(401, "Invalid email or password");
   }
+  // console.log("stuend approved : ", student.isApproved);
+  if(student.isApproved){
+    throw new ApiError(401, "Student Not approved by admin till now..");
+  }
 
   const accessToken = student.generateAccessToken();
   const refreshToken = student.generateRefreshToken();
