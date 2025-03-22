@@ -1,4 +1,4 @@
-import asyncHandler from "express-async-handler";
+import {asyncHandler} from "../utils/asyncHandler.js";
 import mongoose from "mongoose";
 import { Student } from "../models/students.model.js";
 import { Employee } from "../models/employee.model.js";

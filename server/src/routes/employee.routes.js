@@ -18,7 +18,7 @@ router.route("/login")
 
 
 
-//router.use(verifyEmployee); 
+// router.use(verifyEmployee); 
 
 router.route("/get-my-profile")
 .get(getEmployeeProfile);
