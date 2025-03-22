@@ -313,105 +313,21 @@ const updateProfile = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Student ID is required for updating profile");
   }
 
-  // Group allowed updates by category
-  const allowedUpdates = {
-    basicInfo: {
-      firstName: req.body.firstName,
-      lastName: req.body.lastName,
-      gender: req.body.gender,
-      dateOfBirth: req.body.dateOfBirth
-    },
-    medicalInfo: {
-      primaryDiagnosis: req.body.primaryDiagnosis,
-      comorbidity: req.body.comorbidity,
-      allergies: req.body.allergies,
-      medicalHistory: req.body.medicalHistory
-    },
-    educationalInfo: {
-      timings: req.body.timings,
-      daysOfWeek: req.body.daysOfWeek,
-      sessionType: req.body.sessionType,
-      status: req.body.status
-    },
-    guardianInfo: req.body.guardianDetails,
-    preferences: {
-      preferredLanguage: req.body.preferredLanguage,
-      deviceAccess: req.body.deviceAccess,
-      transport: req.body.transport
-    },
-    address: req.body.address,
-    strengths: req.body.strengths,
-    weaknesses: req.body.weaknesses,
-    comments: req.body.comments
-  };
 
-  // Remove undefined values and empty objects
-  Object.keys(allowedUpdates).forEach(key => {
-    if (typeof allowedUpdates[key] === 'object') {
-      Object.keys(allowedUpdates[key]).forEach(subKey => {
-        if (allowedUpdates[key][subKey] === undefined) {
-          delete allowedUpdates[key][subKey];
-        }
-      });
-      if (Object.keys(allowedUpdates[key]).length === 0) {
-        delete allowedUpdates[key];
-      }
-    } else if (allowedUpdates[key] === undefined) {
-      delete allowedUpdates[key];
-    }
-  });
+  const updates = req.body;
 
-  // Check if student exists
+
   const student = await Student.findOne({ StudentId: studentId });
   if (!student) {
     throw new ApiError(404, "Student not found");
   }
 
-  // Validate guardian details if provided
-  if (allowedUpdates.guardianInfo) {
-    const { contactNumber, parentEmail } = allowedUpdates.guardianInfo;
-    
-    if (contactNumber && !/^[6-9]\d{9}$/.test(contactNumber)) {
-      throw new ApiError(400, "Invalid guardian contact number format");
-    }
-
-    if (parentEmail && !/^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/.test(parentEmail)) {
-      throw new ApiError(400, "Invalid guardian email format");
-    }
-  }
-
-  // Validate primary diagnosis if provided
-  const validDiagnoses = ["Autism", "Down Syndrome", "ADHD", "Cerebral Palsy", "Others"];
-  if (allowedUpdates.medicalInfo?.primaryDiagnosis && 
-      !validDiagnoses.includes(allowedUpdates.medicalInfo.primaryDiagnosis)) {
-    throw new ApiError(400, "Invalid primary diagnosis");
-  }
-
-  // Validate preferred language if provided
-  const validLanguages = ["English", "Hindi", "Marathi", "Sign Language", "Other"];
-  if (allowedUpdates.preferences?.preferredLanguage && 
-      !validLanguages.includes(allowedUpdates.preferences.preferredLanguage)) {
-    throw new ApiError(400, "Invalid preferred language");
-  }
-
-  // Validate device access if provided
-  const validDevices = ["Tablet", "Laptop", "Smartphone", "Hearing Aid", "Braille Device"];
-  if (allowedUpdates.preferences?.deviceAccess) {
-    if (!Array.isArray(allowedUpdates.preferences.deviceAccess)) {
-      throw new ApiError(400, "Device access must be an array");
-    }
-    if (!allowedUpdates.preferences.deviceAccess.every(device => validDevices.includes(device))) {
-      throw new ApiError(400, "Invalid device access options");
-    }
-  }
-
-  // Handle file uploads if present
   if (req.files?.avatar?.[0]?.path) {
     const avatar = await uploadOnCloudinary(req.files.avatar[0].path);
     if (avatar) {
-      allowedUpdates.avatar = {
+      updates.avatar = {
         public_id: avatar.public_id,
-        secure_url: avatar.secure_url
+        secure_url: avatar.secure_url,
       };
     }
   }
@@ -419,53 +335,39 @@ const updateProfile = asyncHandler(async (req, res) => {
   if (req.files?.UDID?.[0]?.path) {
     const UDID = await uploadOnCloudinary(req.files.UDID[0].path);
     if (UDID) {
-      allowedUpdates.UDID = {
+      updates.UDID = {
         isAvailable: true,
         public_id: UDID.public_id,
-        secure_url: UDID.secure_url
+        secure_url: UDID.secure_url,
       };
     }
   }
 
   try {
-    // Flatten the nested objects for MongoDB update
-    const flattenedUpdates = {};
-    Object.keys(allowedUpdates).forEach(key => {
-      if (typeof allowedUpdates[key] === 'object') {
-        Object.keys(allowedUpdates[key]).forEach(subKey => {
-          flattenedUpdates[`${key}.${subKey}`] = allowedUpdates[key][subKey];
-        });
-      } else {
-        flattenedUpdates[key] = allowedUpdates[key];
-      }
-    });
-
     const updatedStudent = await Student.findOneAndUpdate(
       { StudentId: studentId },
-      { $set: flattenedUpdates },
+      { $set: updates },
       {
-        new: true,
-        runValidators: true,
-        select: '-password -refreshToken'
+        new: true, 
+        runValidators: true, 
+        select: "-password -refreshToken", 
       }
     );
 
     if (!updatedStudent) {
-      throw new ApiError(404, "Student not found");
+      throw new ApiError(500, "Failed to update student information");
     }
 
     return res.status(200).json(
       new ApiResponse(200, updatedStudent, "Profile updated successfully")
     );
-
   } catch (error) {
-    if (error.name === 'ValidationError') {
+    if (error.name === "ValidationError") {
       throw new ApiError(400, error.message);
     }
     throw error;
   }
 });
-
 
 export {
   registerStudent,
