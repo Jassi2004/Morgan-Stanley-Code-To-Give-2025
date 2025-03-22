@@ -203,17 +203,42 @@ const profilePage = asyncHandler(async (req, res) => {
   }
 
   const profileData = {
-    name: `${student.firstName} ${student.lastName}`,
-    email: student.studentEmail,
-    gender: student.gender,
-    primaryDiagnosis: student.primaryDiagnosis,
-    enrollmentYear: student.enrollmentYear.getFullYear(),
-    primaryEducator: student.educator[0]?.name || "Not Assigned",
-    secondaryEducator: student.educator[1]?.name || "Not Assigned",
-    programEnrolled: student.programs.map((program) => ({
-      name: program.name,
-      description: program.description,
-    })),
+    basicInfo: {
+      name: `${student.firstName} ${student.lastName}`,
+      email: student.studentEmail,
+      gender: student.gender,
+      dateOfBirth: student.dateOfBirth,
+      StudentId: student.StudentId,
+      avatar: student.avatar,
+      UDID: student.UDID
+    },
+    medicalInfo: {
+      primaryDiagnosis: student.primaryDiagnosis,
+      comorbidity: student.comorbidity,
+      allergies: student.allergies,
+      medicalHistory: student.medicalHistory
+    },
+    educationalInfo: {
+      enrollmentYear: student.enrollmentYear.getFullYear(),
+      programs: student.programs,
+      numberOfSessions: student.numberOfSessions,
+      timings: student.timings,
+      daysOfWeek: student.daysOfWeek,
+      sessionType: student.sessionType,
+      educators: student.educator,
+      status: student.status
+    },
+    guardianInfo: student.guardianDetails,
+    preferences: {
+      preferredLanguage: student.preferredLanguage,
+      deviceAccess: student.deviceAccess,
+      transport: student.transport
+    },
+    address: student.address,
+    strengths: student.strengths,
+    weaknesses: student.weaknesses,
+    comments: student.comments,
+    progressReports: student.progressReports
   };
 
   return res
@@ -271,86 +296,103 @@ const fetchAllStudents = asyncHandler(async (req, res) => {
 const updateProfile = asyncHandler(async (req, res) => {
   const { studentId } = req.body;
 
-  // console.log("Received studentId:", studentId);
-  // console.log("Received body:", req.body);
-
   if (!studentId) {
-    return res.status(400).json(new ApiError(400, "Student ID is required for updating profile"));
+    throw new ApiError(400, "Student ID is required for updating profile");
   }
 
+  // Group allowed updates by category
   const allowedUpdates = {
-    firstName: req.body.firstName,
-    lastName: req.body.lastName,
-    gender: req.body.gender,
+    basicInfo: {
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
+      gender: req.body.gender,
+      dateOfBirth: req.body.dateOfBirth
+    },
+    medicalInfo: {
+      primaryDiagnosis: req.body.primaryDiagnosis,
+      comorbidity: req.body.comorbidity,
+      allergies: req.body.allergies,
+      medicalHistory: req.body.medicalHistory
+    },
+    educationalInfo: {
+      timings: req.body.timings,
+      daysOfWeek: req.body.daysOfWeek,
+      sessionType: req.body.sessionType,
+      status: req.body.status
+    },
+    guardianInfo: req.body.guardianDetails,
+    preferences: {
+      preferredLanguage: req.body.preferredLanguage,
+      deviceAccess: req.body.deviceAccess,
+      transport: req.body.transport
+    },
     address: req.body.address,
-    primaryDiagnosis: req.body.primaryDiagnosis,
-    comorbidity: req.body.comorbidity,
-    allergies: req.body.allergies,
-    transport: req.body.transport,
     strengths: req.body.strengths,
     weaknesses: req.body.weaknesses,
-    comments: req.body.comments,
-    preferredLanguage: req.body.preferredLanguage,
-    deviceAccess: req.body.deviceAccess,
-    guardianDetails: req.body.guardianDetails,
-    medicalHistory: req.body.medicalHistory
+    comments: req.body.comments
   };
 
-  // Remove undefined values
+  // Remove undefined values and empty objects
   Object.keys(allowedUpdates).forEach(key => {
-    if (allowedUpdates[key] === undefined) delete allowedUpdates[key];
+    if (typeof allowedUpdates[key] === 'object') {
+      Object.keys(allowedUpdates[key]).forEach(subKey => {
+        if (allowedUpdates[key][subKey] === undefined) {
+          delete allowedUpdates[key][subKey];
+        }
+      });
+      if (Object.keys(allowedUpdates[key]).length === 0) {
+        delete allowedUpdates[key];
+      }
+    } else if (allowedUpdates[key] === undefined) {
+      delete allowedUpdates[key];
+    }
   });
-
-  console.log("Allowed Updates:", allowedUpdates);
 
   // Check if student exists
   const student = await Student.findOne({ StudentId: studentId });
   if (!student) {
-    return res.status(404).json(new ApiError(404, "Student not found"));
+    throw new ApiError(404, "Student not found");
   }
 
   // Validate guardian details if provided
-  if (allowedUpdates.guardianDetails) {
-    const { name, relation, contactNumber, parentEmail } = allowedUpdates.guardianDetails;
-
+  if (allowedUpdates.guardianInfo) {
+    const { contactNumber, parentEmail } = allowedUpdates.guardianInfo;
+    
     if (contactNumber && !/^[6-9]\d{9}$/.test(contactNumber)) {
-      return res.status(400).json(new ApiError(400, "Invalid guardian contact number format"));
+      throw new ApiError(400, "Invalid guardian contact number format");
     }
 
     if (parentEmail && !/^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/.test(parentEmail)) {
-      return res.status(400).json(new ApiError(400, "Invalid guardian email format"));
+      throw new ApiError(400, "Invalid guardian email format");
     }
   }
 
   // Validate primary diagnosis if provided
   const validDiagnoses = ["Autism", "Down Syndrome", "ADHD", "Cerebral Palsy", "Others"];
-  if (allowedUpdates.primaryDiagnosis && !validDiagnoses.includes(allowedUpdates.primaryDiagnosis)) {
-    return res.status(400).json(new ApiError(400, "Invalid primary diagnosis"));
+  if (allowedUpdates.medicalInfo?.primaryDiagnosis && 
+      !validDiagnoses.includes(allowedUpdates.medicalInfo.primaryDiagnosis)) {
+    throw new ApiError(400, "Invalid primary diagnosis");
   }
 
   // Validate preferred language if provided
   const validLanguages = ["English", "Hindi", "Marathi", "Sign Language", "Other"];
-  if (allowedUpdates.preferredLanguage && !validLanguages.includes(allowedUpdates.preferredLanguage)) {
-    return res.status(400).json(new ApiError(400, "Invalid preferred language"));
+  if (allowedUpdates.preferences?.preferredLanguage && 
+      !validLanguages.includes(allowedUpdates.preferences.preferredLanguage)) {
+    throw new ApiError(400, "Invalid preferred language");
   }
 
   // Validate device access if provided
   const validDevices = ["Tablet", "Laptop", "Smartphone", "Hearing Aid", "Braille Device"];
-  if (allowedUpdates.deviceAccess) {
-    if (!Array.isArray(allowedUpdates.deviceAccess)) {
-      return res.status(400).json(new ApiError(400, "Invalid device access format"));
+  if (allowedUpdates.preferences?.deviceAccess) {
+    if (!Array.isArray(allowedUpdates.preferences.deviceAccess)) {
+      throw new ApiError(400, "Device access must be an array");
     }
-
-    if (!allowedUpdates.deviceAccess.every(device => validDevices.includes(device))) {
-      return res.status(400).json(new ApiError(400, "Invalid device access options"));
+    if (!allowedUpdates.preferences.deviceAccess.every(device => validDevices.includes(device))) {
+      throw new ApiError(400, "Invalid device access options");
     }
   }
 
   // Handle file uploads if present
-  if (req.files) {
-    console.log("Received files:", req.files);
-  }
-
   if (req.files?.avatar?.[0]?.path) {
     const avatar = await uploadOnCloudinary(req.files.avatar[0].path);
     if (avatar) {
@@ -373,9 +415,21 @@ const updateProfile = asyncHandler(async (req, res) => {
   }
 
   try {
+    // Flatten the nested objects for MongoDB update
+    const flattenedUpdates = {};
+    Object.keys(allowedUpdates).forEach(key => {
+      if (typeof allowedUpdates[key] === 'object') {
+        Object.keys(allowedUpdates[key]).forEach(subKey => {
+          flattenedUpdates[`${key}.${subKey}`] = allowedUpdates[key][subKey];
+        });
+      } else {
+        flattenedUpdates[key] = allowedUpdates[key];
+      }
+    });
+
     const updatedStudent = await Student.findOneAndUpdate(
       { StudentId: studentId },
-      { $set: allowedUpdates },
+      { $set: flattenedUpdates },
       {
         new: true,
         runValidators: true,
@@ -383,10 +437,8 @@ const updateProfile = asyncHandler(async (req, res) => {
       }
     );
 
-    console.log("Updated Student:", updatedStudent);
-
     if (!updatedStudent) {
-      return res.status(404).json(new ApiError(404, "Student not found"));
+      throw new ApiError(404, "Student not found");
     }
 
     return res.status(200).json(
@@ -394,12 +446,10 @@ const updateProfile = asyncHandler(async (req, res) => {
     );
 
   } catch (error) {
-    console.error("Update error:", error);
-
     if (error.name === 'ValidationError') {
-      return res.status(400).json(new ApiError(400, error.message));
+      throw new ApiError(400, error.message);
     }
-    return res.status(500).json(new ApiError(500, "Internal Server Error"));
+    throw error;
   }
 });
 
