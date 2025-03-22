@@ -1,27 +1,106 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView, TextInput, KeyboardAvoidingView, Platform } from "react-native";
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView, TextInput, KeyboardAvoidingView, Platform, Alert, ActivityIndicator } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
+import { getUserData, sendFeedbackToEducator, getReceivedFeedbacks } from '../utils/api';
 import Navbar from '../components/Navbar';
+
+const DEFAULT_EDUCATOR_IMAGE = "https://res.cloudinary.com/dh2gwea4g/image/upload/v1710834756/educator_default_kxoxyk.png";
 
 export default function SecondaryEducator() {
     const navigation = useNavigation();
     const [rating, setRating] = useState(0);
     const [feedback, setFeedback] = useState('');
+    const [educatorData, setEducatorData] = useState(null);
+    const [receivedFeedbacks, setReceivedFeedbacks] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
     const scrollViewRef = useRef(null);
     const inputRef = useRef(null);
+
+    useEffect(() => {
+        loadEducatorData();
+        loadReceivedFeedback();
+    }, []);
+
+    const loadEducatorData = async () => {
+        try {
+            const userData = await getUserData();
+            if (userData?.educatorDetails?.secondary) {
+                setEducatorData(userData.educatorDetails.secondary);
+                console.log("Secondary Educator Data:", userData.educatorDetails.secondary);
+            }
+        } catch (error) {
+            console.error("Error loading educator data:", error);
+        }
+    };
+
+    const loadReceivedFeedback = async () => {
+        try {
+            setIsLoading(true);
+            const userData = await getUserData();
+            const educatorId = userData?.educatorDetails?.secondary?._id;
+
+            if (!educatorId) {
+                console.error('Educator ID not found');
+                return;
+            }
+
+            const response = await getReceivedFeedbacks(educatorId);
+            if (response.statusCode === 200) {
+                setReceivedFeedbacks(response.data);
+            }
+        } catch (error) {
+            console.error('Error loading received feedback:', error);
+            if (error.response?.status !== 404) { // Ignore 404 errors as they just mean no feedback yet
+                Alert.alert('Error', 'Unable to load feedback. Please try again later.');
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const handleRating = (selectedRating) => {
         setRating(selectedRating);
     };
 
-    const handleSubmitFeedback = () => {
-        // Handle feedback submission
-        console.log('Rating:', rating);
-        console.log('Feedback:', feedback);
-        // Reset form
-        setRating(0);
-        setFeedback('');
+    const handleSubmitFeedback = async () => {
+        try {
+            if (!rating) {
+                Alert.alert('Error', 'Please select a rating');
+                return;
+            }
+
+            if (!feedback.trim()) {
+                Alert.alert('Error', 'Please enter feedback message');
+                return;
+            }
+
+            const userData = await getUserData();
+            const studentId = userData?._id;
+            const educatorId = userData?.educatorDetails?.secondary?._id;
+
+            if (!studentId || !educatorId) {
+                Alert.alert('Error', 'Unable to submit feedback. Missing required information.');
+                return;
+            }
+
+            const response = await sendFeedbackToEducator(studentId, educatorId, feedback, rating);
+
+            if (response.statusCode === 201) {
+                Alert.alert('Success', 'Feedback submitted successfully');
+                // Reset form
+                setRating(0);
+                setFeedback('');
+                // Refresh received feedback
+                loadReceivedFeedback();
+            }
+        } catch (error) {
+            console.error('Error submitting feedback:', error);
+            Alert.alert(
+                'Error',
+                error.response?.data?.message || 'Unable to submit feedback. Please try again.'
+            );
+        }
     };
 
     const handleFocus = () => {
@@ -63,7 +142,7 @@ export default function SecondaryEducator() {
                 <View style={styles.section}>
                     <View style={styles.imageContainer}>
                         <Image 
-                            source={{ uri: "https://res.cloudinary.com/dh2gwea4g/image/upload/v1742526651/educator2_profile.jpg" }} 
+                            source={{ uri: DEFAULT_EDUCATOR_IMAGE }} 
                             style={styles.profileImage}
                         />
                     </View>
@@ -73,17 +152,27 @@ export default function SecondaryEducator() {
 
                     <View style={styles.detailRow}>
                         <Text style={styles.detailLabel}>Name:</Text>
-                        <Text style={styles.detailValue}>Jane Smith</Text>
+                        <Text style={styles.detailValue}>{educatorData?.name || 'Not Assigned'}</Text>
+                    </View>
+
+                    <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Specialty:</Text>
+                        <Text style={styles.detailValue}>{educatorData?.specialty || 'Special Education Specialist'}</Text>
                     </View>
 
                     <View style={styles.detailRow}>
                         <Text style={styles.detailLabel}>Email:</Text>
-                        <Text style={styles.detailValue}>jane.smith@educator.com</Text>
+                        <Text style={styles.detailValue}>{educatorData?.email || 'N/A'}</Text>
+                    </View>
+
+                    <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Phone:</Text>
+                        <Text style={styles.detailValue}>{educatorData?.phone || 'N/A'}</Text>
                     </View>
 
                     <View style={[styles.detailRow, { borderBottomWidth: 0 }]}>
-                        <Text style={styles.detailLabel}>Phone:</Text>
-                        <Text style={styles.detailValue}>+1 (555) 987-6543</Text>
+                        <Text style={styles.detailLabel}>Department:</Text>
+                        <Text style={styles.detailValue}>{educatorData?.department || 'N/A'}</Text>
                     </View>
                 </View>
 
@@ -134,6 +223,59 @@ export default function SecondaryEducator() {
                         <FontAwesome name="paper-plane" size={20} color="#FFF" style={styles.buttonIcon} />
                         <Text style={styles.buttonText}>Submit Feedback</Text>
                     </TouchableOpacity>
+                </View>
+
+                {/* Received Feedback Section */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Received Feedback</Text>
+                    
+                    {isLoading ? (
+                        <ActivityIndicator size="large" color="#4CAF50" />
+                    ) : receivedFeedbacks.length > 0 ? (
+                        <>
+                            {/* Latest Feedback Card */}
+                            {receivedFeedbacks.slice(0, 1).map((feedback) => (
+                                <View key={feedback._id} style={styles.feedbackCard}>
+                                    <View style={styles.feedbackHeader}>
+                                        <Text style={styles.feedbackDate}>
+                                            {new Date(feedback.createdAt).toLocaleDateString()}
+                                        </Text>
+                                        <View style={styles.feedbackRating}>
+                                            {[...Array(feedback.rating)].map((_, index) => (
+                                                <FontAwesome
+                                                    key={index}
+                                                    name="star"
+                                                    size={16}
+                                                    color="#FFD700"
+                                                    style={styles.smallStar}
+                                                />
+                                            ))}
+                                        </View>
+                                    </View>
+                                    <Text style={styles.feedbackText}>
+                                        "{feedback.content}"
+                                    </Text>
+                                    <Text style={styles.feedbackAuthor}>
+                                        - {feedback.senderId?.firstName} {feedback.senderId?.lastName}
+                                    </Text>
+                                </View>
+                            ))}
+
+                            {/* View All Button */}
+                            <TouchableOpacity 
+                                style={styles.viewAllButton}
+                                onPress={() => navigation.navigate('FeedbackHistory', { 
+                                    educatorId: educatorData?._id,
+                                    educatorName: educatorData?.name
+                                })}
+                            >
+                                <Text style={styles.viewAllText}>View All Feedback</Text>
+                                <FontAwesome name="angle-right" size={20} color="#4CAF50" />
+                            </TouchableOpacity>
+                        </>
+                    ) : (
+                        <Text style={styles.noFeedbackText}>No feedback received yet</Text>
+                    )}
                 </View>
 
                 {/* Add padding at bottom to ensure content is visible above footer */}
@@ -282,5 +424,62 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: "#FFF",
         fontWeight: "600",
+    },
+    feedbackCard: {
+        backgroundColor: '#F8F9FA',
+        borderRadius: 8,
+        padding: 15,
+        marginBottom: 15,
+        borderWidth: 1,
+        borderColor: '#E9ECEF',
+    },
+    feedbackHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 10,
+    },
+    feedbackDate: {
+        fontSize: 14,
+        color: '#666',
+    },
+    feedbackRating: {
+        flexDirection: 'row',
+    },
+    smallStar: {
+        marginLeft: 2,
+    },
+    feedbackText: {
+        fontSize: 15,
+        color: '#333',
+        lineHeight: 22,
+        fontStyle: 'italic',
+        marginBottom: 10,
+    },
+    feedbackAuthor: {
+        fontSize: 14,
+        color: '#666',
+        textAlign: 'right',
+        fontWeight: '500',
+    },
+    viewAllButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 12,
+        marginTop: 10,
+    },
+    viewAllText: {
+        fontSize: 16,
+        color: '#4CAF50',
+        marginRight: 10,
+        fontWeight: '600',
+    },
+    noFeedbackText: {
+        fontSize: 16,
+        color: '#666',
+        textAlign: 'center',
+        fontStyle: 'italic',
+        marginVertical: 20,
     },
 });

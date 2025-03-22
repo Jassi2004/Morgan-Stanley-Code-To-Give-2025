@@ -121,12 +121,11 @@ const studentSchema = new mongoose.Schema(
       ],
       default: ["All"],
     },
-    educator: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Employee",
-      },
-    ],
+    educator: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Employee",
+      required: true,
+    }],
     sessionType: {
       type: String,
       enum: ["Online", "Offline"],
