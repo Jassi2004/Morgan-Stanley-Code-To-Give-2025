@@ -1,31 +1,56 @@
 import { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, Pressable, StyleSheet } from "react-native";
-import { loginUser } from "../utils/api";
+import { handleLogin } from "../utils/api";
 import { FontAwesome } from '@expo/vector-icons';
-import { handleGoogleLogin } from "../utils/api";
 
 export default function Login({ navigation }) {
-  const [email, setEmail] = useState("");
+  const [studentEmail, setStudentEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = async () => {
+  const onLogin = async () => {
     setErrorMessage(""); // Clear previous errors
-    if (!email || !password) {
+    setIsLoading(true);
+
+    // Basic validation
+    if (!studentEmail || !password) {
       setErrorMessage("Please fill in all fields");
+      setIsLoading(false);
+      return;
+    }
+
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(studentEmail)) {
+      setErrorMessage("Please enter a valid email address");
+      setIsLoading(false);
       return;
     }
 
     try {
-      const response = await loginUser({ email, password });
-      if (response.success) {
+      const result = await handleLogin(studentEmail, password);
+      console.log("Login result:", result); // Debug log
+      
+      if (result.success) {
         navigation.navigate("Home");
       } else {
-        setErrorMessage(response.message || "Login failed");
+        setErrorMessage(result.message || "Incorrect email or password");
       }
     } catch (error) {
       console.error("Login error:", error);
-      setErrorMessage(error.message || "Something went wrong. Please try again.");
+      setErrorMessage("Unable to connect. Please check your internet connection and try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleInputChange = (type, value) => {
+    setErrorMessage(""); // Clear error message on input change
+    if (type === 'email') {
+      setStudentEmail(value.trim()); // Remove any accidental spaces
+    } else {
+      setPassword(value);
     }
   };
 
@@ -33,104 +58,49 @@ export default function Login({ navigation }) {
     <View style={styles.container}>
       <Text style={styles.title}>Login</Text>
       
+      <View style={[styles.inputContainer, errorMessage && !studentEmail && styles.inputContainerError]}>
+        <FontAwesome name="envelope" size={20} color="#666" style={styles.inputIcon} />
+        <TextInput
+          placeholder="Email"
+          placeholderTextColor="#666"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+          style={styles.input}
+          value={studentEmail}
+          onChangeText={(text) => handleInputChange('email', text)}
+        />
+      </View>
 
-      {/* Email */}
-      <TextInput
-        placeholder="Email"
-        placeholderTextColor="#666"
-        keyboardType="email-address"
-        style={styles.input}
-        value={email}
-        onChangeText={(text) => {
-          setEmail(text);
-          setErrorMessage(""); // Clear error when user types
-        }}
-      />
+      <View style={[styles.inputContainer, errorMessage && !password && styles.inputContainerError]}>
+        <FontAwesome name="lock" size={20} color="#666" style={styles.inputIcon} />
+        <TextInput
+          placeholder="Password"
+          placeholderTextColor="#666"
+          secureTextEntry
+          style={styles.input}
+          value={password}
+          onChangeText={(text) => handleInputChange('password', text)}
+        />
+      </View>
 
-      {/* Password */}
-      <TextInput
-        placeholder="Password"
-        placeholderTextColor="#666"
-        secureTextEntry
-        style={styles.input}
-        value={password}
-        onChangeText={(text) => {
-          setPassword(text);
-          setErrorMessage(""); // Clear error when user types
-        }}
-      />
-
-      {/* Error Message */}
       {errorMessage ? (
-        <Text style={styles.errorText}>{errorMessage}</Text>
+        <View style={styles.errorContainer}>
+          <FontAwesome name="exclamation-circle" size={16} color="#FF0000" />
+          <Text style={styles.errorText}>{errorMessage}</Text>
+        </View>
       ) : null}
 
-      {/* Login Button */}
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Login</Text>
+      <TouchableOpacity 
+        style={[styles.button, isLoading && styles.buttonDisabled]} 
+        onPress={onLogin}
+        disabled={isLoading}
+      >
+        <Text style={styles.buttonText}>
+          {isLoading ? "Logging in..." : "Login"}
+        </Text>
       </TouchableOpacity>
 
-      {/* OR Divider */}
-      <View style={styles.orContainer}>
-        <View style={styles.orLine} />
-        <Text style={styles.orText}>OR</Text>
-        <View style={styles.orLine} />
-      </View>
-
-      {/* Social Login Buttons */}
-      <View style={styles.socialButtonsContainer}>
-        <Pressable 
-          style={({ pressed }) => [
-            styles.socialButton,
-            pressed && styles.socialButtonPressed
-          ]}
-        >
-          {({ pressed }) => (
-            <FontAwesome 
-              name="google" 
-              size={24} 
-              color={pressed ? '#001F3F' : '#666'} 
-            />
-          )}
-        </Pressable>
-
-        <Pressable 
-          style={({ pressed }) => [
-            styles.socialButton,
-            pressed && styles.socialButtonPressed
-          ]}
-        >
-          {({ pressed }) => (
-            <FontAwesome 
-              name="facebook" 
-              size={24} 
-              color={pressed ? '#001F3F' : '#666'} 
-            />
-          )}
-        </Pressable>
-
-        <Pressable 
-          style={({ pressed }) => [
-            styles.socialButton,
-            pressed && styles.socialButtonPressed
-          ]}
-        >
-          {({ pressed }) => (
-            <FontAwesome 
-              name="twitter" 
-              size={24} 
-              color={pressed ? '#001F3F' : '#666'} 
-            />
-          )}
-        </Pressable>
-      </View>
-
-      {/* Forgot Password */}
-      <TouchableOpacity>
-        <Text style={styles.forgotText}>Forgot Password?</Text>
-      </TouchableOpacity>
-
-      {/* Don't have an account? Sign Up */}
       <TouchableOpacity onPress={() => navigation.navigate("SignUp")}>
         <Text style={styles.signUpText}>Don't have an account? Sign Up</Text>
       </TouchableOpacity>
@@ -150,24 +120,45 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "bold",
     color: "#001F3F",
-    marginBottom: 20,
+    marginBottom: 30,
   },
-  input: {
+  inputContainer: {
     width: "100%",
-    padding: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFF",
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 8,
-    marginBottom: 10,
+    marginBottom: 15,
+    paddingHorizontal: 10,
+  },
+  inputContainerError: {
+    borderColor: "#FF0000",
+  },
+  inputIcon: {
+    marginRight: 10,
+  },
+  input: {
+    flex: 1,
+    padding: 12,
     fontSize: 16,
-    backgroundColor: "#FFF",
+    color: "#333",
+  },
+  errorContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFE8E8",
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 15,
+    width: "100%",
   },
   errorText: {
     color: "#FF0000",
     fontSize: 14,
-    marginBottom: 10,
-    textAlign: "center",
-    width: "100%",
+    marginLeft: 8,
+    flex: 1,
   },
   button: {
     backgroundColor: "#001F3F",
@@ -178,58 +169,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginVertical: 10,
   },
+  buttonDisabled: {
+    backgroundColor: "#666",
+    opacity: 0.7,
+  },
   buttonText: {
     color: "#FFF",
     fontSize: 18,
-    fontWeight: "bold",
-  },
-  orContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
-    marginVertical: 15,
-  },
-  orLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#ccc',
-  },
-  orText: {
-    marginHorizontal: 10,
-    color: '#666',
-    fontSize: 16,
-  },
-  socialButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    width: '100%',
-    marginBottom: 15,
-    gap: 20,
-  },
-  socialButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#FFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  socialButtonPressed: {
-    backgroundColor: '#F5F5F5',
-    transform: [{ scale: 0.95 }],
-  },
-  forgotText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: "#001F3F",
     fontWeight: "bold",
   },
   signUpText: {

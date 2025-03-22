@@ -137,13 +137,13 @@ const loginStudent = asyncHandler(async (req, res) => {
     throw new ApiError(401, "Invalid email or password");
   }
 
+  if (!student.isApproved) {
+    throw new ApiError(403, "Your account is pending admin approval");
+  }
+
   const isPasswordCorrect = await student.isPasswordCorrect(password);
   if (!isPasswordCorrect) {
     throw new ApiError(401, "Invalid email or password");
-  }
-  // console.log("stuend approved : ", student.isApproved);
-  if(student.isApproved){
-    throw new ApiError(401, "Student Not approved by admin till now..");
   }
 
   const accessToken = student.generateAccessToken();
@@ -170,6 +170,7 @@ const loginStudent = asyncHandler(async (req, res) => {
     )
   );
 });
+
 
 const logoutStudent = asyncHandler(async (req, res) => {
   const { studentId } = req.body;
@@ -365,16 +366,24 @@ const updateProfile = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Student ID is required for updating profile");
   }
 
+<<<<<<< HEAD
   // Extract fields from the body dynamically
   const updates = req.body;
+=======
 
-  // Check if student exists
+  const updates = req.body;
+
+>>>>>>> f4e477fad6d8abab758e10dd86642319d6129374
+
   const student = await Student.findOne({ StudentId: studentId });
   if (!student) {
     throw new ApiError(404, "Student not found");
   }
 
+<<<<<<< HEAD
   // Handle file uploads for avatar and UDID if provided
+=======
+>>>>>>> f4e477fad6d8abab758e10dd86642319d6129374
   if (req.files?.avatar?.[0]?.path) {
     const avatar = await uploadOnCloudinary(req.files.avatar[0].path);
     if (avatar) {
@@ -397,14 +406,23 @@ const updateProfile = asyncHandler(async (req, res) => {
   }
 
   try {
+<<<<<<< HEAD
     // Update the student dynamically using $set
+=======
+>>>>>>> f4e477fad6d8abab758e10dd86642319d6129374
     const updatedStudent = await Student.findOneAndUpdate(
       { StudentId: studentId },
       { $set: updates },
       {
+<<<<<<< HEAD
         new: true, // Return the updated document
         runValidators: true, // Validate updates
         select: "-password -refreshToken", // Exclude sensitive fields
+=======
+        new: true, 
+        runValidators: true, 
+        select: "-password -refreshToken", 
+>>>>>>> f4e477fad6d8abab758e10dd86642319d6129374
       }
     );
 

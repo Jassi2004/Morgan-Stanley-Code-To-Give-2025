@@ -38,7 +38,7 @@ export default function Home() {
     const showControls = () => {
         setControlsVisible(true);
     };
-
+    
     return (
         <View style={styles.container}>
             {/* Show Controls Button (only visible when controls are hidden) */}
@@ -94,7 +94,7 @@ export default function Home() {
 
             <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 {/* Schedule Section */}
-                <View style={styles.section}>
+            <View style={styles.section}>
                     <Text style={[styles.sectionTitle, { fontSize: scaledFont(18) }]}>Hmmm, you seem tightly packed! Let's go through your schedule:</Text>
                     <TouchableOpacity style={styles.classSection}>
                         <View style={[styles.classIconContainer, { backgroundColor: '#E3F2FD' }]}>
@@ -178,8 +178,8 @@ export default function Home() {
                                 <Text style={[styles.timelineDescription, { fontSize: scaledFont(12) }]}>
                                     Showcase your artwork and meet other young artists. Quiet room available.
                                 </Text>
-                            </View>
-                        </View>
+                </View>
+            </View>
 
                         <View style={styles.timelineEvent}>
                             <View style={[styles.timelineDot, { backgroundColor: '#FF9800' }]} />
@@ -236,8 +236,8 @@ export default function Home() {
                             </View>
                             <FontAwesome name="chevron-right" size={20} color="#666" />
                         </TouchableOpacity>
-                    </View>
                 </View>
+            </View>
 
                 {/* Articles Section */}
                 <View style={styles.section}>
@@ -257,7 +257,7 @@ export default function Home() {
                                 <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>Learn about sensory challenges and effective coping strategies...</Text>
                                 <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>5 min read • Expert Article</Text>
                             </View>
-                        </TouchableOpacity>
+                </TouchableOpacity>
 
                         <TouchableOpacity style={styles.articleCard}>
                             <View style={[styles.articleImage, { backgroundColor: '#F3E5F5' }]}>
@@ -268,7 +268,7 @@ export default function Home() {
                                 <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>Tips for helping your child develop meaningful friendships...</Text>
                                 <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>7 min read • Parent Guide</Text>
                             </View>
-                        </TouchableOpacity>
+                </TouchableOpacity>
 
                         <TouchableOpacity style={styles.articleCard}>
                             <View style={[styles.articleImage, { backgroundColor: '#E8F5E9' }]}>
@@ -279,7 +279,7 @@ export default function Home() {
                                 <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>How art therapy can help with emotional expression...</Text>
                                 <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>4 min read • Therapy Insights</Text>
                             </View>
-                        </TouchableOpacity>
+                </TouchableOpacity>
 
                         <TouchableOpacity style={styles.articleCard}>
                             <View style={[styles.articleImage, { backgroundColor: '#FFF3E0' }]}>
@@ -290,9 +290,9 @@ export default function Home() {
                                 <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>Inspiring journeys of children who overcame challenges...</Text>
                                 <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>6 min read • Community Stories</Text>
                             </View>
-                        </TouchableOpacity>
+                </TouchableOpacity>
                     </ScrollView>
-                </View>
+            </View>
 
                 {/* Add padding at bottom to ensure content is visible above footer */}
                 <View style={{ height: 80 }} />
