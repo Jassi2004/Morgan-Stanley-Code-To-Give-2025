@@ -271,8 +271,11 @@ const fetchAllStudents = asyncHandler(async (req, res) => {
 const updateProfile = asyncHandler(async (req, res) => {
   const { studentId } = req.body;
 
+  // console.log("Received studentId:", studentId);
+  // console.log("Received body:", req.body);
+
   if (!studentId) {
-    throw new ApiError(400, "Student ID is required for updating profile");
+    return res.status(400).json(new ApiError(400, "Student ID is required for updating profile"));
   }
 
   const allowedUpdates = {
@@ -294,44 +297,60 @@ const updateProfile = asyncHandler(async (req, res) => {
   };
 
   // Remove undefined values
-  Object.keys(allowedUpdates).forEach(key => 
-    allowedUpdates[key] === undefined && delete allowedUpdates[key]
-  );
+  Object.keys(allowedUpdates).forEach(key => {
+    if (allowedUpdates[key] === undefined) delete allowedUpdates[key];
+  });
+
+  console.log("Allowed Updates:", allowedUpdates);
+
+  // Check if student exists
+  const student = await Student.findOne({ StudentId: studentId });
+  if (!student) {
+    return res.status(404).json(new ApiError(404, "Student not found"));
+  }
 
   // Validate guardian details if provided
   if (allowedUpdates.guardianDetails) {
     const { name, relation, contactNumber, parentEmail } = allowedUpdates.guardianDetails;
-    
+
     if (contactNumber && !/^[6-9]\d{9}$/.test(contactNumber)) {
-      throw new ApiError(400, "Invalid guardian contact number format");
+      return res.status(400).json(new ApiError(400, "Invalid guardian contact number format"));
     }
-    
+
     if (parentEmail && !/^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/.test(parentEmail)) {
-      throw new ApiError(400, "Invalid guardian email format");
+      return res.status(400).json(new ApiError(400, "Invalid guardian email format"));
     }
   }
 
   // Validate primary diagnosis if provided
-  if (allowedUpdates.primaryDiagnosis && 
-      !["Autism", "Down Syndrome", "ADHD", "Cerebral Palsy", "Others"].includes(allowedUpdates.primaryDiagnosis)) {
-    throw new ApiError(400, "Invalid primary diagnosis");
+  const validDiagnoses = ["Autism", "Down Syndrome", "ADHD", "Cerebral Palsy", "Others"];
+  if (allowedUpdates.primaryDiagnosis && !validDiagnoses.includes(allowedUpdates.primaryDiagnosis)) {
+    return res.status(400).json(new ApiError(400, "Invalid primary diagnosis"));
   }
 
   // Validate preferred language if provided
-  if (allowedUpdates.preferredLanguage && 
-      !["English", "Hindi", "Marathi", "Sign Language", "Other"].includes(allowedUpdates.preferredLanguage)) {
-    throw new ApiError(400, "Invalid preferred language");
+  const validLanguages = ["English", "Hindi", "Marathi", "Sign Language", "Other"];
+  if (allowedUpdates.preferredLanguage && !validLanguages.includes(allowedUpdates.preferredLanguage)) {
+    return res.status(400).json(new ApiError(400, "Invalid preferred language"));
   }
 
   // Validate device access if provided
+  const validDevices = ["Tablet", "Laptop", "Smartphone", "Hearing Aid", "Braille Device"];
   if (allowedUpdates.deviceAccess) {
-    const validDevices = ["Tablet", "Laptop", "Smartphone", "Hearing Aid", "Braille Device"];
+    if (!Array.isArray(allowedUpdates.deviceAccess)) {
+      return res.status(400).json(new ApiError(400, "Invalid device access format"));
+    }
+
     if (!allowedUpdates.deviceAccess.every(device => validDevices.includes(device))) {
-      throw new ApiError(400, "Invalid device access options");
+      return res.status(400).json(new ApiError(400, "Invalid device access options"));
     }
   }
 
   // Handle file uploads if present
+  if (req.files) {
+    console.log("Received files:", req.files);
+  }
+
   if (req.files?.avatar?.[0]?.path) {
     const avatar = await uploadOnCloudinary(req.files.avatar[0].path);
     if (avatar) {
@@ -357,32 +376,33 @@ const updateProfile = asyncHandler(async (req, res) => {
     const updatedStudent = await Student.findOneAndUpdate(
       { StudentId: studentId },
       { $set: allowedUpdates },
-      { 
+      {
         new: true,
         runValidators: true,
         select: '-password -refreshToken'
       }
     );
 
+    console.log("Updated Student:", updatedStudent);
+
     if (!updatedStudent) {
-      throw new ApiError(404, "Student not found");
+      return res.status(404).json(new ApiError(404, "Student not found"));
     }
 
-    return res
-      .status(200)
-      .json(new ApiResponse(
-        200,
-        updatedStudent,
-        "Profile updated successfully"
-      ));
+    return res.status(200).json(
+      new ApiResponse(200, updatedStudent, "Profile updated successfully")
+    );
 
   } catch (error) {
+    console.error("Update error:", error);
+
     if (error.name === 'ValidationError') {
-      throw new ApiError(400, error.message);
+      return res.status(400).json(new ApiError(400, error.message));
     }
-    throw error;
+    return res.status(500).json(new ApiError(500, "Internal Server Error"));
   }
 });
+
 
 export {
   registerStudent,
