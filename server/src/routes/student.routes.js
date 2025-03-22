@@ -1,6 +1,6 @@
 import express from "express";
-import { registerStudent, loginStudent, logoutStudent, profilePage, changePassword, fetchAllStudents,updateProfile } from "../controllers/student.controller.js";
-
+import { registerStudent, loginStudent, logoutStudent, profilePage, changePassword, fetchAllStudents,updateProfile, uploadProfilePicture } from "../controllers/student.controller.js";
+import  { upload } from "../middlewares/multer.middleware.js";
 
 const router = express.Router();
 
@@ -14,5 +14,7 @@ router.post("/profile", profilePage);
 router.put("/change-password", changePassword);
 router.get("/fetchAllStudents", fetchAllStudents);
 router.put("/update-profile", updateProfile);
+
+router.post("/uploadAvatar", upload.single("avatar"), uploadProfilePicture);
 
 export default router;

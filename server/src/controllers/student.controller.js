@@ -366,24 +366,16 @@ const updateProfile = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Student ID is required for updating profile");
   }
 
-<<<<<<< HEAD
-  // Extract fields from the body dynamically
-  const updates = req.body;
-=======
 
   const updates = req.body;
 
->>>>>>> f4e477fad6d8abab758e10dd86642319d6129374
+
 
   const student = await Student.findOne({ StudentId: studentId });
   if (!student) {
     throw new ApiError(404, "Student not found");
   }
 
-<<<<<<< HEAD
-  // Handle file uploads for avatar and UDID if provided
-=======
->>>>>>> f4e477fad6d8abab758e10dd86642319d6129374
   if (req.files?.avatar?.[0]?.path) {
     const avatar = await uploadOnCloudinary(req.files.avatar[0].path);
     if (avatar) {
@@ -406,23 +398,15 @@ const updateProfile = asyncHandler(async (req, res) => {
   }
 
   try {
-<<<<<<< HEAD
-    // Update the student dynamically using $set
-=======
->>>>>>> f4e477fad6d8abab758e10dd86642319d6129374
+
     const updatedStudent = await Student.findOneAndUpdate(
       { StudentId: studentId },
       { $set: updates },
       {
-<<<<<<< HEAD
         new: true, // Return the updated document
         runValidators: true, // Validate updates
         select: "-password -refreshToken", // Exclude sensitive fields
-=======
-        new: true, 
-        runValidators: true, 
-        select: "-password -refreshToken", 
->>>>>>> f4e477fad6d8abab758e10dd86642319d6129374
+
       }
     );
 
@@ -442,6 +426,46 @@ const updateProfile = asyncHandler(async (req, res) => {
   }
 });
 
+const uploadProfilePicture = asyncHandler(async (req, res) => {
+  try {
+      const studentId = req.body?.studentId;
+      console.log(studentId)
+      if (!studentId) {
+          throw new ApiError(400, "Student ID is required");
+      }
+
+      if (!req.file) {
+          throw new ApiError(400, "Please upload avatar file");
+      }
+
+      const localFilePath = req.file.path;
+      const avatar = await uploadOnCloudinary(localFilePath);
+
+      if (!avatar.secure_url) {
+          throw new ApiError(400, "Please try again, avatar not updated");
+      }
+
+      const student = await Student.findById(studentId);
+      if (!student) {
+          throw new ApiError(404, "Student not found");
+      }
+
+      student.avatar.public_id = avatar.public_id;
+      student.avatar.secure_url = avatar.secure_url;
+
+      await student.save({ validateBeforeSave: false });
+
+      // Cleanup local file
+      fs.unlinkSync(localFilePath);
+
+      return res.status(200).json(new ApiResponse(200, student, "Avatar uploaded successfully"));
+  } catch (error) {
+      console.error(`Error occurred while updating profile picture: ${error.message}`);
+      throw new ApiError(400, "Error occurred while uploading profile picture");
+  }
+});
+
+
 export {
   registerStudent,
   loginStudent,
@@ -450,5 +474,6 @@ export {
   changePassword,
   fetchAllStudents,
   updateProfile,
-  approveStudent
+  approveStudent,
+  uploadProfilePicture
 };
