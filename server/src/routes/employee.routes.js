@@ -1,6 +1,6 @@
 
 import { Router } from "express";
-import { addEducator, createEmployeeAccount, fetchAllEmployees, getEmployeeProfile, loginEmployeeAccount } from "../controllers/employee.controller.js";
+import { addEducator, approveStudentAccount, createEmployeeAccount, fetchAllEmployees, getEmployeeProfile, loginEmployeeAccount } from "../controllers/employee.controller.js";
 import { verifyAdmin, verifyEmployee } from "../middlewares/auth.middleware.js";
 
 
@@ -32,6 +32,9 @@ router.route("/add-educator")
 
 router.route("/fetch-all-employees")
 .get(fetchAllEmployees);
+
+router.route("/approve-student")
+.post(approveStudentAccount);
 
 
 export default router;
