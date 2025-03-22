@@ -19,14 +19,14 @@ export default function Profile() {
     const loadUserData = async () => {
         try {
             const data = await getUserData();
-            console.log("Loaded user data:", data); // Debug log
+            // console.log("Loaded user data:", data); // Debug log
             setUserData(data);
             
             // Additional debug logs
             if (data) {
                 console.log("First Name:", data.firstName);
                 console.log("Last Name:", data.lastName);
-                console.log("Full user object:", JSON.stringify(data, null, 2));
+                // console.log("Full user object:", JSON.stringify(data, null, 2));
             } else {
                 console.log("No user data loaded");
             }
@@ -39,7 +39,7 @@ export default function Profile() {
 
     // Debug log when userData changes
     useEffect(() => {
-        console.log("userData state updated:", userData);
+        // console.log("userData state updated:", userData);
     }, [userData]);
 
     if (isLoading) {
@@ -125,10 +125,10 @@ export default function Profile() {
                         <View style={styles.educatorInfo}>
                             <Text style={styles.educatorTitle}>Primary Educator</Text>
                             <Text style={styles.educatorName}>
-                                {userData?.educator?.primary?.name || 'Not Assigned'}
+                                {userData?.educatorDetails?.primary?.name || 'Not Assigned'}
                             </Text>
                             <Text style={styles.educatorSpecialty}>
-                                {userData?.educator?.primary?.specialty || 'Special Education Specialist'}
+                                {userData?.educatorDetails?.primary?.specialty || 'Special Education Specialist'}
                             </Text>
                         </View>
                         <FontAwesome name="chevron-right" size={20} color="#666" />
@@ -141,10 +141,10 @@ export default function Profile() {
                         <View style={styles.educatorInfo}>
                             <Text style={styles.educatorTitle}>Secondary Educator</Text>
                             <Text style={styles.educatorName}>
-                                {userData?.educator?.secondary?.name || 'Not Assigned'}
+                                {userData?.educatorDetails?.secondary?.name || 'Not Assigned'}
                             </Text>
                             <Text style={styles.educatorSpecialty}>
-                                {userData?.educator?.secondary?.specialty || 'Behavioral Therapist'}
+                                {userData?.educatorDetails?.secondary?.specialty || 'Behavioral Therapist'}
                             </Text>
                         </View>
                         <FontAwesome name="chevron-right" size={20} color="#666" />

@@ -99,6 +99,7 @@ const registerStudent = asyncHandler(async (req, res) => {
       // public_id: UDIDUrls?.public_id || "",
       // secure_url: UDIDUrls?.secure_url || "",
     },
+    educator: [],
   });
 
   const { accessToken, refreshToken } = await generateAccessAndRefreshToken(

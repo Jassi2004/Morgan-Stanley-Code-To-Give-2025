@@ -20,28 +20,130 @@ api.interceptors.request.use(
   }
 );
 
+// Get educator details
+const getEducatorDetails = async (educatorId) => {
+  try {
+    console.log("Attempting to fetch details for educator ID:", educatorId);
+    
+    // First try to get from fetch-all-employees and filter
+    const response = await api.get('/employee/fetch-all-employees');
+    if (response.data?.data) {
+      const allEmployees = response.data.data;
+      // console.log("All employees:", allEmployees.map(emp => ({ id: emp._id, name: emp.name })));
+      
+      const educator = allEmployees.find(emp => emp._id.toString() === educatorId.toString());
+      console.log("Found educator:", educator ? {
+        id: educator._id,
+        name: educator.name,
+        designation: educator.designation,
+        department: educator.department,
+        email: educator.email,
+        phone: educator.phone
+      } : 'Not found');
+      
+      if (educator) {
+        return {
+          name: educator.name,
+          specialty: educator.designation,
+          email: educator.email,
+          phone: educator.phone,
+          department: educator.department,
+          _id: educator._id
+        };
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error(`Error fetching educator details for ${educatorId}:`, error);
+    return null;
+  }
+};
+
 // **Handle Login Function**
 export const handleLogin = async (studentEmail, password) => {
   try {
-    console.log("Attempting login with:", { studentEmail, password }); // Debug log
+    console.log("Attempting login with:", { studentEmail, password });
     
     const response = await api.post("/student/login", {
       studentEmail: studentEmail,
       password: password
     });
     
-    console.log("Server response:", response.data); // Debug log
-    
     if (response.data?.data) {
       const { tokens, student } = response.data.data;
       
-      console.log("Student data to be stored:", student); // Debug log
+      // Fetch educator details if student has educators assigned
+      if (student.educator && student.educator.length > 0) {
+        try {
+          const [primaryEducator, secondaryEducator] = await Promise.all([
+            student.educator[0] ? getEducatorDetails(student.educator[0]) : null,
+            student.educator[1] ? getEducatorDetails(student.educator[1]) : null
+          ]);
+
+          // Add educator details to student data
+          student.educatorDetails = {
+            primary: primaryEducator || {
+              name: 'Not Assigned',
+              specialty: 'Special Education Specialist',
+              email: '',
+              phone: '',
+              department: ''
+            },
+            secondary: secondaryEducator || {
+              name: 'Not Assigned',
+              specialty: 'Behavioral Therapist',
+              email: '',
+              phone: '',
+              department: ''
+            }
+          };
+
+          console.log("Added educator details:", student.educatorDetails);
+        } catch (error) {
+          console.error("Error fetching educator details:", error);
+          // Set default values if educator fetch fails
+          student.educatorDetails = {
+            primary: {
+              name: 'Not Assigned',
+              specialty: 'Special Education Specialist',
+              email: '',
+              phone: '',
+              department: ''
+            },
+            secondary: {
+              name: 'Not Assigned',
+              specialty: 'Behavioral Therapist',
+              email: '',
+              phone: '',
+              department: ''
+            }
+          };
+        }
+      } else {
+        // Set default values if no educators assigned
+        student.educatorDetails = {
+          primary: {
+            name: 'Not Assigned',
+            specialty: 'Special Education Specialist',
+            email: '',
+            phone: '',
+            department: ''
+          },
+          secondary: {
+            name: 'Not Assigned',
+            specialty: 'Behavioral Therapist',
+            email: '',
+            phone: '',
+            department: ''
+          }
+        };
+      }
       
       // Store tokens
       await SecureStore.setItemAsync("accessToken", tokens.accessToken);
       await SecureStore.setItemAsync("refreshToken", tokens.refreshToken);
       
-      // Store user data
+      // Store user data with educator details
       await SecureStore.setItemAsync("userData", JSON.stringify(student));
       
       return { 
@@ -71,7 +173,7 @@ export const handleLogin = async (studentEmail, password) => {
 export const getUserData = async () => {
   try {
     const userData = await SecureStore.getItemAsync("userData");
-    console.log("Retrieved stored user data:", userData); // Debug log
+    // console.log("Retrieved stored user data:", userData); // Debug log
     
     if (!userData) {
       console.log("No user data found in storage");
@@ -130,5 +232,42 @@ export const getNotifications = async () => {
     };
   }
 };
+
+// Feedback APIs
+export const sendFeedbackToEducator = async (studentId, educatorId, content, rating) => {
+  try {
+      const response = await api.post(`/feedback/sendFeedback`, {
+          studentId,
+          educatorId,
+          content,
+          rating
+      });
+      return response.data;
+  } catch (error) {
+      console.error('Error sending feedback:', error);
+      throw error;
+  }
+};
+
+export const getReceivedFeedbacks = async (educatorId) => {
+  try {
+      const response = await api.get(`/feedback/getReceivedFeedbacks/${educatorId}`);
+      return response.data;
+  } catch (error) {
+      console.error('Error getting received feedbacks:', error);
+      throw error;
+  }
+};
+
+export const getSentFeedbacks = async (studentId) => {
+  try {
+      const response = await api.get(`/feedback/getSentFeedbacks/${studentId}`);
+      return response.data;
+  } catch (error) {
+      console.error('Error getting sent feedbacks:', error);
+      throw error;
+  }
+};
+
 
 export default api;

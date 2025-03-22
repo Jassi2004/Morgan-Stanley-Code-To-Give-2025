@@ -166,8 +166,8 @@ export default function Home() {
                                 <Text style={[styles.timelineDescription, { fontSize: scaledFont(12) }]}>
                                     Interactive group session focusing on friendship and communication.
                                 </Text>
-                            </View>
-                        </View>
+                </View>
+            </View>
 
                         <View style={styles.timelineEvent}>
                             <View style={[styles.timelineDot, { backgroundColor: '#9C27B0' }]} />
