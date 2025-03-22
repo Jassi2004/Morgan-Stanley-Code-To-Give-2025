@@ -55,7 +55,7 @@ export const AppProvider = ({ children }) => {
             activeTeachers
         });
     };
-
+ 
     const fetchData = async () => {
         setLoading(true);
         setError(null);
@@ -67,12 +67,17 @@ export const AppProvider = ({ children }) => {
             ]);
 
             // Extract students data from the nested structure
-            const studentsData = studentsResponse.data?.data?.students || [];
+            const studentsData = studentsResponse.data?.students || [];
+
+            // console.log("stu",studentsData);
+            
             // Extract employees data
             const employeesData = employeesResponse.data || [];
             // Extract notifications data
             const notificationsData = notificationsResponse.data || [];
 
+
+            
             setStudents(studentsData);
             setEmployees(employeesData);
             setNotifications(notificationsData);

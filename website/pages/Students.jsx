@@ -8,6 +8,8 @@ import { toast } from 'react-toastify';
 const Students = () => {
   const navigate = useNavigate();
   const { students, loading, error, refreshStudents } = useContext(AppContext);
+  // console.log(students);
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [diagnosisFilter, setDiagnosisFilter] = useState("all");
   const [programFilter, setProgramFilter] = useState("all");
