@@ -127,42 +127,34 @@ const registerStudent = asyncHandler(async (req, res) => {
 
 const loginStudent = asyncHandler(async (req, res) => {
   const { studentEmail, password } = req.body;
-  console.log("Incoming login request:", { studentEmail, password: password });
 
   if (!studentEmail || !password) {
-    console.log("Missing email or password");
     throw new ApiError(400, "Email and password are required");
   }
 
   const student = await Student.findOne({ studentEmail }).select("+password");
-  console.log("Student found in DB:", student ? student._id : "Not found");
-
   if (!student) {
-    console.log("Invalid email: Student not found");
     throw new ApiError(401, "Invalid email or password");
   }
-  console.log("Function definition:", student.isPasswordCorrect.toString());
-  const isPasswordCorrect = await student.isPasswordCorrect(password);
-  console.log("Password match:", isPasswordCorrect);
 
-  if (!isPasswordCorrect) {
-    console.log("Invalid password");
-    throw new ApiError(401, "Invalid email or password");
+  if (!student.isApproved) {
+    throw new ApiError(403, "Your account is pending admin approval");
   }
-  // console.log("stuend approved : ", student.isApproved);
-  if(student.isApproved){
-    throw new ApiError(401, "Student Not approved by admin till now..");
+
+  const isPasswordCorrect = await student.isPasswordCorrect(password);
+  if (!isPasswordCorrect) {
+    throw new ApiError(401, "Invalid email or password");
   }
 
   const accessToken = student.generateAccessToken();
   const refreshToken = student.generateRefreshToken();
-  console.log("Generated tokens:", { accessToken: !!accessToken, refreshToken: !!refreshToken });
 
   student.refreshToken = refreshToken;
   await student.save({ validateBeforeSave: false });
 
-  const responseStudent = await Student.findById(student._id).select("-password -refreshToken");
-  console.log("Final response student:", responseStudent);
+  const responseStudent = await Student.findById(student._id).select(
+    "-password -refreshToken"
+  );
 
   return res.status(200).json(
     new ApiResponse(
