@@ -51,13 +51,15 @@ const AddEducatorForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:5000/api/v1/employees/add-educator', {
+      const response = await fetch('http://localhost:8000/api/v1/employee/add-educator', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(formData),
       });
+      console.log(response);
+      
       
       if (!response.ok) {
         throw new Error('Failed to add educator');

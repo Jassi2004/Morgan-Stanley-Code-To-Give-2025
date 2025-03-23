@@ -30,7 +30,7 @@ export default function Login({ navigation }) {
 
     try {
       const result = await handleLogin(studentEmail, password);
-      console.log("Login result:", result); // Debug log
+      // console.log("Login result:", result); // Debug log
       
       if (result.success) {
         navigation.navigate("Home");

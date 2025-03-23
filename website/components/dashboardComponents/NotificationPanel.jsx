@@ -27,7 +27,7 @@ const NotificationPanel = () => {
 
   return (
     <div className="bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] rounded-xl shadow-sm p-6 transition-colors duration-300">
-      <h3 className="text-lg font-semibold mb-4">All Notifications</h3>
+      <h3 className="text-lg font-semibold mb-4">Admin Notifications</h3>
 
       <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
         {Array.isArray(notificationArray) && notificationArray.length > 0 ? (

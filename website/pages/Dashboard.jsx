@@ -4,7 +4,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import DashboardCard from '../components/dashboardComponents/DashboardCard';
 import AttendanceChart from '../components/dashboardComponents/AttendanceChart';
 import SessionSchedule from '../components/dashboardComponents/SessionSchedule';
-import NotificationPanel from '../components/dashboardComponents/NotificationPanel';
+import AdminNotificationPanel from '../components/dashboardComponents/AdminNotificationPanel';
 import PerformanceGraph from '../components/dashboardComponents/PerformanceGraph';
 import { useNavigate } from 'react-router-dom';
 import { AppContext } from "../context/AppContext";
@@ -207,13 +207,13 @@ function DashBoard() {
 
         {/* Charts and Data */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <AttendanceChart />
+          <AdminNotificationPanel />
           <SessionSchedule />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <PerformanceGraph />
-          <NotificationPanel />
+          <AttendanceChart />
         </div>
       </main>
       <ToastContainer
