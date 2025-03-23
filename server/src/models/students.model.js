@@ -90,9 +90,9 @@ const studentSchema = new mongoose.Schema(
     program : {
       type : String,
       enum : ["Multi", "Job Readiness", "Vocation", "Spruha", "Suyog", "Sameti", "Shaale", "Siddhi", "Sattva"],
-      required : [true, "Program is required"]
+      // required : [true, "Program is required"]
   },
-    // programs: [
+    // program: [
     //   {
     //     type: mongoose.Schema.Types.ObjectId,
     //     ref: "Program",
@@ -130,12 +130,12 @@ const studentSchema = new mongoose.Schema(
       primary: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Employee",
-        required: [true, "Primary educator is required"],
+        // required: [true, "Primary educator is required"],
       },
       secondary: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Employee",
-        required: [true, "Secondary educator is required"],
+        // required: [true, "Secondary educator is required"],
       },
     },    
     sessionType: {

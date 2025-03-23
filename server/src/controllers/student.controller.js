@@ -5,6 +5,12 @@ import { Student } from "../models/students.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import bcrypt from "bcryptjs";
 
+const cookieOptions = {
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+  secure: true,
+  httpOnly: true,
+  sameSite: "none",
+};
 const generateAccessAndRefreshToken = async (studentId) => {
   try {
     const student = await Student.findById(studentId);
@@ -114,16 +120,20 @@ const registerStudent = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Failed to register student");
   }
 
-  return res.status(201).json(
-    new ApiResponse(
-      201,
-      {
-        student: createdStudent,
-        tokens: { accessToken, refreshToken },
-      },
-      "Student registered successfully"
-    )
-  );
+  return res
+    .status(201)
+    .cookie("accessToken", accessToken, cookieOptions)
+    .cookie("refreshToken", refreshToken, cookieOptions)
+    .json(
+      new ApiResponse(
+        201,
+        {
+          student: createdStudent,
+          tokens: { accessToken, refreshToken },
+        },
+        "Student registered successfully"
+      )
+    );
 });
 
 const loginStudent = asyncHandler(async (req, res) => {
@@ -157,30 +167,33 @@ const loginStudent = asyncHandler(async (req, res) => {
     "-password -refreshToken"
   );
 
-  return res.status(200).json(
-    new ApiResponse(
-      200,
-      {
-        student: responseStudent,
-        tokens: {
-          accessToken,
-          refreshToken,
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, cookieOptions)
+    .cookie("refreshToken", refreshToken, cookieOptions)
+    .json(
+      new ApiResponse(
+        200,
+        {
+          student: responseStudent,
+          tokens: {
+            accessToken,
+            refreshToken,
+          },
         },
-      },
-      "Student logged in successfully"
-    )
-  );
+        "Student logged in successfully"
+      )
+    );
 });
 
-
 const logoutStudent = asyncHandler(async (req, res) => {
-  const { studentId } = req.body;
+  const studentid = req.user?._id;
 
-  if (!studentId) {
+  if (!studentid) {
     throw new ApiError(400, "Student ID is required for logout");
   }
 
-  const student = await Student.findOne({StudentId:studentId});
+  const student = await Student.findById(studentid);
   if (!student) {
     throw new ApiError(404, "Student not found");
   }
@@ -194,16 +207,16 @@ const logoutStudent = asyncHandler(async (req, res) => {
 });
 
 const profilePage = asyncHandler(async (req, res) => {
-  const { studentId } = req.body;
+  const studentid = req.user?._id;
 
-  if (!studentId) {
+  if (!studentid) {
     throw new ApiError(400, "Student ID is required for fetching profile data");
   }
 
-  const student = await Student.findOne({StudentId:studentId})
+  const student = await Student.findById(studentid)
     .select("-password -refreshToken")
-    .populate('educator', 'name designation email')
-    .populate('programs', 'name description');
+    .populate("educator", "name designation email")
+    .populate("programs", "name description");
 
   if (!student) {
     throw new ApiError(404, "Student not found");
@@ -213,18 +226,18 @@ const profilePage = asyncHandler(async (req, res) => {
     enrollmentStatus: {
       isApproved: student.isApproved,
       status: student.status,
-      enrollmentYear: student.enrollmentYear.getFullYear()
+      enrollmentYear: student.enrollmentYear.getFullYear(),
     },
     assignedStaff: {
       primaryEducator: student.educator[0] || null,
-      secondaryEducator: student.educator[1] || null
+      secondaryEducator: student.educator[1] || null,
     },
     programs: {
       enrolledPrograms: student.programs,
       numberOfSessions: student.numberOfSessions,
       timings: student.timings,
       daysOfWeek: student.daysOfWeek,
-      sessionType: student.sessionType
+      sessionType: student.sessionType,
     },
     basicInfo: {
       name: `${student.firstName} ${student.lastName}`,
@@ -233,25 +246,25 @@ const profilePage = asyncHandler(async (req, res) => {
       dateOfBirth: student.dateOfBirth,
       StudentId: student.StudentId,
       avatar: student.avatar,
-      UDID: student.UDID
+      UDID: student.UDID,
     },
     medicalInfo: {
       primaryDiagnosis: student.primaryDiagnosis,
       comorbidity: student.comorbidity,
       allergies: student.allergies,
-      medicalHistory: student.medicalHistory
+      medicalHistory: student.medicalHistory,
     },
     guardianInfo: student.guardianDetails,
     preferences: {
       preferredLanguage: student.preferredLanguage,
       deviceAccess: student.deviceAccess,
-      transport: student.transport
+      transport: student.transport,
     },
     address: student.address,
     strengths: student.strengths,
     weaknesses: student.weaknesses,
     comments: student.comments,
-    progressReports: student.progressReports
+    progressReports: student.progressReports,
   };
 
   return res
@@ -269,7 +282,9 @@ const changePassword = asyncHandler(async (req, res) => {
     );
   }
 
-  const student = await Student.findOne({StudentId:studentId}).select("+password");
+  const student = await Student.findOne({ StudentId: studentId }).select(
+    "+password"
+  );
   if (!student) {
     throw new ApiError(404, "Student not found");
   }
@@ -300,12 +315,11 @@ const changePassword = asyncHandler(async (req, res) => {
 
 const fetchAllStudents = asyncHandler(async (req, res) => {
   const students = await Student.find().select("-password -refreshToken");
-  
+
   return res
     .status(200)
     .json(new ApiResponse(200, { students }, "Students fetched successfully"));
 });
-
 
 const approveStudent = asyncHandler(async (req, res) => {
   const { studentId } = req.body;
@@ -316,7 +330,10 @@ const approveStudent = asyncHandler(async (req, res) => {
   }
 
   if (!educatorIds || !Array.isArray(educatorIds) || educatorIds.length !== 2) {
-    throw new ApiError(400, "Two educators (primary and secondary) must be assigned");
+    throw new ApiError(
+      400,
+      "Two educators (primary and secondary) must be assigned"
+    );
   }
 
   if (!programIds || !Array.isArray(programIds) || programIds.length === 0) {
@@ -324,10 +341,25 @@ const approveStudent = asyncHandler(async (req, res) => {
   }
 
   // Validate program IDs against allowed programs
-  const validPrograms = ["Multi", "Job Readiness", "Vocation", "Spruha", "Suyog", "Sameti", "Shaale", "Siddhi", "Sattva"];
-  const invalidPrograms = programIds.filter(program => !validPrograms.includes(program));
+  const validPrograms = [
+    "Multi",
+    "Job Readiness",
+    "Vocation",
+    "Spruha",
+    "Suyog",
+    "Sameti",
+    "Shaale",
+    "Siddhi",
+    "Sattva",
+  ];
+  const invalidPrograms = programIds.filter(
+    (program) => !validPrograms.includes(program)
+  );
   if (invalidPrograms.length > 0) {
-    throw new ApiError(400, `Invalid program(s): ${invalidPrograms.join(', ')}`);
+    throw new ApiError(
+      400,
+      `Invalid program(s): ${invalidPrograms.join(", ")}`
+    );
   }
 
   const student = await Student.findOne({ StudentId: studentId });
@@ -349,15 +381,15 @@ const approveStudent = asyncHandler(async (req, res) => {
 
   const updatedStudent = await Student.findById(student._id)
     .select("-password -refreshToken")
-    .populate('educator', 'name designation email')
-    .populate('programs', 'name description');
+    .populate("educator", "name designation email")
+    .populate("programs", "name description");
 
-  return res.status(200).json(
-    new ApiResponse(200, updatedStudent, "Student approved successfully")
-  );
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, updatedStudent, "Student approved successfully")
+    );
 });
-
-
 
 const updateProfile = asyncHandler(async (req, res) => {
   const { studentId } = req.body;
@@ -367,21 +399,12 @@ const updateProfile = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Student ID is required for updating profile");
   }
 
-
-  // Extract fields from the body dynamically
-  
-
-
   const updates = req.body;
-
-
 
   const student = await Student.findOne({ StudentId: studentId });
   if (!student) {
     throw new ApiError(404, "Student not found");
   }
-
-  // Handle file uploads for avatar and UDID if provided
 
   if (req.files?.avatar?.[0]?.path) {
     const avatar = await uploadOnCloudinary(req.files.avatar[0].path);
@@ -405,20 +428,13 @@ const updateProfile = asyncHandler(async (req, res) => {
   }
 
   try {
-
-    // Update the student dynamically using $set
-
-
     const updatedStudent = await Student.findOneAndUpdate(
       { StudentId: studentId },
       { $set: updates },
       {
-
-        
-        new: true, 
-        runValidators: true, 
-        select: "-password -refreshToken", 
-
+        new: true,
+        runValidators: true,
+        select: "-password -refreshToken",
       }
     );
 
@@ -427,14 +443,57 @@ const updateProfile = asyncHandler(async (req, res) => {
       throw new ApiError(500, "Failed to update student information");
     }
 
-    return res.status(200).json(
-      new ApiResponse(200, updatedStudent, "Profile updated successfully")
-    );
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(200, updatedStudent, "Profile updated successfully")
+      );
   } catch (error) {
     if (error.name === "ValidationError") {
       throw new ApiError(400, error.message);
     }
     throw error;
+  }
+});
+
+const uploadProfilePicture = asyncHandler(async (req, res) => {
+  try {
+    const studentid = req.user?._id;
+    console.log(studentid);
+    if (!studentid) {
+      throw new ApiError(400, "Student ID is required");
+    }
+
+    if (!req.file) {
+      throw new ApiError(400, "Please upload avatar file");
+    }
+
+    const localFilePath = req.file?.path;
+    const avatar = await uploadOnCloudinary(localFilePath);
+
+    if (!avatar.secure_url) {
+      throw new ApiError(400, "Please try again, avatar not updated");
+    }
+
+    const student = await Student.findById(studentid);
+    if (!student) {
+      throw new ApiError(404, "Student not found");
+    }
+
+    student.avatar.public_id = avatar.public_id;
+    student.avatar.secure_url = avatar.secure_url;
+
+    await student.save({ validateBeforeSave: false });
+
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, student, "Avatar uploaded successfully"));
+  } catch (error) {
+    console.error(
+      `Error occurred while updating profile picture: ${error.message}`
+    );
+    throw new ApiError(400, "Error occurred while uploading profile picture");
   }
 });
 
@@ -446,5 +505,6 @@ export {
   changePassword,
   fetchAllStudents,
   updateProfile,
-  approveStudent
+  approveStudent,
+  uploadProfilePicture,
 };
