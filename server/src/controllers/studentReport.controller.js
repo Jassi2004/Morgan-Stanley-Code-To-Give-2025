@@ -11,7 +11,6 @@ const generateStudentReport = asyncHandler(async (req, res) => {
             studentId,
             programFeedback,
             feedback,
-            assessmentReport
         } = req.body;
 
 
@@ -26,7 +25,7 @@ const generateStudentReport = asyncHandler(async (req, res) => {
             throw new ApiError(404, "Student not found.");
         }
 
-        const grades = await Grade.find({ studentId : student._id}).select("_id");
+        const grades = await Grade.find({ student : student._id}).select("_id");
 
 
         const newReport = new studentReport({
@@ -43,7 +42,7 @@ const generateStudentReport = asyncHandler(async (req, res) => {
         const report = await studentReport.findById(newReport._id).populate("studentDetails", "StudentId firstName lastName program primaryDiagnosis guardianDetails.name guardianDetails.relation guardianDetails.contactNumber guardianDetails.parentEmail")
         .populate({
             path : "assessmentReport",
-            select : "program marks feedback date"
+            select : "program marks feedback date assessmentName"
         })
 
 

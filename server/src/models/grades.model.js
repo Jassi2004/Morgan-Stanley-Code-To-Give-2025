@@ -13,6 +13,11 @@ const gradesSchema = new mongoose.Schema({
         required: true,
     },
 
+    assessmentName : {
+        type : String,
+        required : [true, "Assessment name is required"]
+    },
+
     program: {
         type : String,
         required : [true, "Program is required"]

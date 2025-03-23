@@ -9,7 +9,7 @@ import { Grade } from "../models/grades.model.js";
 
 const giveGradesToStudent = asyncHandler(async(req, res) => {
     try{
-        const { studentId, educatorId, marks, feedback } = req.body;
+        const { studentId, educatorId, marks, feedback, assessmentName } = req.body;
 
         if(!isValidObjectId(studentId) || !isValidObjectId(educatorId)){
             throw new ApiError(400, "One of the id's is not valid");
@@ -21,6 +21,7 @@ const giveGradesToStudent = asyncHandler(async(req, res) => {
             student : studentId,
             educator : educatorId,
             program : educator.program,
+            assessmentName,
             marks,
             feedback
         })

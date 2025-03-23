@@ -4,6 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { Employee } from "../models/employee.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { Student } from "../models/students.model.js";
+import mongoose from "mongoose";
 
 
 
@@ -345,6 +346,32 @@ const uploadProfilePicture = asyncHandler(async(req, res) => {
     }
 })
 
+const fetchStudentsAssignedToEducator = asyncHandler(async (req, res) => {
+    try {
+        const { userId } = req.body;
+
+        if (!userId) {
+            return res.status(400).json(new ApiError(400, "User ID is required"));
+        }
+
+        const userObjectId = new mongoose.Types.ObjectId(userId); // Convert to ObjectId
+
+        const students = await Student.find({
+            $or: [
+                { "educators.primary": userObjectId },
+                { "educators.secondary": userObjectId }
+            ]
+        }).select("StudentId firstName lastName program enrollmentYear status");
+
+        res.status(200).json(new ApiResponse(200, students, "Students assigned to educators fetched successfully"));
+
+    } catch (err) {
+        console.error(`Error fetching students assigned to educators: ${err}`);
+        res.status(500).json(new ApiError(500, "Internal Server Error"));
+    }
+});
+
+
 
 const deleteEmployeeAccount = asyncHandler(async(req, res) => {
     try{
@@ -383,5 +410,6 @@ export {
     fetchAllEmployees,
     approveStudentAccount,
     uploadProfilePicture,
-    deleteEmployeeAccount
+    deleteEmployeeAccount,
+    fetchStudentsAssignedToEducator
 }
