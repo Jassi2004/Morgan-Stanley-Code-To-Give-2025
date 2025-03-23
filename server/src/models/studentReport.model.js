@@ -55,15 +55,8 @@ const studentReportSchema = new Schema({
     },
     assessmentReport : [
         {
-            assessmentNumber : {
-                type : String,
-            },
-            assessmentSubject : {
-                type : String
-            },
-            assessmentMarks : {
-                type : Number
-            }
+            type : Schema.Types.ObjectId,
+            ref : "Grade"
         }
     ],
     overallScore : {

@@ -1,6 +1,6 @@
 
 import { Router } from "express";
-import { addEducator, approveStudentAccount, createEmployeeAccount, deleteEmployeeAccount, fetchAllEmployees, getEmployeeProfile, loginEmployeeAccount, logoutEmployee, uploadProfilePicture } from "../controllers/employee.controller.js";
+import { addEducator, approveStudentAccount, createEmployeeAccount, deleteEmployeeAccount, fetchAllEmployees, fetchStudentsAssignedToEducator, getEmployeeProfile, loginEmployeeAccount, logoutEmployee, uploadProfilePicture } from "../controllers/employee.controller.js";
 import { verifyAdmin, verifyEmployee } from "../middlewares/auth.middleware.js";
 import  { upload } from "../middlewares/multer.middleware.js";
 
@@ -28,10 +28,11 @@ router.route("/get-my-profile")
 router.route("/upload-avatar")
 .post(upload.single("avatar"), uploadProfilePicture);
 
+router.route("/fetch-assigned-students")
+.get(fetchStudentsAssignedToEducator);
 
 router.route("/logout")
 .get(logoutEmployee);
-
 
 
 

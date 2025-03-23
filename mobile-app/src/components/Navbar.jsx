@@ -58,21 +58,6 @@ export default function Navbar() {
                     isRouteActive('Profile') && styles.activeText
                 ]}>Profile</Text>
             </TouchableOpacity>
-
-            <TouchableOpacity 
-                style={styles.footerTab}
-                onPress={() => navigation.navigate('Menu')}
-            >
-                <FontAwesome 
-                    name="bars" 
-                    size={24} 
-                    color={isRouteActive('Menu') ? '#001F3F' : '#666'} 
-                />
-                <Text style={[
-                    styles.footerText, 
-                    isRouteActive('Menu') && styles.activeText
-                ]}>Menu</Text>
-            </TouchableOpacity>
         </View>
     );
 }

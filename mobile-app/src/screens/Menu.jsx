@@ -1,70 +1,103 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useNavigation } from "@react-navigation/native";
 import { FontAwesome } from '@expo/vector-icons';
-import Navbar from '../components/Navbar';
+import { fetchTranslation } from '../utils/translate';
+import { useLanguage } from '../context/LanguageContext';
 
-export default function Menu() {
+export default function Menu({ onClose }) {
     const navigation = useNavigation();
+    const { language } = useLanguage();
+    const [isTranslating, setIsTranslating] = useState(true);
+
+    // Translation states
+    const [translations, setTranslations] = useState({
+        menu: "Menu",
+        attendance: "Attendance",
+        courses: "Courses",
+        therapists: "Therapists",
+        settings: "Settings",
+        helpSupport: "Help & Support",
+        logout: "Logout",
+        loading: "Loading..."
+    });
+
+    // Fetch translations when language changes
+    useEffect(() => {
+        const translateContent = async () => {
+            setIsTranslating(true);
+            try {
+                const translatedContent = {};
+                for (const [key, value] of Object.entries(translations)) {
+                    translatedContent[key] = await fetchTranslation(value, language);
+                }
+                setTranslations(translatedContent);
+            } catch (error) {
+                console.error('Error translating content:', error);
+            } finally {
+                setIsTranslating(false);
+            }
+        };
+
+        translateContent();
+    }, [language]);
+
+    if (isTranslating) {
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#4CAF50" />
+                <Text style={styles.loadingText}>{translations.loading}</Text>
+            </View>
+        );
+    }
 
     return (
         <View style={styles.container}>
-            {/* Header */}
+            {/* Close Button */}
             <View style={styles.header}>
-                <Text style={styles.headerTitle}>Menu</Text>
-                <TouchableOpacity 
-                    style={styles.notificationButton}
-                    onPress={() => navigation.navigate('Notifications')}
-                >
-                    <FontAwesome name="bell" size={24} color="#001F3F" />
+                <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                    <FontAwesome name="times" size={24} color="#001F3F" />
                 </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
-                {/* Menu Items */}
-                <View style={styles.section}>
-                    <TouchableOpacity style={styles.menuItem}>
-                        <FontAwesome name="calendar" size={24} color="#4CAF50" />
-                        <Text style={styles.menuItemText}>Attendance</Text>
-                        <FontAwesome name="chevron-right" size={20} color="#666" />
-                    </TouchableOpacity>
+            {/* Menu Items Container */}
+            <View style={styles.menuItemsContainer}>
+                <TouchableOpacity style={styles.menuItem}>
+                    <FontAwesome name="calendar" size={24} color="#4CAF50" />
+                    <Text style={styles.menuItemText}>{translations.attendance}</Text>
+                    <FontAwesome name="chevron-right" size={20} color="#666" />
+                </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.menuItem}>
-                        <FontAwesome name="book" size={24} color="#2196F3" />
-                        <Text style={styles.menuItemText}>Courses</Text>
-                        <FontAwesome name="chevron-right" size={20} color="#666" />
-                    </TouchableOpacity>
+                <TouchableOpacity style={styles.menuItem}>
+                    <FontAwesome name="book" size={24} color="#2196F3" />
+                    <Text style={styles.menuItemText}>{translations.courses}</Text>
+                    <FontAwesome name="chevron-right" size={20} color="#666" />
+                </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.menuItem}>
-                        <FontAwesome name="user-md" size={24} color="#9C27B0" />
-                        <Text style={styles.menuItemText}>Therapists</Text>
-                        <FontAwesome name="chevron-right" size={20} color="#666" />
-                    </TouchableOpacity>
+                <TouchableOpacity style={styles.menuItem}>
+                    <FontAwesome name="user-md" size={24} color="#9C27B0" />
+                    <Text style={styles.menuItemText}>{translations.therapists}</Text>
+                    <FontAwesome name="chevron-right" size={20} color="#666" />
+                </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.menuItem}>
-                        <FontAwesome name="cog" size={24} color="#FF9800" />
-                        <Text style={styles.menuItemText}>Settings</Text>
-                        <FontAwesome name="chevron-right" size={20} color="#666" />
-                    </TouchableOpacity>
+                <TouchableOpacity style={styles.menuItem}>
+                    <FontAwesome name="cog" size={24} color="#FF9800" />
+                    <Text style={styles.menuItemText}>{translations.settings}</Text>
+                    <FontAwesome name="chevron-right" size={20} color="#666" />
+                </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.menuItem}>
-                        <FontAwesome name="question-circle" size={24} color="#607D8B" />
-                        <Text style={styles.menuItemText}>Help & Support</Text>
-                        <FontAwesome name="chevron-right" size={20} color="#666" />
-                    </TouchableOpacity>
+                <TouchableOpacity style={styles.menuItem}>
+                    <FontAwesome name="question-circle" size={24} color="#607D8B" />
+                    <Text style={styles.menuItemText}>{translations.helpSupport}</Text>
+                    <FontAwesome name="chevron-right" size={20} color="#666" />
+                </TouchableOpacity>
+            </View>
 
-                    <TouchableOpacity style={[styles.menuItem, styles.logoutItem]}>
-                        <FontAwesome name="sign-out" size={24} color="#F44336" />
-                        <Text style={[styles.menuItemText, { color: '#F44336' }]}>Logout</Text>
-                    </TouchableOpacity>
-                </View>
-
-                {/* Add padding at bottom to ensure content is visible above footer */}
-                <View style={{ height: 80 }} />
-            </ScrollView>
-
-            {/* Footer Navigation */}
-            <Navbar />
+            {/* Logout Section - Fixed at Bottom */}
+            <TouchableOpacity style={styles.logoutButton}>
+                <FontAwesome name="sign-out" size={24} color="#F44336" />
+                <Text style={styles.logoutText}>{translations.logout}</Text>
+            </TouchableOpacity>
         </View>
     );
 }
@@ -72,43 +105,22 @@ export default function Menu() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#F5F5F5",
-    },
-    scrollContent: {
-        flex: 1,
+        backgroundColor: "#FFF",
     },
     header: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 15,
-        backgroundColor: '#FFF',
+        paddingTop: 50,
+        paddingHorizontal: 20,
+        paddingBottom: 20,
         borderBottomWidth: 1,
         borderBottomColor: '#eee',
-        paddingTop: 45,
     },
-    headerTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#001F3F',
-        flex: 1,
-        textAlign: 'center',
-    },
-    notificationButton: {
-        position: 'absolute',
-        right: 15,
-        top: 45,
+    closeButton: {
         padding: 5,
+        alignSelf: 'flex-end',
     },
-    section: {
-        backgroundColor: '#FFF',
-        margin: 10,
-        borderRadius: 10,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 5,
-        elevation: 3,
+    menuItemsContainer: {
+        flex: 1,
+        paddingTop: 20,
     },
     menuItem: {
         flexDirection: 'row',
@@ -123,7 +135,30 @@ const styles = StyleSheet.create({
         marginLeft: 15,
         flex: 1,
     },
-    logoutItem: {
-        borderBottomWidth: 0,
+    logoutButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 20,
+        borderTopWidth: 1,
+        borderTopColor: '#eee',
+        backgroundColor: '#FFF',
+    },
+    logoutText: {
+        fontSize: 16,
+        color: '#F44336',
+        marginLeft: 15,
+        fontWeight: '500',
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: "#FFF",
+    },
+    loadingText: {
+        marginTop: 10,
+        fontSize: 16,
+        color: '#4CAF50',
+        fontWeight: '600',
     },
 });

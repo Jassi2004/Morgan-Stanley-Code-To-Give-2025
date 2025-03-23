@@ -130,12 +130,12 @@ const studentSchema = new mongoose.Schema(
       primary: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Employee",
-        // required: [true, "Primary educator is required"],
+        required: [true, "Primary educator is required"],
       },
       secondary: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Employee",
-        // required: [true, "Secondary educator is required"],
+        required: [true, "Secondary educator is required"],
       },
     },    
     sessionType: {

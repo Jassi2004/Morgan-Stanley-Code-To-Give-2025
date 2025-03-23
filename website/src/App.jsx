@@ -8,6 +8,7 @@ import StudentLogin from "../pages/StudentLogin";
 import AddTeacherForm from "../components/form/AddTeacherForm";
 import AddStudentForm from "../components/form/AddStudentForm";
 import Team from "../pages/Team";
+import EmployeeDashboard from "../pages/EmployeeDashboard";
 import AddEducatorForm from "../components/form/AddEducatorForm";
 import EditStudent from "../components/student/EditStudent";
 import StudentProfile from "../components/student/StudentProfile";
@@ -39,7 +40,7 @@ function App() {
           <Route path="/login/admin" element={<AdminLogin />} />
           <Route path="/register/employee" element={<EmployeeRegister />} />
           <Route path="/login/employee" element={<EmployeeLogin />} />
-
+          <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
         </Route>
       </Routes>
     </Router>
