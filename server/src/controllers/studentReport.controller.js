@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { studentReport } from "../models/studentReport.model.js";
 import { Student } from "../models/students.model.js";
+import { Grade } from "../models/grades.model.js";
 
 const generateStudentReport = asyncHandler(async (req, res) => {
     try {
@@ -10,7 +11,6 @@ const generateStudentReport = asyncHandler(async (req, res) => {
             studentId,
             programFeedback,
             feedback,
-            assessmentReport
         } = req.body;
 
 
@@ -25,18 +25,25 @@ const generateStudentReport = asyncHandler(async (req, res) => {
             throw new ApiError(404, "Student not found.");
         }
 
+        const grades = await Grade.find({ student : student._id}).select("_id");
+
 
         const newReport = new studentReport({
             studentDetails: student._id,
             programFeedback,
             feedback,
-            assessmentReport
+            assessmentReport : grades.map(grade => grade._id)
         });
 
 
         await newReport.save();
 
-        const report = await studentReport.findById(newReport._id).populate("studentDetails", "StudentId firstName lastName program primaryDiagnosis guardianDetails.name guardianDetails.relation guardianDetails.contactNumber guardianDetails.parentEmail");
+
+        const report = await studentReport.findById(newReport._id).populate("studentDetails", "StudentId firstName lastName program primaryDiagnosis guardianDetails.name guardianDetails.relation guardianDetails.contactNumber guardianDetails.parentEmail")
+        .populate({
+            path : "assessmentReport",
+            select : "program marks feedback date assessmentName"
+        })
 
 
         
