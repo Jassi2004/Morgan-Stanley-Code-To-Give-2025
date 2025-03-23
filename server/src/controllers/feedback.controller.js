@@ -1,4 +1,4 @@
-import asyncHandler from "express-async-handler";
+import {asyncHandler} from "../utils/asyncHandler.js";
 import mongoose from "mongoose";
 import { Student } from "../models/students.model.js";
 import { Employee } from "../models/employee.model.js";
@@ -22,7 +22,7 @@ export const sendFeedback = asyncHandler(async (req, res) => {
     }
   
     const student = await Student.findById(studentId);
-    console.log("Student data:", student);
+    // console.log("Student data:", student);
   
     if (!student) {        
         console.log("Student not found:", studentId);
@@ -30,7 +30,7 @@ export const sendFeedback = asyncHandler(async (req, res) => {
     }
   
     const educator = await Employee.findById(educatorId);
-    console.log("Educator data:", educator);
+    // console.log("Educator data:", educator);
   
     if (!educator) {
         console.log("Educator not found:", educatorId);
@@ -58,7 +58,7 @@ export const sendFeedback = asyncHandler(async (req, res) => {
         rating: rating || 5 // Default rating if not provided
     });
   
-    console.log("Feedback sent successfully:", feedback._id);
+    // console.log("Feedback sent successfully:", feedback._id);
     return res.status(201).json(new ApiResponse(201, feedback, "Feedback sent successfully"));
 });
 
@@ -70,7 +70,7 @@ export const sendFeedback = asyncHandler(async (req, res) => {
 export const getSentFeedbacks = asyncHandler(async (req, res) => {
   const { studentId } = req.params;
 
-  console.log("Fetching sent feedbacks for student:", studentId);
+  // console.log("Fetching sent feedbacks for student:", studentId);
   const feedbacks = await Feedback.find({ senderId: studentId })
     .populate("receiverId", "name")
     .sort({ createdAt: -1 }); // Sort by newest first
@@ -89,12 +89,11 @@ export const getSentFeedbacks = asyncHandler(async (req, res) => {
  * @access  Public
  */
 export const getReceivedFeedbacks = asyncHandler(async (req, res) => {
-  const { educatorId, studentId } = req.params;
+  const { educatorId } = req.params;
 
-  console.log("Fetching feedbacks sent by educator:", educatorId, "to student:", studentId);
-  
-  const feedbacks = await Feedback.find({ senderId: educatorId, receiverId: studentId })
-    .populate("receiverId", "firstName lastName") // Get student details
+  // console.log("Fetching received feedbacks for educator:", educatorId);
+  const feedbacks = await Feedback.find({ receiverId: educatorId })
+    .populate("senderId", "firstName lastName")
     .sort({ createdAt: -1 }); // Sort by newest first
 
   if (!feedbacks.length) {

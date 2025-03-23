@@ -30,9 +30,12 @@ const generateAccessAndRefreshTokens = async(userId) => {
 
 const createEmployeeAccount = asyncHandler(async (req, res) => {
     try {
-        const { employeeId, name, gender, email, password, designation, department, employmentType, program, phone, DOB, dateOfJoining, status, workLocation, emergencyContact, bloodGroup } = req.body;
-        
-        if (!employeeId || !name || !email || !password || !designation || !department || !employmentType || !program || !phone || !DOB || !dateOfJoining || !status || !emergencyContact || !workLocation || !bloodGroup) {
+        const {
+            employeeId, name, gender, email, password, designation, department, employmentType, 
+            program, phone, DOB, dateOfJoining, status, workLocation, bloodGroup
+        } = req.body;
+
+        if (!employeeId || !name || !email || !password || !designation || !department || !employmentType || !program || !phone || !DOB || !dateOfJoining || !status || !workLocation || !bloodGroup) {
             throw new ApiError(400, "All required fields must be provided");
         }
 
@@ -40,59 +43,44 @@ const createEmployeeAccount = asyncHandler(async (req, res) => {
         if (existingEmployee) {
             throw new ApiError(400, "Employee with the provided email, phone, or employeeId already exists");
         }
-        
-
-
 
         const user = await Employee.create({
-                employeeId,
-                name,
-                gender,
-                email,
-                password,
-                avatar: {
-                    public_id : "",
-                    secure_url :""
-                },
-                designation,
-                department,
-                employmentType,
-                program,
-                phone,
-                DOB,
-                dateOfJoining,
-                status,
-                workLocation,
-                
-                bloodGroup
+            employeeId,
+            name,
+            gender,
+            email,
+            password,
+            avatar: { public_id: "", secure_url: "" },
+            designation,
+            department,
+            employmentType,
+            program,
+            phone,
+            DOB,
+            dateOfJoining,
+            status,
+            workLocation,
+            bloodGroup,
+            role: "Employee"  // ✅ Automatically assigned
         });
 
-            const newUser = await Employee.findById(user._id).select("-password -refreshToken");
-            if(!newUser){
-                throw new ApiError(500, "Failed to create employee account");
-            }
-            const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
+        const newUser = await Employee.findById(user._id).select("-password -refreshToken");
+        if (!newUser) {
+            throw new ApiError(500, "Failed to create employee account");
+        }
 
-            return res.status(201)
+        const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
+
+        return res.status(201)
             .cookie("accessToken", accessToken, cookieOptions)
             .cookie("refreshToken", refreshToken, cookieOptions)
-            .json(
-                new ApiResponse(
-                    201,
-                    {
-                        user, 
-                        accessToken, 
-                        refreshToken
-                    },
-                "Employee account created successfully"
-                )
-            )
-
+            .json(new ApiResponse(201, { user, accessToken, refreshToken }, "Employee account created successfully"));
     } catch (err) {
         console.error(`Error occurred while creating employee account: ${err}`);
         throw new ApiError(500, err?.message || "Internal server error");
     }
 });
+
 
 const loginEmployeeAccount = asyncHandler(async (req, res) => {
     try {
