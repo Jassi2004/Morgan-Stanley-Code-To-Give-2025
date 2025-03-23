@@ -1,12 +1,28 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import {useState} from "react";
 
 const EmployeeLogin = () => {
+    const [ email, setEmail ] = useState("");
+    const [ password, setPassword ] = useState(""); 
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    navigate("/dashboard"); // Redirects to the dashboard after login
+    const response = await fetch("http://localhost:8000/api/v1/employee/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    console.log(response);
+    
+    if(response.status == 200){
+        navigate("/");
+    }else{
+        window.alert("Wrong credentials")
+    }
+    const data = await response.json();
+    console.log(data);
   };
 
   return (
@@ -15,11 +31,13 @@ const EmployeeLogin = () => {
         <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-6 text-center">
           Employee Login
         </h2>
-        <form className="space-y-4" onSubmit={handleLogin}>
+        <form className="space-y-4" onSubmit={handleSubmit}>
           <div>
             <label className="block text-gray-700 dark:text-gray-300 font-medium mb-1">Email:</label>
             <input
               type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
               className="w-full px-4 py-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
               required
@@ -29,6 +47,8 @@ const EmployeeLogin = () => {
             <label className="block text-gray-700 dark:text-gray-300 font-medium mb-1">Password:</label>
             <input
               type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
               className="w-full px-4 py-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
               required
