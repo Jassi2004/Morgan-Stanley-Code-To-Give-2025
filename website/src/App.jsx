@@ -13,6 +13,7 @@ import EditStudent from "../components/student/EditStudent";
 import StudentProfile from "../components/student/StudentProfile";
 import AdminLogin from "../pages/AdminLogin";
 import EmployeeRegister from "../pages/EmplooyeeRegister";
+import EmployeeLogin from "../pages/EmployeeLogin";
 
 function App() {
   return (
@@ -37,6 +38,7 @@ function App() {
           <Route path="/aboutTeam" element={<Team />} />
           <Route path="/login/admin" element={<AdminLogin />} />
           <Route path="/register/employee" element={<EmployeeRegister />} />
+          <Route path="/login/employee" element={<EmployeeLogin />} />
 
         </Route>
       </Routes>
