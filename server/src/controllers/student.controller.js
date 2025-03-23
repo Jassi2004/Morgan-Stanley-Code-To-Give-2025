@@ -414,7 +414,6 @@ const updateProfile = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Student not found");
   }
 
-
   if (req.files?.avatar?.[0]?.path) {
     const avatar = await uploadOnCloudinary(req.files.avatar[0].path);
     if (avatar) {
@@ -441,10 +440,12 @@ const updateProfile = asyncHandler(async (req, res) => {
       { StudentId: studentId },
       { $set: updates },
       {
-
-        new: true,
-        runValidators: true,
-        select: "-password -refreshToken",
+        new: true, // Return the updated document
+        runValidators: true, // Validate updates
+        select: "-password -refreshToken", // Exclude sensitive fields
+        new: true, 
+        runValidators: true, 
+        select: "-password -refreshToken", 
 
       }
     );
