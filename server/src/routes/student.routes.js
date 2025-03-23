@@ -1,22 +1,45 @@
-import express from "express";
-import { registerStudent, loginStudent, logoutStudent, profilePage, changePassword, fetchAllStudents,updateProfile, uploadProfilePicture } from "../controllers/student.controller.js";
-import  { upload } from "../middlewares/multer.middleware.js";
-import { verifyStudent } from "../middlewares/auth.middleware.js";
+import { Router } from 'express';
+import { upload } from '../middlewares/multer.middleware.js';
+import { verifyStudent, verifyAdmin } from '../middlewares/auth.middleware.js';
+import {
+    registerStudent,
+    loginStudent,
+    logoutStudent,
+    profilePage,
+    changePassword,
+    fetchAllStudents,
+    updateProfile,
+    uploadProfilePicture
+} from '../controllers/student.controller.js';
 
-const router = express.Router();
+const router = Router();
 
-// Student Authentication Routes
-router.post("/register", registerStudent);
-router.post("/login", loginStudent);
-router.post("/logout", logoutStudent);
+// Public routes (no auth required)
+router.route("/register").post(registerStudent);
+router.route("/login").post(loginStudent);
 
+// Protected routes (require student authentication)
+router.route("/logout").get(verifyStudent, logoutStudent);
+router.route("/profile").get(verifyStudent, profilePage);
+router.route("/change-password").post(verifyStudent, changePassword);
 
-// Student Profile Routes
-router.post("/profile", profilePage);
-router.put("/change-password", changePassword);
-router.get("/fetchAllStudents", fetchAllStudents);
-router.put("/update-profile", updateProfile);
+// File upload routes with student authentication
+router.route("/upload-avatar").post(
+    verifyStudent,
+    upload.single("avatar"),
+    uploadProfilePicture
+);
 
-router.post("/uploadAvatar", verifyStudent, upload.single("avatar"), uploadProfilePicture);
+router.route("/update-profile").put(
+    verifyStudent,
+    upload.fields([
+        { name: "avatar", maxCount: 1 },
+        { name: "UDID", maxCount: 1 }
+    ]),
+    updateProfile
+);
+
+// Admin only routes
+router.route("/all").get(verifyEmployee, verifyAdmin, fetchAllStudents);
 
 export default router;

@@ -2,7 +2,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Student } from "../models/students.model.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
 import { AdminNotification } from "../models/adminNotification.model.js";
 import bcrypt from "bcryptjs";
 
@@ -29,115 +29,128 @@ const generateAccessAndRefreshToken = async (studentId) => {
 
 const registerStudent = asyncHandler(async (req, res) => {
   const {
-      StudentId,
+    firstName,
+    lastName,
+    studentEmail,
+    password,
+    gender,
+    dateOfBirth,
+    primaryDiagnosis,
+    allergies,
+    transport,
+    address,
+    guardianDetails,
+    preferredLanguage,
+    sessionType,
+    fathersName,
+    mothersName,
+    parentEmail,
+    contactNumber,
+    UDID // Optional field
+  } = req.body;
+
+  // Generate StudentId
+  const StudentId = `STU${Date.now()}`;
+
+  // Validate required fields
+  if (
+    [
       firstName,
       lastName,
-      studentEmail,
+      studentEmail, // Added to required fields
       password,
       gender,
       dateOfBirth,
       primaryDiagnosis,
-      enrollmentYear,
       address,
-      guardianDetails,
-      preferredLanguage,
-      transport,
-      UDID,
-  } = req.body;
-
-  // Validate required fields
-  if (
-      [
-          StudentId,
-          firstName,
-          lastName,
-          studentEmail,
-          password,
-          gender,
-          dateOfBirth,
-          primaryDiagnosis,
-          enrollmentYear,
-          address,
-      ].some((field) => field === undefined || field.trim() === "")
+      fathersName,
+      mothersName,
+      parentEmail,
+      contactNumber
+    ].some((field) => field === undefined || field.trim() === "")
   ) {
-      throw new ApiError(400, "All required fields must be filled.");
+    throw new ApiError(400, "All required fields must be filled.");
   }
 
   // Check for existing student
   const existingStudent = await Student.findOne({
-      $or: [{ studentEmail }, { StudentId }],
+    $or: [{ studentEmail }, { StudentId }],
   });
   if (existingStudent) {
-      throw new ApiError(
-          409,
-          "Student with the same email or ID already exists."
-      );
+    throw new ApiError(
+      409,
+      "Student with the same email or ID already exists."
+    );
   }
 
   // Create new student
   const student = await Student.create({
-      StudentId,
-      firstName,
-      lastName,
-      studentEmail,
-      password,
-      gender,
-      dateOfBirth,
-      primaryDiagnosis,
-      enrollmentYear,
-      address,
-      guardianDetails,
-      preferredLanguage: preferredLanguage || "English",
-      transport: transport || false,
-      UDID: {
-          isAvailable: UDID?.isAvailable || false,
-      },
-      educator: [],
+    StudentId,
+    firstName,
+    lastName,
+    studentEmail,
+    password,
+    gender,
+    dateOfBirth,
+    primaryDiagnosis,
+    allergies: allergies || [],
+    transport: transport || false,
+    address,
+    guardianDetails: {
+      name: fathersName,
+      relation: "Father",
+      contactNumber,
+      parentEmail
+    },
+    preferredLanguage: preferredLanguage || "English",
+    sessionType: sessionType || "Offline",
+    UDID: {
+      isAvailable: UDID?.isAvailable || false,
+      public_id: UDID?.public_id || "",
+      secure_url: UDID?.secure_url || ""
+    }
   });
 
-  // Generate tokens for the student
+  // Rest of the code remains the same...
   const { accessToken, refreshToken } = await generateAccessAndRefreshToken(student._id);
 
-  // Fetch the created student (excluding sensitive fields)
   const createdStudent = await Student.findById(student._id).select(
-      "-password -refreshToken"
+    "-password -refreshToken"
   );
 
   if (!createdStudent) {
-      throw new ApiError(500, "Failed to register student.");
+    throw new ApiError(500, "Failed to register student.");
   }
 
-  // Create a notification for the admin
   let notification;
   try {
-      notification = await AdminNotification.create({
-          studentId: createdStudent._id,
-          message: `New student registration request from ${firstName} ${lastName}`,
-          type: "STUDENT_REGISTRATION",
-          status: "PENDING",
-      });
-      console.log("Admin notification created successfully:", notification);
+    notification = await AdminNotification.create({
+      studentId: createdStudent._id,
+      message: `New student registration request from ${firstName} ${lastName}`,
+      type: "STUDENT_REGISTRATION",
+      status: "PENDING",
+    });
+    console.log("Admin notification created successfully:", notification);
   } catch (error) {
-      console.error("Failed to create admin notification:", error);
-      throw new ApiError(500, "Failed to notify admin. Registration is incomplete.");
+    console.error("Failed to create admin notification:", error);
+    throw new ApiError(500, "Failed to notify admin. Registration is incomplete.");
   }
 
-  // Respond with success
   return res
-      .status(201)
-      .cookie("accessToken", accessToken, cookieOptions)
-      .cookie("refreshToken", refreshToken, cookieOptions)
-      .json(
-          new ApiResponse(
-              201,
-              {
-                  student: createdStudent,
-                  notification: notification, // Include the notification in the response
-                  tokens: { accessToken, refreshToken },
-              },
-              "Student registered successfully. Admin has been notified."
-          )
-      );
+    .status(201)
+    .cookie("accessToken", accessToken, cookieOptions)
+    .cookie("refreshToken", refreshToken, cookieOptions)
+    .json(
+      new ApiResponse(
+        201,
+        {
+          student: createdStudent,
+          notification: notification,
+          tokens: { accessToken, refreshToken },
+        },
+        "Student registered successfully. Admin has been notified."
+      )
+    );
 });
 
 
@@ -222,56 +235,69 @@ const profilePage = asyncHandler(async (req, res) => {
 
   const student = await Student.findById(studentid)
     .select("-password -refreshToken")
-    .populate("educator", "name designation email")
-    .populate("programs", "name description");
+    .populate("educators.primary", "name designation email")
+    .populate("educators.secondary", "name designation email");
 
   if (!student) {
     throw new ApiError(404, "Student not found");
   }
 
   const profileData = {
+    basicInfo: {
+      StudentId: student.StudentId,
+      firstName: student.firstName,
+      lastName: student.lastName,
+      studentEmail: student.studentEmail,
+      gender: student.gender,
+      dateOfBirth: student.dateOfBirth,
+      avatar: student.avatar,
+      UDID: student.UDID
+    },
     enrollmentStatus: {
       isApproved: student.isApproved,
       status: student.status,
-      enrollmentYear: student.enrollmentYear.getFullYear(),
-    },
-    assignedStaff: {
-      primaryEducator: student.educator[0] || null,
-      secondaryEducator: student.educator[1] || null,
-    },
-    programs: {
-      enrolledPrograms: student.programs,
-      numberOfSessions: student.numberOfSessions,
-      timings: student.timings,
-      daysOfWeek: student.daysOfWeek,
-      sessionType: student.sessionType,
-    },
-    basicInfo: {
-      name: `${student.firstName} ${student.lastName}`,
-      email: student.studentEmail,
-      gender: student.gender,
-      dateOfBirth: student.dateOfBirth,
-      StudentId: student.StudentId,
-      avatar: student.avatar,
-      UDID: student.UDID,
+      enrollmentYear: student.enrollmentYear
     },
     medicalInfo: {
       primaryDiagnosis: student.primaryDiagnosis,
       comorbidity: student.comorbidity,
       allergies: student.allergies,
-      medicalHistory: student.medicalHistory,
+      medicalHistory: {
+        medications: student.medicalHistory?.medications || [],
+        surgeries: student.medicalHistory?.surgeries || [],
+        notes: student.medicalHistory?.notes
+      }
     },
-    guardianInfo: student.guardianDetails,
+    programDetails: {
+      program: student.program,
+      numberOfSessions: student.numberOfSessions,
+      timings: student.timings,
+      daysOfWeek: student.daysOfWeek,
+      sessionType: student.sessionType
+    },
+    educatorInfo: {
+      primary: student.educators?.primary || null,
+      secondary: student.educators?.secondary || null
+    },
+    guardianDetails: {
+      name: student.guardianDetails?.name,
+      relation: student.guardianDetails?.relation,
+      contactNumber: student.guardianDetails?.contactNumber,
+      parentEmail: student.guardianDetails?.parentEmail
+    },
     preferences: {
       preferredLanguage: student.preferredLanguage,
-      deviceAccess: student.deviceAccess,
-      transport: student.transport,
+      transport: student.transport
     },
     address: student.address,
-    strengths: student.strengths,
-    weaknesses: student.weaknesses,
+    strengths: student.strengths || [],
+    weaknesses: student.weaknesses || [],
     comments: student.comments,
-    progressReports: student.progressReports,
+    progressReports: student.progressReports?.map(report => ({
+      date: report.date,
+      educator: report.educator,
+      report: report.report
+    })) || []
   };
 
   return res
@@ -406,7 +432,6 @@ const updateProfile = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Student ID is required for updating profile");
   }
 
-
   const updates = req.body;
 
   const student = await Student.findOne({ StudentId: studentId });
@@ -414,24 +439,29 @@ const updateProfile = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Student not found");
   }
 
-  if (req.files?.avatar?.[0]?.path) {
-    const avatar = await uploadOnCloudinary(req.files.avatar[0].path);
-    if (avatar) {
-      updates.avatar = {
-        public_id: avatar.public_id,
-        secure_url: avatar.secure_url,
-      };
+  // Handle file uploads if present
+  if (req.files) {
+    // Handle avatar upload
+    if (req.files.avatar?.[0]?.path) {
+      const avatar = await uploadOnCloudinary(req.files.avatar[0].path);
+      if (avatar?.secure_url) {
+        updates.avatar = {
+          public_id: avatar.public_id,
+          secure_url: avatar.secure_url,
+        };
+      }
     }
-  }
 
-  if (req.files?.UDID?.[0]?.path) {
-    const UDID = await uploadOnCloudinary(req.files.UDID[0].path);
-    if (UDID) {
-      updates.UDID = {
-        isAvailable: true,
-        public_id: UDID.public_id,
-        secure_url: UDID.secure_url,
-      };
+    // Handle UDID upload
+    if (req.files.UDID?.[0]?.path) {
+      const UDID = await uploadOnCloudinary(req.files.UDID[0].path);
+      if (UDID?.secure_url) {
+        updates.UDID = {
+          isAvailable: true,
+          public_id: UDID.public_id,
+          secure_url: UDID.secure_url,
+        };
+      }
     }
   }
 
@@ -442,15 +472,10 @@ const updateProfile = asyncHandler(async (req, res) => {
       {
         new: true, // Return the updated document
         runValidators: true, // Validate updates
-        select: "-password -refreshToken", // Exclude sensitive fields
-        new: true, 
-        runValidators: true, 
-        select: "-password -refreshToken", 
-
+        select: "-password -refreshToken" // Exclude sensitive fields
       }
     );
 
-    // Ensure the update was successful
     if (!updatedStudent) {
       throw new ApiError(500, "Failed to update student information");
     }
@@ -469,44 +494,58 @@ const updateProfile = asyncHandler(async (req, res) => {
 });
 
 const uploadProfilePicture = asyncHandler(async (req, res) => {
-  try {
-    const studentid = req.user?._id;
-    console.log(studentid);
-    if (!studentid) {
-      throw new ApiError(400, "Student ID is required");
-    }
+  const studentid = req.user?._id;
 
-    if (!req.file) {
-      throw new ApiError(400, "Please upload avatar file");
-    }
-
-    const localFilePath = req.file?.path;
-    const avatar = await uploadOnCloudinary(localFilePath);
-
-    if (!avatar.secure_url) {
-      throw new ApiError(400, "Please try again, avatar not updated");
-    }
-
-    const student = await Student.findById(studentid);
-    if (!student) {
-      throw new ApiError(404, "Student not found");
-    }
-
-    student.avatar.public_id = avatar.public_id;
-    student.avatar.secure_url = avatar.secure_url;
-
-    await student.save({ validateBeforeSave: false });
-
-
-    return res
-      .status(200)
-      .json(new ApiResponse(200, student, "Avatar uploaded successfully"));
-  } catch (error) {
-    console.error(
-      `Error occurred while updating profile picture: ${error.message}`
-    );
-    throw new ApiError(400, "Error occurred while uploading profile picture");
+  if (!studentid) {
+    throw new ApiError(400, "Student ID is required");
   }
+
+  if (!req.file) {
+    throw new ApiError(400, "Please upload avatar file");
+  }
+
+  const student = await Student.findById(studentid);
+  if (!student) {
+    throw new ApiError(404, "Student not found");
+  }
+
+  // Upload to cloudinary
+  const localFilePath = req.file.path;
+  const avatar = await uploadOnCloudinary(localFilePath);
+
+  if (!avatar?.secure_url) {
+    throw new ApiError(400, "Failed to upload avatar to cloud storage");
+  }
+
+  // Delete old avatar from cloudinary if exists
+  if (student.avatar?.public_id) {
+    try {
+      await deleteFromCloudinary(student.avatar.public_id);
+    } catch (error) {
+      console.error("Failed to delete old avatar:", error);
+      // Continue with update even if delete fails
+    }
+  }
+
+  // Update student avatar
+  student.avatar = {
+    public_id: avatar.public_id,
+    secure_url: avatar.secure_url
+  };
+
+  const updatedStudent = await student.save({ validateBeforeSave: false });
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200, 
+        {
+          avatar: updatedStudent.avatar
+        },
+        "Avatar uploaded successfully"
+      )
+    );
 });
 
 export {

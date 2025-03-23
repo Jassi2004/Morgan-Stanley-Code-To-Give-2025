@@ -210,11 +210,7 @@ const studentSchema = new mongoose.Schema(
       enum: ["English", "Hindi", "Marathi", "Sign Language", "Other"],
       default: "English",
     },
-    deviceAccess: {
-      type: [String],
-      enum: ["Tablet", "Laptop", "Smartphone", "Hearing Aid", "Braille Device"],
-      default: [],
-    },
+    
 
     refreshToken: {
       type: String,
