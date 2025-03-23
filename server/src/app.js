@@ -5,7 +5,10 @@ import cors from "cors";
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+    origin :[process.env.FRONTEND_URL],
+    credentials : true
+}))
 
 
 app.use(express.json({ limit : "10mb" }));
@@ -21,7 +24,7 @@ import notificationRouter from "./routes/notification.routes.js"
 import feedbackRouter from "./routes/feedback.routes.js"
 import adminNotificationRouter from "./routes/adminNotification.route.js"
 
-app.use("/api/v1/employee", employeeRouter);
+app.use("/api/v1/employee", employeeRouter); 
 app.use("/api/v1/student", studentRouter);
 app.use("/api/v1/notification", notificationRouter);
 app.use("/api/v1/feedback", feedbackRouter);
