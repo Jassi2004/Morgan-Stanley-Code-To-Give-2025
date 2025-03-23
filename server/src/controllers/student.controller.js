@@ -171,13 +171,9 @@ const loginStudent = asyncHandler(async (req, res) => {
   }
 
   if (!student.isApproved) {
-    return res.status(403).json(
-      new ApiResponse(
-        403,
-        null,
-        "Your account is pending admin approval. Please wait for approval before logging in."
-      )
-    );
+    return res.status(200).json({
+      message: "Please wait for admin approval before logging in."
+    });
   }
 
   const isPasswordCorrect = await student.isPasswordCorrect(password);
