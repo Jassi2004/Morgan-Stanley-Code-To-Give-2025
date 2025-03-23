@@ -86,7 +86,7 @@ const employeeSchema = new Schema({
         type : String,
         enum : ["Active", "Discontinued", "Temporary Discontinue"],
         default : "Active",
-        required : [true, "Status of the employement is required"],
+        //required : [true, "Status of the employement is required"],
     },
     tenure: {
         type: String,
