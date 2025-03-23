@@ -171,7 +171,9 @@ const loginStudent = asyncHandler(async (req, res) => {
   }
 
   if (!student.isApproved) {
-    throw new ApiError(403, "Your account is pending admin approval");
+    return res.status(200).json({
+      message: "Please wait for admin approval before logging in."
+    });
   }
 
   const isPasswordCorrect = await student.isPasswordCorrect(password);
@@ -420,6 +422,7 @@ const updateProfile = asyncHandler(async (req, res) => {
   if (!studentId) {
     throw new ApiError(400, "Student ID is required for updating profile");
   }
+
 
   const updates = req.body;
 
