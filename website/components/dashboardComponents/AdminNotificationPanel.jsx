@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'react-toastify';
 import { CheckCircle, XCircle, AlertCircle } from 'lucide-react';
-import { getPendingNotifications, approveRegistration, rejectRegistration } from '../../services/adminNotificationServices';
+import { getAllAdminNotifications, approveRegistration, rejectRegistration } from '../../services/adminNotificationServices';
 
 const AdminNotificationPanel = () => {
     const [notifications, setNotifications] = useState([]);
@@ -15,18 +15,18 @@ const AdminNotificationPanel = () => {
     }, []);
 
     const fetchNotifications = async () => {
+        setLoading(true);
         try {
-            const response = await getPendingNotifications();
-            console.log('Raw API response:', response); // Debug log
-            // Check if response is an array directly or nested in data property
-            const notificationData = Array.isArray(response) ? response : 
-                                   Array.isArray(response.data) ? response.data :
-                                   response.data?.notifications || [];
-            console.log('Processed notifications:', notificationData); // Debug log
+            const response = await getAllAdminNotifications();
+            const notificationData =
+                Array.isArray(response) ? response :
+                Array.isArray(response.data) ? response.data :
+                response.data?.notifications || [];
             setNotifications(notificationData);
         } catch (error) {
             console.error('Notification fetch error:', error);
-            toast.error(error.message || 'Failed to fetch notifications');
+            toast.error(error?.message || 'Failed to fetch notifications');
+            setNotifications([]);
         } finally {
             setLoading(false);
         }
@@ -36,32 +36,39 @@ const AdminNotificationPanel = () => {
         try {
             await approveRegistration(notificationId);
             toast.success('Registration approved successfully');
-            fetchNotifications(); // Refresh the list
+            fetchNotifications();
         } catch (error) {
-            toast.error(error.message || 'Failed to approve registration');
+            console.error('Approval error:', error);
+            toast.error(error?.message || 'Failed to approve registration');
         }
     };
 
     const handleReject = async (notificationId) => {
+        if (!rejectReason.trim()) {
+            toast.warning('Rejection reason is required');
+            return;
+        }
+
         try {
             await rejectRegistration(notificationId, rejectReason);
             toast.success('Registration rejected successfully');
             setSelectedNotification(null);
             setRejectReason('');
-            fetchNotifications(); // Refresh the list
+            fetchNotifications();
         } catch (error) {
-            toast.error(error.message || 'Failed to reject registration');
+            console.error('Rejection error:', error);
+            toast.error(error?.message || 'Failed to reject registration');
         }
     };
 
     const getNotificationIcon = (type) => {
         switch (type) {
             case 'STUDENT_REGISTRATION':
-                return <AlertCircle className="w-5 h-5 text-blue-500" />;
+                return <AlertCircle className="w-5 h-5 text-[var(--color-info)]" />;
             case 'EMPLOYEE_REGISTRATION':
-                return <AlertCircle className="w-5 h-5 text-purple-500" />;
+                return <AlertCircle className="w-5 h-5 text-[var(--color-brand)]" />;
             default:
-                return <AlertCircle className="w-5 h-5 text-gray-500" />;
+                return <AlertCircle className="w-5 h-5 text-[var(--color-text-secondary)]" />;
         }
     };
 
@@ -70,10 +77,10 @@ const AdminNotificationPanel = () => {
             <div className="bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] rounded-xl shadow-sm p-6">
                 <div className="animate-pulse flex space-x-4">
                     <div className="flex-1 space-y-4 py-1">
-                        <div className="h-4 bg-[var(--color-bg-hover)] rounded w-3/4"></div>
+                        <div className="h-4 bg-[var(--color-bg-accent)] rounded w-3/4"></div>
                         <div className="space-y-2">
-                            <div className="h-4 bg-[var(--color-bg-hover)] rounded"></div>
-                            <div className="h-4 bg-[var(--color-bg-hover)] rounded w-5/6"></div>
+                            <div className="h-4 bg-[var(--color-bg-accent)] rounded"></div>
+                            <div className="h-4 bg-[var(--color-bg-accent)] rounded w-5/6"></div>
                         </div>
                     </div>
                 </div>
@@ -90,7 +97,7 @@ const AdminNotificationPanel = () => {
                     notifications.map((notification) => (
                         <div
                             key={notification._id}
-                            className="flex items-start space-x-3 p-4 rounded-lg transition-colors duration-300 hover:bg-[var(--color-bg-hover)] border border-[var(--color-border-primary)]"
+                            className="flex items-start space-x-3 p-4 rounded-lg hover:bg-[var(--color-bg-accent)] border border-[var(--color-border-primary)]"
                         >
                             <div className="flex-shrink-0">
                                 {getNotificationIcon(notification.type)}
@@ -110,24 +117,22 @@ const AdminNotificationPanel = () => {
                                     <div className="flex space-x-2">
                                         <button
                                             onClick={() => handleApprove(notification._id)}
-                                            className="p-1 rounded-full hover:bg-green-100 dark:hover:bg-green-900 transition-colors duration-200"
+                                            className="px-3 py-1 rounded-lg bg-[var(--color-brand)] text-white hover:bg-[var(--color-brand-hover)] transition-all"
                                             title="Approve"
                                         >
-                                            <CheckCircle className="w-5 h-5 text-green-500" />
+                                            Approve
                                         </button>
                                         <button
                                             onClick={() => setSelectedNotification(notification)}
-                                            className="p-1 rounded-full hover:bg-red-100 dark:hover:bg-red-900 transition-colors duration-200"
+                                            className="px-3 py-1 rounded-lg bg-[var(--color-danger)] text-white hover:bg-red-600 transition-all"
                                             title="Reject"
                                         >
-                                            <XCircle className="w-5 h-5 text-red-500" />
+                                            Reject
                                         </button>
                                     </div>
                                 </div>
 
-                                <p className="text-sm mt-2">
-                                    {notification.message}
-                                </p>
+                                <p className="text-sm mt-2">{notification.message}</p>
 
                                 {selectedNotification?._id === notification._id && (
                                     <div className="mt-3 space-y-2">
@@ -144,14 +149,13 @@ const AdminNotificationPanel = () => {
                                                     setSelectedNotification(null);
                                                     setRejectReason('');
                                                 }}
-                                                className="px-3 py-1 text-sm rounded-lg hover:bg-[var(--color-bg-hover)]"
+                                                className="px-3 py-1 text-sm rounded-lg bg-[var(--color-bg-accent)] hover:bg-[var(--color-bg-primary)]"
                                             >
                                                 Cancel
                                             </button>
                                             <button
                                                 onClick={() => handleReject(notification._id)}
-                                                className="px-3 py-1 text-sm rounded-lg bg-red-500 text-white hover:bg-red-600"
-                                                disabled={!rejectReason.trim()}
+                                                className="px-3 py-1 text-sm rounded-lg bg-[var(--color-danger)] text-white hover:bg-red-600"
                                             >
                                                 Confirm Reject
                                             </button>
@@ -171,4 +175,4 @@ const AdminNotificationPanel = () => {
     );
 };
 
-export default AdminNotificationPanel; 
+export default AdminNotificationPanel;

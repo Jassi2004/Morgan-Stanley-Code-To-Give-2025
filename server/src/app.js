@@ -25,7 +25,7 @@ app.use("/api/v1/employee", employeeRouter);
 app.use("/api/v1/student", studentRouter);
 app.use("/api/v1/notification", notificationRouter);
 app.use("/api/v1/feedback", feedbackRouter);
-app.use("/api/v1/admin-notification", adminNotificationRouter); 
+app.use("/api/v1/adminnotification", adminNotificationRouter); 
 
 
 export { app };

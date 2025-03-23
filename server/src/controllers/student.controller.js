@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Student } from "../models/students.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { AdminNotification } from "../models/adminNotification.model.js";
 import bcrypt from "bcryptjs";
 
 const cookieOptions = {
@@ -44,6 +45,7 @@ const registerStudent = asyncHandler(async (req, res) => {
     UDID,
   } = req.body;
 
+  // Validate required fields
   if (
     [
       StudentId,
@@ -61,6 +63,7 @@ const registerStudent = asyncHandler(async (req, res) => {
     throw new ApiError(400, "All required fields must be filled");
   }
 
+  // Check for existing student
   const existingStudent = await Student.findOne({
     $or: [{ studentEmail }, { StudentId }],
   });
@@ -82,6 +85,7 @@ const registerStudent = asyncHandler(async (req, res) => {
   //   UDIDUrls = await uploadOnCloudinary(req.files.UDID[0].path);
   // }
 
+  // Create new student
   const student = await Student.create({
     StudentId,
     firstName,
@@ -108,10 +112,12 @@ const registerStudent = asyncHandler(async (req, res) => {
     educator: [],
   });
 
+  // Generate tokens for the student
   const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
     student._id
   );
 
+  // Fetch the created student (excluding sensitive fields)
   const createdStudent = await Student.findById(student._id).select(
     "-password -refreshToken"
   );
@@ -120,6 +126,22 @@ const registerStudent = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Failed to register student");
   }
 
+  // Create a notification for the admin
+  try {
+    const notification = await AdminNotification.create({
+      studentId: createdStudent._id,
+      message: `New student registration request from ${firstName} ${lastName}`,
+      type: "STUDENT_REGISTRATION",
+      status: "PENDING",
+    });
+    console.log("Admin Notification created successfully:", notification);
+  } catch (error) {
+    console.error("Failed to create admin notification:", error);
+    // Optionally handle notification creation errors
+    // You might want to proceed with student registration even if notification fails
+  }
+
+  // Respond with success
   return res
     .status(201)
     .cookie("accessToken", accessToken, cookieOptions)
@@ -131,7 +153,7 @@ const registerStudent = asyncHandler(async (req, res) => {
           student: createdStudent,
           tokens: { accessToken, refreshToken },
         },
-        "Student registered successfully"
+        "Student registered successfully. Admin has been notified."
       )
     );
 });

@@ -1,10 +1,10 @@
 import express from 'express';
-import { 
-    registerStudent, 
-    registerEmployee, 
+import {
+    registerStudent,
+    registerEmployee,
     approveRegistration,
     rejectRegistration,
-    getPendingNotifications
+    getPendingNotifications,
 } from '../controllers/adminNotification.controller.js';
 import { verifyAdmin } from '../middlewares/auth.middleware.js';
 
@@ -15,9 +15,8 @@ router.post('/register/student', registerStudent);
 router.post('/register/employee', registerEmployee);
 
 // Protected admin routes
+router.get('/pending', getPendingNotifications);
+router.put('/approve/:notificationId', approveRegistration);
+router.put('/reject/:notificationId', rejectRegistration);
 
-router.get('/pending',verifyAdmin, getPendingNotifications);
-router.put('/approve/:notificationId', verifyAdmin,approveRegistration);
-router.put('/reject/:notificationId', verifyAdmin ,rejectRegistration);
-
-export default router; 
+export default router;
