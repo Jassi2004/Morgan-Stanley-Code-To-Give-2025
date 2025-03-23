@@ -64,7 +64,7 @@ export const scheduleBirthdayWish = function () {
     // Schedule the cron job to run at midnight every day (00:00 AM)
     // for 12at midnight -> 0 0 * * * 
     // for after every 1 min -> * * * * * 
-    cron.schedule("* * * * *", async () => {
+    cron.schedule("0 0 * * *", async () => {
         console.log("🔔 Checking for birthdays at midnight...");
         await birthdayWish();
     });

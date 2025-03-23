@@ -14,22 +14,15 @@ const gradesSchema = new mongoose.Schema({
     },
 
     program: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Program",
-        required: true,
+        type : String,
+        required : [true, "Program is required"]
     },
 
-    overallRating: {
+    marks : {
         type: Number,
         required: true,
         min: [1, "Rating must be atleast 1"],
         max: [5, "Rating can be at most 5"],
-    },
-
-    skillRating: {
-        type: Map,
-        of: Number,
-        default: {},
     },
 
     feedback : {
