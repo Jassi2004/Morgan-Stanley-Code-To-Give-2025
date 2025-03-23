@@ -421,10 +421,6 @@ const updateProfile = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Student ID is required for updating profile");
   }
 
-<<<<<<< HEAD
-  // Extract fields from the body dynamically
-=======
->>>>>>> b8e93815536e452fcfea94e2667ea6427c3af0a4
   const updates = req.body;
 
   const student = await Student.findOne({ StudentId: studentId });
@@ -432,10 +428,6 @@ const updateProfile = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Student not found");
   }
 
-<<<<<<< HEAD
-  // Handle file uploads for avatar and UDID if provided
-=======
->>>>>>> b8e93815536e452fcfea94e2667ea6427c3af0a4
   if (req.files?.avatar?.[0]?.path) {
     const avatar = await uploadOnCloudinary(req.files.avatar[0].path);
     if (avatar) {
@@ -458,26 +450,17 @@ const updateProfile = asyncHandler(async (req, res) => {
   }
 
   try {
-<<<<<<< HEAD
-    // Update the student dynamically using $set
-=======
->>>>>>> b8e93815536e452fcfea94e2667ea6427c3af0a4
     const updatedStudent = await Student.findOneAndUpdate(
       { StudentId: studentId },
       { $set: updates },
       {
-<<<<<<< HEAD
         new: true, // Return the updated document
         runValidators: true, // Validate updates
         select: "-password -refreshToken", // Exclude sensitive fields
         new: true, 
         runValidators: true, 
         select: "-password -refreshToken", 
-=======
-        new: true,
-        runValidators: true,
-        select: "-password -refreshToken",
->>>>>>> b8e93815536e452fcfea94e2667ea6427c3af0a4
+
       }
     );
 
