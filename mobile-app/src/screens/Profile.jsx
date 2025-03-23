@@ -1,32 +1,126 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from "react-native";
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert, Animated } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { getUserData, handleLogout } from '../utils/api';
 import Navbar from '../components/Navbar';
+import { fetchTranslation } from '../utils/translate';
+import { useLanguage } from '../context/LanguageContext';
+import Menu from './Menu';
 
 const DEFAULT_PROFILE_IMAGE = "https://res.cloudinary.com/dh2gwea4g/image/upload/t_Banner 9:16/v1742526651/ishanya5_xkgnk4.webp";
 
 export default function Profile() {
     const navigation = useNavigation();
+    const { language } = useLanguage();
     const [userData, setUserData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isTranslating, setIsTranslating] = useState(true);
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const menuAnimation = useRef(new Animated.Value(-300)).current;
 
+    // Translation states
+    const [translations, setTranslations] = useState({
+        profile: "Profile",
+        studentDetails: "Student Details",
+        name: "Name",
+        email: "Email",
+        gender: "Gender",
+        primaryDiagnosis: "Primary Diagnosis",
+        myEducators: "My Educators",
+        primaryEducator: "Primary Educator",
+        secondaryEducator: "Secondary Educator",
+        notAssigned: "Not Assigned",
+        specialty: "Specialty",
+        accountSettings: "Account Settings",
+        changePassword: "Change Password",
+        editProfile: "Edit Profile",
+        logout: "Logout",
+        loading: "Loading...",
+        error: "Error loading profile",
+        specialEducationSpecialist: "Special Education Specialist",
+        behavioralTherapist: "Behavioral Therapist"
+    });
+
+    const toggleMenu = () => {
+        const toValue = isMenuOpen ? -300 : 0;
+        Animated.spring(menuAnimation, {
+            toValue,
+            useNativeDriver: true,
+            bounciness: 0,
+        }).start();
+        setIsMenuOpen(!isMenuOpen);
+    };
+
+    // Translate user data
+    const translateUserData = async (data) => {
+        if (!data) return null;
+        
+        try {
+            const translatedData = {
+                ...data,
+                firstName: await fetchTranslation(data.firstName || '', language),
+                lastName: await fetchTranslation(data.lastName || '', language),
+                gender: await fetchTranslation(data.gender || '', language),
+                primaryDiagnosis: await fetchTranslation(data.primaryDiagnosis || '', language)
+            };
+
+            // Translate educator details if they exist
+            if (data.educatorDetails) {
+                translatedData.educatorDetails = {
+                    primary: data.educatorDetails.primary ? {
+                        ...data.educatorDetails.primary,
+                        name: await fetchTranslation(data.educatorDetails.primary.name || '', language),
+                        specialty: await fetchTranslation(data.educatorDetails.primary.specialty || translations.specialEducationSpecialist, language)
+                    } : null,
+                    secondary: data.educatorDetails.secondary ? {
+                        ...data.educatorDetails.secondary,
+                        name: await fetchTranslation(data.educatorDetails.secondary.name || '', language),
+                        specialty: await fetchTranslation(data.educatorDetails.secondary.specialty || translations.behavioralTherapist, language)
+                    } : null
+                };
+            }
+
+            return translatedData;
+        } catch (error) {
+            console.error('Error translating user data:', error);
+            return data;
+        }
+    };
+
+    // Fetch translations when language changes
     useEffect(() => {
-        loadUserData();
-    }, []);
+        const translateContent = async () => {
+            setIsTranslating(true);
+            try {
+                // Translate UI elements
+                const translatedContent = {};
+                for (const [key, value] of Object.entries(translations)) {
+                    translatedContent[key] = await fetchTranslation(value, language);
+                }
+                setTranslations(translatedContent);
+
+                // Translate existing user data if available
+                if (userData) {
+                    const translatedUserData = await translateUserData(userData);
+                    setUserData(translatedUserData);
+                }
+            } catch (error) {
+                console.error('Error translating content:', error);
+            } finally {
+                setIsTranslating(false);
+            }
+        };
+
+        translateContent();
+    }, [language]);
 
     const loadUserData = async () => {
         try {
             const data = await getUserData();
-            // console.log("Loaded user data:", data); // Debug log
-            setUserData(data);
-            
-            // Additional debug logs
             if (data) {
-                console.log("First Name:", data.firstName);
-                console.log("Last Name:", data.lastName);
-                // console.log("Full user object:", JSON.stringify(data, null, 2));
+                const translatedData = await translateUserData(data);
+                setUserData(translatedData);
             } else {
                 console.log("No user data loaded");
             }
@@ -37,15 +131,32 @@ export default function Profile() {
         }
     };
 
-    // Debug log when userData changes
     useEffect(() => {
-        // console.log("userData state updated:", userData);
-    }, [userData]);
+        loadUserData();
+    }, []);
+
+    const onLogout = async () => {
+        try {
+            await handleLogout();
+            navigation.replace("Login");
+        } catch (error) {
+            console.error("Logout error:", error);
+        }
+    };
+
+    if (isTranslating) {
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#4CAF50" />
+                <Text style={styles.loadingText}>{translations.loading}</Text>
+            </View>
+        );
+    }
 
     if (isLoading) {
         return (
             <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#001F3F" />
+                <Text style={styles.loadingText}>{translations.loading}</Text>
             </View>
         );
     }
@@ -53,8 +164,8 @@ export default function Profile() {
     // Early return if no user data
     if (!userData) {
         return (
-            <View style={styles.loadingContainer}>
-                <Text>No user data available</Text>
+            <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{translations.error}</Text>
             </View>
         );
     }
@@ -63,14 +174,39 @@ export default function Profile() {
         <View style={styles.container}>
             {/* Header */}
             <View style={styles.header}>
-                <Text style={styles.headerTitle}>Profile</Text>
-                <TouchableOpacity 
+                <TouchableOpacity
                     style={styles.menuButton}
+                    onPress={toggleMenu}
+                >
+                    <FontAwesome name="bars" size={24} color="#001F3F" />
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>{translations.profile}</Text>
+                <TouchableOpacity 
+                    style={styles.notificationButton}
                     onPress={() => navigation.navigate('Notifications')}
                 >
                     <FontAwesome name="bell" size={24} color="#001F3F" />
                 </TouchableOpacity>
             </View>
+
+            {/* Menu Drawer */}
+            <Animated.View style={[
+                styles.menuDrawer,
+                {
+                    transform: [{ translateX: menuAnimation }]
+                }
+            ]}>
+                <Menu onClose={toggleMenu} />
+            </Animated.View>
+
+            {/* Overlay when menu is open */}
+            {isMenuOpen && (
+                <TouchableOpacity
+                    style={styles.overlay}
+                    activeOpacity={1}
+                    onPress={toggleMenu}
+                />
+            )}
 
             <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 {/* Profile Section */}
@@ -83,31 +219,31 @@ export default function Profile() {
                     </View>
 
                     {/* Student Details */}
-                    <Text style={styles.sectionTitle}>Student Details</Text>
+                    <Text style={styles.sectionTitle}>{translations.studentDetails}</Text>
 
                     <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Name:</Text>
+                        <Text style={styles.detailLabel}>{translations.name}:</Text>
                         <Text style={styles.detailValue}>
                             {`${userData.firstName || ''} ${userData.lastName || ''}`}
                         </Text>
                     </View>
 
                     <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Email:</Text>
+                        <Text style={styles.detailLabel}>{translations.email}:</Text>
                         <Text style={styles.detailValue}>
                             {userData.studentEmail || 'N/A'}
                         </Text>
                     </View>
 
                     <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Gender:</Text>
+                        <Text style={styles.detailLabel}>{translations.gender}:</Text>
                         <Text style={styles.detailValue}>
                             {userData.gender || 'N/A'}
                         </Text>
                     </View>
 
                     <View style={[styles.detailRow, { borderBottomWidth: 0 }]}>
-                        <Text style={styles.detailLabel}>Primary Diagnosis:</Text>
+                        <Text style={styles.detailLabel}>{translations.primaryDiagnosis}:</Text>
                         <Text style={styles.detailValue}>
                             {userData.primaryDiagnosis || 'N/A'}
                         </Text>
@@ -116,19 +252,19 @@ export default function Profile() {
 
                 {/* Educators Section */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>My Educators</Text>
+                    <Text style={styles.sectionTitle}>{translations.myEducators}</Text>
                     
                     <TouchableOpacity 
                         style={styles.educatorCard}
                         onPress={() => navigation.navigate('PrimaryEducator')}
                     >
                         <View style={styles.educatorInfo}>
-                            <Text style={styles.educatorTitle}>Primary Educator</Text>
+                            <Text style={styles.educatorTitle}>{translations.primaryEducator}</Text>
                             <Text style={styles.educatorName}>
-                                {userData?.educatorDetails?.primary?.name || 'Not Assigned'}
+                                {userData?.educatorDetails?.primary?.name || translations.notAssigned}
                             </Text>
                             <Text style={styles.educatorSpecialty}>
-                                {userData?.educatorDetails?.primary?.specialty || 'Special Education Specialist'}
+                                {userData?.educatorDetails?.primary?.specialty || translations.specialEducationSpecialist}
                             </Text>
                         </View>
                         <FontAwesome name="chevron-right" size={20} color="#666" />
@@ -139,12 +275,12 @@ export default function Profile() {
                         onPress={() => navigation.navigate('SecondaryEducator')}
                     >
                         <View style={styles.educatorInfo}>
-                            <Text style={styles.educatorTitle}>Secondary Educator</Text>
+                            <Text style={styles.educatorTitle}>{translations.secondaryEducator}</Text>
                             <Text style={styles.educatorName}>
-                                {userData?.educatorDetails?.secondary?.name || 'Not Assigned'}
+                                {userData?.educatorDetails?.secondary?.name || translations.notAssigned}
                             </Text>
                             <Text style={styles.educatorSpecialty}>
-                                {userData?.educatorDetails?.secondary?.specialty || 'Behavioral Therapist'}
+                                {userData?.educatorDetails?.secondary?.specialty || translations.behavioralTherapist}
                             </Text>
                         </View>
                         <FontAwesome name="chevron-right" size={20} color="#666" />
@@ -153,38 +289,26 @@ export default function Profile() {
 
                 {/* Action Buttons Section */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Account Settings</Text>
+                    <Text style={styles.sectionTitle}>{translations.accountSettings}</Text>
                     <TouchableOpacity style={styles.actionButton}>
                         <FontAwesome name="lock" size={20} color="#FFF" style={styles.buttonIcon} />
-                        <Text style={styles.buttonText}>Change Password</Text>
+                        <Text style={styles.buttonText}>{translations.changePassword}</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.actionButton}>
-                        <FontAwesome name="shield" size={20} color="#FFF" style={styles.buttonIcon} />
-                        <Text style={styles.buttonText}>Privacy Settings</Text>
+                    <TouchableOpacity 
+                        style={styles.actionButton}
+                        onPress={() => navigation.navigate('EditProfile')}
+                    >
+                        <FontAwesome name="edit" size={20} color="#FFF" style={styles.buttonIcon} />
+                        <Text style={styles.buttonText}>{translations.editProfile}</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity 
                         style={[styles.actionButton, styles.logoutButton]}
-                        onPress={async () => {
-                            try {
-                                const result = await handleLogout();
-                                if (result.success) {
-                                    navigation.reset({
-                                        index: 0,
-                                        routes: [{ name: 'Login' }],
-                                    });
-                                } else {
-                                    Alert.alert('Logout Failed', 'Unable to logout. Please try again.');
-                                }
-                            } catch (error) {
-                                console.error('Error during logout:', error);
-                                Alert.alert('Error', 'An error occurred while logging out.');
-                            }
-                        }}
+                        onPress={onLogout}
                     >
                         <FontAwesome name="sign-out" size={20} color="#FFF" style={styles.buttonIcon} />
-                        <Text style={styles.buttonText}>Logout</Text>
+                        <Text style={styles.buttonText}>{translations.logout}</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -211,7 +335,7 @@ const styles = StyleSheet.create({
     },
     header: {
         flexDirection: 'row',
-        justifyContent: 'center',
+        justifyContent: 'space-between',
         alignItems: 'center',
         padding: 15,
         backgroundColor: '#FFF',
@@ -219,18 +343,39 @@ const styles = StyleSheet.create({
         borderBottomColor: '#eee',
         paddingTop: 45,
     },
+    menuButton: {
+        padding: 5,
+    },
+    notificationButton: {
+        padding: 5,
+    },
     headerTitle: {
         fontSize: 20,
         fontWeight: 'bold',
         color: '#001F3F',
-        flex: 1,
-        textAlign: 'center',
     },
-    menuButton: {
+    menuDrawer: {
         position: 'absolute',
-        right: 15,
-        top: 45,
-        padding: 5,
+        left: 0,
+        top: 0,
+        bottom: 0,
+        width: 300,
+        backgroundColor: '#FFF',
+        zIndex: 1000,
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 2, height: 0 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+    },
+    overlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        zIndex: 999,
     },
     scrollContent: {
         flex: 1,
@@ -335,5 +480,21 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#4CAF50',
         fontStyle: 'italic',
+    },
+    errorContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: "#F5F5F5",
+    },
+    errorText: {
+        color: "#FF3B30",
+        fontSize: 16,
+        fontWeight: "bold",
+    },
+    loadingText: {
+        color: "#001F3F",
+        fontSize: 16,
+        fontWeight: "bold",
     },
 });

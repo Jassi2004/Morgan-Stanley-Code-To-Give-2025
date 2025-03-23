@@ -24,7 +24,7 @@ export const sendFeedback = asyncHandler(async (req, res) => {
     const student = await Student.findById(studentId);
     console.log("Student data:", student);
   
-    if (!student) {
+    if (!student) {        
         console.log("Student not found:", studentId);
         throw new ApiError(404, "Student not found");
     }
@@ -38,10 +38,10 @@ export const sendFeedback = asyncHandler(async (req, res) => {
     }
 
     // Ensure student.educator is initialized as an array
-    if (!student.educator) {
-        student.educator = [];
-        await student.save();
-    }
+    // if (!student.educator) {
+    //     student.educator = [];
+    //     await student.save();
+    // }
   
     // Convert educatorId to ObjectId for comparison
     const educatorObjectId = new mongoose.Types.ObjectId(educatorId.toString());
@@ -89,17 +89,19 @@ export const getSentFeedbacks = asyncHandler(async (req, res) => {
  * @access  Public
  */
 export const getReceivedFeedbacks = asyncHandler(async (req, res) => {
-  const { educatorId } = req.params;
+  const { educatorId, studentId } = req.params;
 
-  console.log("Fetching received feedbacks for educator:", educatorId);
-  const feedbacks = await Feedback.find({ receiverId: educatorId })
-    .populate("senderId", "firstName lastName")
+  console.log("Fetching feedbacks sent by educator:", educatorId, "to student:", studentId);
+  
+  const feedbacks = await Feedback.find({ senderId: educatorId, receiverId: studentId })
+    .populate("receiverId", "firstName lastName") // Get student details
     .sort({ createdAt: -1 }); // Sort by newest first
 
   if (!feedbacks.length) {
-    console.log("No received feedbacks found for educator:", educatorId);
-    throw new ApiError(404, "No received feedbacks found");
+    console.log("No feedbacks found from educator", educatorId, "to student", studentId);
+    throw new ApiError(404, "No feedbacks found for this educator-student pair");
   }
 
-  return res.status(200).json(new ApiResponse(200, feedbacks, "Received feedbacks retrieved successfully"));
+  return res.status(200).json(new ApiResponse(200, feedbacks, "Sent feedbacks retrieved successfully"));
 });
+

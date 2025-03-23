@@ -5,7 +5,7 @@ const router = express.Router();
 
 router.post("/sendFeedback", sendFeedback);
 router.get("/getSentFeedbacks/:studentId", getSentFeedbacks);
-router.get("/getReceivedFeedbacks/:studentId", getReceivedFeedbacks);
+router.get("/getReceivedFeedbacks/:educatorId/:studentId", getReceivedFeedbacks);
 
 
 export default router;

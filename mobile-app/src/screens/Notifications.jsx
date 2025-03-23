@@ -4,25 +4,73 @@ import { FontAwesome } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { getNotifications } from '../utils/api';
 import Navbar from '../components/Navbar';
+import { fetchTranslation } from '../utils/translate';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Notifications() {
     const navigation = useNavigation();
+    const { language } = useLanguage();
     const [notifications, setNotifications] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isTranslating, setIsTranslating] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState(null);
+
+    // Translation states
+    const [translations, setTranslations] = useState({
+        title: "Notifications",
+        noNotifications: "No new notifications",
+        loadingText: "Loading...",
+        failedToLoad: "Failed to load notifications"
+    });
+
+    // Fetch translations for UI elements
+    useEffect(() => {
+        const translateContent = async () => {
+            setIsTranslating(true);
+            try {
+                const translatedContent = {};
+                for (const [key, value] of Object.entries(translations)) {
+                    translatedContent[key] = await fetchTranslation(value, language);
+                }
+                setTranslations(translatedContent);
+            } catch (error) {
+                console.error('Error translating content:', error);
+            }
+        };
+        translateContent();
+    }, [language]);
+
+    // Translate notifications
+    const translateNotifications = async (notifs) => {
+        try {
+            const translatedNotifications = await Promise.all(
+                notifs.map(async (notification) => ({
+                    ...notification,
+                    message: await fetchTranslation(notification.message, language)
+                }))
+            );
+            return translatedNotifications;
+        } catch (error) {
+            console.error('Error translating notifications:', error);
+            return notifs;
+        } finally {
+            setIsTranslating(false);
+        }
+    };
 
     const loadNotifications = async () => {
         try {
             const result = await getNotifications();
             if (result.success) {
-                setNotifications(result.notifications);
+                const translatedNotifs = await translateNotifications(result.notifications);
+                setNotifications(translatedNotifs);
                 setError(null);
             } else {
                 setError(result.message);
             }
         } catch (error) {
-            setError('Failed to load notifications');
+            setError(translations.failedToLoad);
             console.error('Error loading notifications:', error);
         } finally {
             setIsLoading(false);
@@ -32,7 +80,7 @@ export default function Notifications() {
 
     useEffect(() => {
         loadNotifications();
-    }, []);
+    }, [language]); // Reload when language changes
 
     const onRefresh = React.useCallback(() => {
         setRefreshing(true);
@@ -77,6 +125,27 @@ export default function Notifications() {
         </View>
     );
 
+    if (isLoading || isTranslating) {
+        return (
+            <View style={styles.container}>
+                {/* Header */}
+                <View style={styles.header}>
+                    <TouchableOpacity 
+                        style={styles.backButton}
+                        onPress={() => navigation.goBack()}
+                    >
+                        <FontAwesome name="arrow-left" size={24} color="#001F3F" />
+                    </TouchableOpacity>
+                    <Text style={styles.headerTitle}>{translations.title}</Text>
+                </View>
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#4CAF50" />
+                    <Text style={styles.loadingText}>{translations.loadingText}</Text>
+                </View>
+            </View>
+        );
+    }
+
     return (
         <View style={styles.container}>
             {/* Header */}
@@ -87,39 +156,33 @@ export default function Notifications() {
                 >
                     <FontAwesome name="arrow-left" size={24} color="#001F3F" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Notifications</Text>
+                <Text style={styles.headerTitle}>{translations.title}</Text>
             </View>
 
-            {isLoading ? (
-                <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#001F3F" />
-                </View>
-            ) : (
-                <ScrollView 
-                    style={styles.scrollContent} 
-                    showsVerticalScrollIndicator={false}
-                    refreshControl={
-                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-                    }
-                >
-                    {error ? (
-                        <View style={styles.section}>
-                            <Text style={styles.errorText}>{error}</Text>
-                        </View>
-                    ) : notifications.length > 0 ? (
-                        <View style={styles.section}>
-                            {notifications.map(renderNotification)}
-                        </View>
-                    ) : (
-                        <View style={styles.section}>
-                            <Text style={styles.emptyText}>No new notifications</Text>
-                        </View>
-                    )}
+            <ScrollView 
+                style={styles.scrollContent} 
+                showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                }
+            >
+                {error ? (
+                    <View style={styles.section}>
+                        <Text style={styles.errorText}>{error}</Text>
+                    </View>
+                ) : notifications.length > 0 ? (
+                    <View style={styles.section}>
+                        {notifications.map(renderNotification)}
+                    </View>
+                ) : (
+                    <View style={styles.section}>
+                        <Text style={styles.emptyText}>{translations.noNotifications}</Text>
+                    </View>
+                )}
 
-                    {/* Add padding at bottom to ensure content is visible above footer */}
-                    <View style={{ height: 80 }} />
-                </ScrollView>
-            )}
+                {/* Add padding at bottom to ensure content is visible above footer */}
+                <View style={{ height: 80 }} />
+            </ScrollView>
 
             {/* Footer Navigation */}
             <Navbar />
@@ -208,5 +271,11 @@ const styles = StyleSheet.create({
         color: '#FF3B30',
         textAlign: 'center',
         marginTop: 20,
+    },
+    loadingText: {
+        marginTop: 10,
+        fontSize: 16,
+        color: '#4CAF50',
+        fontWeight: '600',
     },
 });
