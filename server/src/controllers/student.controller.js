@@ -29,25 +29,6 @@ const generateAccessAndRefreshToken = async (studentId) => {
 
 const registerStudent = asyncHandler(async (req, res) => {
   const {
-    StudentId,
-    firstName,
-    lastName,
-    studentEmail,
-    password,
-    gender,
-    dateOfBirth,
-    primaryDiagnosis,
-    enrollmentYear,
-    address,
-    guardianDetails,
-    preferredLanguage,
-    transport,
-    UDID,
-  } = req.body;
-
-  // Validate required fields
-  if (
-    [
       StudentId,
       firstName,
       lastName,
@@ -58,105 +39,107 @@ const registerStudent = asyncHandler(async (req, res) => {
       primaryDiagnosis,
       enrollmentYear,
       address,
-    ].some((field) => field === undefined || field.trim() === "")
+      guardianDetails,
+      preferredLanguage,
+      transport,
+      UDID,
+  } = req.body;
+
+  // Validate required fields
+  if (
+      [
+          StudentId,
+          firstName,
+          lastName,
+          studentEmail,
+          password,
+          gender,
+          dateOfBirth,
+          primaryDiagnosis,
+          enrollmentYear,
+          address,
+      ].some((field) => field === undefined || field.trim() === "")
   ) {
-    throw new ApiError(400, "All required fields must be filled");
+      throw new ApiError(400, "All required fields must be filled.");
   }
 
   // Check for existing student
   const existingStudent = await Student.findOne({
-    $or: [{ studentEmail }, { StudentId }],
+      $or: [{ studentEmail }, { StudentId }],
   });
   if (existingStudent) {
-    throw new ApiError(409, "Student with the same email or ID already exists");
+      throw new ApiError(
+          409,
+          "Student with the same email or ID already exists."
+      );
   }
-
-  // const avatarLocalPath = req.files?.avatar?.[0]?.path;
-  // if (!avatarLocalPath) {
-  //   throw new ApiError(400, "Avatar is required");
-  // }
-  // const avatar = await uploadOnCloudinary(avatarLocalPath);
-  // if (!avatar) {
-  //   throw new ApiError(500, "Failed to upload avatar");
-  // }
-
-  // let UDIDUrls = {};
-  // if (UDID?.isAvailable && req.files?.UDID?.[0]?.path) {
-  //   UDIDUrls = await uploadOnCloudinary(req.files.UDID[0].path);
-  // }
 
   // Create new student
   const student = await Student.create({
-    StudentId,
-    firstName,
-    lastName,
-    studentEmail,
-    password,
-    // avatar: {
-    //   public_id: avatar.public_id,
-    //   secure_url: avatar.secure_url,
-    // },
-    gender,
-    dateOfBirth,
-    primaryDiagnosis,
-    enrollmentYear,
-    address,
-    guardianDetails,
-    preferredLanguage: preferredLanguage || "English",
-    transport: transport || false,
-    UDID: {
-      isAvailable: UDID?.isAvailable || false,
-      // public_id: UDIDUrls?.public_id || "",
-      // secure_url: UDIDUrls?.secure_url || "",
-    },
-    educator: [],
+      StudentId,
+      firstName,
+      lastName,
+      studentEmail,
+      password,
+      gender,
+      dateOfBirth,
+      primaryDiagnosis,
+      enrollmentYear,
+      address,
+      guardianDetails,
+      preferredLanguage: preferredLanguage || "English",
+      transport: transport || false,
+      UDID: {
+          isAvailable: UDID?.isAvailable || false,
+      },
+      educator: [],
   });
 
   // Generate tokens for the student
-  const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
-    student._id
-  );
+  const { accessToken, refreshToken } = await generateAccessAndRefreshToken(student._id);
 
   // Fetch the created student (excluding sensitive fields)
   const createdStudent = await Student.findById(student._id).select(
-    "-password -refreshToken"
+      "-password -refreshToken"
   );
 
   if (!createdStudent) {
-    throw new ApiError(500, "Failed to register student");
+      throw new ApiError(500, "Failed to register student.");
   }
 
   // Create a notification for the admin
+  let notification;
   try {
-    const notification = await AdminNotification.create({
-      studentId: createdStudent._id,
-      message: `New student registration request from ${firstName} ${lastName}`,
-      type: "STUDENT_REGISTRATION",
-      status: "PENDING",
-    });
-    console.log("Admin Notification created successfully:", notification);
+      notification = await AdminNotification.create({
+          studentId: createdStudent._id,
+          message: `New student registration request from ${firstName} ${lastName}`,
+          type: "STUDENT_REGISTRATION",
+          status: "PENDING",
+      });
+      console.log("Admin notification created successfully:", notification);
   } catch (error) {
-    console.error("Failed to create admin notification:", error);
-    // Optionally handle notification creation errors
-    // You might want to proceed with student registration even if notification fails
+      console.error("Failed to create admin notification:", error);
+      throw new ApiError(500, "Failed to notify admin. Registration is incomplete.");
   }
 
   // Respond with success
   return res
-    .status(201)
-    .cookie("accessToken", accessToken, cookieOptions)
-    .cookie("refreshToken", refreshToken, cookieOptions)
-    .json(
-      new ApiResponse(
-        201,
-        {
-          student: createdStudent,
-          tokens: { accessToken, refreshToken },
-        },
-        "Student registered successfully. Admin has been notified."
-      )
-    );
+      .status(201)
+      .cookie("accessToken", accessToken, cookieOptions)
+      .cookie("refreshToken", refreshToken, cookieOptions)
+      .json(
+          new ApiResponse(
+              201,
+              {
+                  student: createdStudent,
+                  notification: notification, // Include the notification in the response
+                  tokens: { accessToken, refreshToken },
+              },
+              "Student registered successfully. Admin has been notified."
+          )
+      );
 });
+
 
 const loginStudent = asyncHandler(async (req, res) => {
   const { studentEmail, password } = req.body;
