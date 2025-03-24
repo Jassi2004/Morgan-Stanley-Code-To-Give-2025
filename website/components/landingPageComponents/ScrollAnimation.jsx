@@ -786,7 +786,7 @@ return (
     {/* Loading/error elements */}
     {isLoading && !loadingError && (
       <div className="fixed inset-0 w-full h-full bg-white flex justify-center items-center z-[2000]">
-        <div className="font-sans text-6xl font-bold">{progress}%</div>
+        <div className="font-sans text-6xl font-bold text-black">{progress}%</div>
       </div>
     )}
 
