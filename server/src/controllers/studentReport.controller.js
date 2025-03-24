@@ -5,6 +5,7 @@ import { studentReport } from "../models/studentReport.model.js";
 import { Student } from "../models/students.model.js";
 import { Grade } from "../models/grades.model.js";
 import { monthlyReport } from "../models/monthlyReports.model.js";
+import { isValidObjectId } from "mongoose";
 
 const generateStudentQuarterlyReport = asyncHandler(async (req, res) => {
     try {
@@ -70,45 +71,81 @@ const generateStudentQuarterlyReport = asyncHandler(async (req, res) => {
 });
 
 
-const generateMonthlyReport = asyncHandler(async(req, res) => {
-    try{
-
+const generateMonthlyReport = asyncHandler(async (req, res) => {
+    try {
         const { studentId, monthlyScore, remarks, timeFrame } = req.body;
-        if(!studentId || !monthlyScore || !remarks){
-            throw new ApiError(400, "Required fields not provided");
-        } 
 
-        if(monthlyScore < 1 || monthlyScore > 5){
-            throw new ApiError(400, "Monthly Score must be between 0 and 100");
+        // Validation: Ensure studentId, monthlyScore array, and remarks are provided
+        if (!studentId || !Array.isArray(monthlyScore) || monthlyScore.length === 0 || !remarks) {
+            throw new ApiError(400, "Invalid or missing required fields.");
         }
 
+        // Validation: Ensure each skill entry has skillName and marks
+        for (const skill of monthlyScore) {
+            if (!skill.skillName || typeof skill.marks !== "number" || skill.marks < 0 || skill.marks > 5) {
+                throw new ApiError(400, "Each skill must have a skillName and a valid marks value between 0 and 5.");
+            }
+        }
+
+        // Auto-assigns timeframe if not provided
         const currentDate = new Date();
-        const month = currentDate.toLocaleString("en-US", {month : "short"});
+        const month = currentDate.toLocaleString("en-US", { month: "short" });
         const year = currentDate.getFullYear().toString();
         const quarter = `Q${Math.ceil((currentDate.getMonth() + 1) / 3)}`;
 
         const report = await monthlyReport.create({
-            studentDetails : studentId,
+            studentDetails: studentId,
             monthlyScore,
             remarks,
-            timeFrame : timeFrame || { month, year, quarter}
+            timeFrame: timeFrame || { month, year, quarter }, // Auto-assign timeframe if not provided
         });
 
-        return res.status(201).json(
-            new ApiResponse(
-                201,
-                report,
-                "Student Monthly report successfully generated"
-            )
-        );
+        return res.status(201).json(new ApiResponse(201, report, "Student Monthly report successfully generated"));
 
+    } catch (err) {
+        console.error(`Error while generating monthly reports: ${err}`);
+        throw new ApiError(400, "Error occurred while generating monthly reports.");
+    }
+});
+
+
+const fetchStudentReportById = asyncHandler(async(req, res) => {
+    try{
+        const { studentId } = req.body;
+
+        if(!isValidObjectId(studentId)){
+            throw new ApiError(400, "Invalid Student Id");
+        }
+
+        const userReport = await studentReport.findOne({ studentDetails : studentId }).populate("studentDetails", "StudentId firstName lastName program primaryDiagnosis guardianDetails.name guardianDetails.relation guardianDetails.contactNumber guardianDetails.parentEmail")
+        .populate({
+            path : "assessmentReport",
+            select : "program marks feedback date assessmentName"
+        })
+        .populate({
+            path : "monthlyReports",
+            select : "monthlyScore remarks timeFrame"
+        })
+        
+        return res.status(200)
+        .json(
+            new ApiResponse(
+                200,
+                userReport,
+                "Student Report fetched successfully"
+            )
+        )
 
     }catch(err){
-        console.error(`Error occurred while generating monthly reports : ${err}`);
-        throw new ApiError(400, "Error occurred while generating monthly reports !!");
+        console.error(`Error occurred while fetching student reports by Id : ${err}`);
+        throw new ApiError(400, "Error occured while fetching student reports by ID");
     }
 })
 
 
-
-export { generateStudentQuarterlyReport, generateMonthlyReport };
+export { 
+    generateStudentQuarterlyReport,
+    generateMonthlyReport,
+    fetchStudentReportById
+    
+};

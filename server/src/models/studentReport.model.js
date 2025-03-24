@@ -1,5 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 import { Grade } from "./grades.model.js";
+import { monthlyReport } from "./monthlyReports.model.js";
 
 const studentReportSchema = new Schema(
     {
@@ -104,6 +105,27 @@ studentReportSchema.pre("save", async function (next) {
             }
         }
 
+        // Fetch monthly reports and calculate their average skill score
+        if (this.monthlyReports?.length) {
+            const reports = await monthlyReport.find({ _id: { $in: this.monthlyReports } }).select("monthlyScore");
+
+            let monthlyTotal = 0;
+            let monthlyCount = 0;
+
+            reports.forEach((report) => {
+                if (report.monthlyScore?.length) {
+                    const reportScore = report.monthlyScore.reduce((acc, skill) => acc + skill.marks, 0);
+                    monthlyTotal += reportScore;
+                    monthlyCount += report.monthlyScore.length;
+                }
+            });
+
+            if (monthlyCount > 0) {
+                totalScore += monthlyTotal;
+                count += monthlyCount;
+            }
+        }
+
         // Compute final overallScore
         this.overallScore = count > 0 ? totalScore / count : 0;
 
@@ -112,5 +134,4 @@ studentReportSchema.pre("save", async function (next) {
         next(err);
     }
 });
-
 export const studentReport = mongoose.model("studentReport", studentReportSchema);

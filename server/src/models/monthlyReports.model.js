@@ -7,12 +7,20 @@ const monthlyReportSchema = new Schema(
             ref: "Student",
             required: [true, "Student details are required"],
         },
-        monthlyScore: {
-            type: Number,
-            required: [true, "Monthly score is required"],
-            min: [1, "Score must be at least 1"],
-            max: [5, "Score cannot exceed 5"],
-        },
+        monthlyScore: [
+            {
+                skillName : {
+                    type : String,
+                    required : [true, "skillname is required"]
+                },
+                marks : {
+                    type: Number,
+                    required: [true, "Monthly score is required"],
+                    min: [1, "Score must be at least 1"],
+                    max: [5, "Score cannot exceed 5"],
+                }
+            }
+        ],
         remarks: {
             type: String,
             required: [true, "Remarks are required"],
