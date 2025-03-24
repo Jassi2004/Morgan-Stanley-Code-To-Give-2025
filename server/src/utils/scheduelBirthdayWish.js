@@ -1,7 +1,7 @@
 import cron from "node-cron";
 import { asyncHandler } from "./asyncHandler.js";
 import { Student } from "../models/students.model.js";
-import { sendEmail } from "./sendEmail.js";
+import  sendEmail  from "./sendEmail.js";
 import { Notification } from "../models/notification.model.js";
 
 const birthdayWish = asyncHandler(async () => {
