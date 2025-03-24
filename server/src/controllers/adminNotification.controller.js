@@ -4,7 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { Student } from "../models/students.model.js";
 import { Employee } from "../models/employee.model.js";
 import { AdminNotification } from "../models/adminNotification.model.js";
-import { sendEmail } from "../utils/sendEmail.js";
+import  sendEmail  from "../utils/sendEmail.js";
 
 
 // Get all pending notifications

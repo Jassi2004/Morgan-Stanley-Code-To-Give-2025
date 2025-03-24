@@ -83,7 +83,7 @@ const studentSchema = new mongoose.Schema(
     },
     enrollmentYear: {
       type: Date,
-      required: [true, "enrollment year is required"],
+      // required: [true, "enrollment year is required"],
       min: [new Date("2015-01-01"), "Year must be valid"],
       max: [new Date(new Date().getFullYear(), 11, 31), "Enrollment year cannot be in the future"], 
     },
@@ -130,12 +130,12 @@ const studentSchema = new mongoose.Schema(
       primary: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Employee",
-        required: [true, "Primary educator is required"],
+        // required: [true, "Primary educator is required"],
       },
       secondary: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Employee",
-        required: [true, "Secondary educator is required"],
+        // required: [true, "Secondary educator is required"],
       },
     },    
     sessionType: {
@@ -172,44 +172,61 @@ const studentSchema = new mongoose.Schema(
         enum: ["Active", "Graduated"],
         default: "Active",
     },
-    guardianDetails: {
-      name: { type: String, required: [true, "Guardian name is required"] },
-      relation: {
-        type: String,
-        required: [true, "Guardian relation is required"],
-      },
-      contactNumber: {
-        type: String,
-        required: [true, "Guardian contact number is required"],
-        validate: {
-          validator: function (v) {
-            return /^[6-9]\d{9}$/.test(v);
-          },
-          message: (props) => `${props.value} is not a valid contact number!`,
-        },
-      },
-      parentEmail: {
-        type: String,
-        required: true,
-        lowercase: true,
-        trim: true,
-        match: [
-          /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
-          "Please enter a valid email address",
-        ],
-      },
+    // guardianDetails: {
+    //   name: { type: String, required: [true, "Guardian name is required"] },
+    //   relation: {
+    //     type: String,
+    //     required: [true, "Guardian relation is required"],
+    //   },
+    //   contactNumber: {
+    //     type: String,
+    //     required: [true, "Guardian contact number is required"],
+    //     validate: {
+    //       validator: function (v) {
+    //         return /^[6-9]\d{9}$/.test(v);
+    //       },
+    //       message: (props) => `${props.value} is not a valid contact number!`,
+    //     },
+    //   },
+    //   parentEmail: {
+    //     type: String,
+    //     required: true,
+    //     lowercase: true,
+    //     trim: true,
+    //     match: [
+    //       /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
+    //       "Please enter a valid email address",
+    //     ],
+    //   },
+    // },
+    // medicalHistory: {
+    //   medications: { type: [String], default: [] },
+    //   surgeries: { type: [String], default: [] },
+    //   notes: { type: String },
+    // },
+
+    fathersName: {
+      type: String,
+      required: [true, "Father name is required"],
     },
-    medicalHistory: {
-      medications: { type: [String], default: [] },
-      surgeries: { type: [String], default: [] },
-      notes: { type: String },
+    mothersName: {
+      type: String,
+      required: [true, "Mother name is required"],
+    },
+    parentEmail: {
+      type: String,
+      required: [true, "Parent email is required"],
+    },
+    contactNumber: {
+      type: Number,
+      required: [true, "Contact number is required"],
     },
     
-    preferredLanguage: {
-      type: String,
-      enum: ["English", "Hindi", "Marathi", "Sign Language", "Other"],
-      default: "English",
-    },
+    // preferredLanguage: {
+    //   type: String,
+    //   enum: ["English", "Hindi", "Marathi", "Sign Language", "Other"],
+    //   default: "English",
+    // },
     
 
     refreshToken: {
@@ -217,21 +234,21 @@ const studentSchema = new mongoose.Schema(
     },
 
 
-    progressReports: [{
-        date: {
-            type: Date,
-            default: Date.now,
-        },
-        educator: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Employee",
-        },
-        report: {
-            type: String,
-            required: true,
-            maxLength: 1000
-        },
-    }],
+    // progressReports: [{
+    //     date: {
+    //         type: Date,
+    //         default: Date.now,
+    //     },
+    //     educator: {
+    //         type: mongoose.Schema.Types.ObjectId,
+    //         ref: "Employee",
+    //     },
+    //     report: {
+    //         type: String,
+    //         required: true,
+    //         maxLength: 1000
+    //     },
+    // }],
 
     
   },

@@ -60,16 +60,20 @@ export const AppProvider = ({ children }) => {
                 getAllNotifications(),
             ]);
 
-            const studentsData = studentsResponse.data?.students || [];
+            if (studentsResponse.success) {
+                setStudents(studentsResponse.data);
+            } else {
+                throw new Error(studentsResponse.message);
+            }
+
             const employeesData = employeesResponse.data || [];
             const notificationsData = notificationsResponse.data || [];
 
-            setStudents(studentsData);
             setEmployees(employeesData);
             setNotifications(notificationsData);
-            updateCounts(studentsData, employeesData);
+            updateCounts(studentsResponse.data, employeesData);
         } catch (err) {
-            setError("Failed to fetch data");
+            setError(err.message || "Failed to fetch data");
             console.error("Error fetching data:", err);
             setStudents([]);
             setEmployees([]);
