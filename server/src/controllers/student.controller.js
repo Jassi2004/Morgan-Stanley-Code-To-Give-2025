@@ -431,15 +431,6 @@ const updateProfile = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Student not found");
   }
 
-<<<<<<< HEAD
-  if (req.files?.avatar?.[0]?.path) {
-    const avatar = await uploadOnCloudinary(req.files.avatar[0].path);
-    if (avatar) {
-      updates.avatar = {
-        public_id: avatar.public_id,
-        secure_url: avatar.secure_url,
-      };
-=======
   // Handle file uploads if present
   if (req.files) {
     // Handle avatar upload
@@ -451,7 +442,6 @@ const updateProfile = asyncHandler(async (req, res) => {
           secure_url: avatar.secure_url,
         };
       }
->>>>>>> 77012740207d65271b40dfebfd58e05081ee5865
     }
 
     // Handle UDID upload
@@ -474,7 +464,6 @@ const updateProfile = asyncHandler(async (req, res) => {
       {
         new: true, // Return the updated document
         runValidators: true, // Validate updates
-<<<<<<< HEAD
         select: "-password -refreshToken", // Exclude sensitive fields
         new: true, 
         runValidators: true, 
@@ -482,9 +471,6 @@ const updateProfile = asyncHandler(async (req, res) => {
         new: true,
         runValidators: true,
         select: "-password -refreshToken",
-=======
-        select: "-password -refreshToken" // Exclude sensitive fields
->>>>>>> 77012740207d65271b40dfebfd58e05081ee5865
       }
     );
 
