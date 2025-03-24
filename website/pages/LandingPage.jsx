@@ -2,6 +2,9 @@ import React, { useRef, useEffect } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import ScrollAnimation from '../components/landingPageComponents/ScrollAnimation'; // Your background component
+import AboutUs from '../components/landingPageComponents/AboutUs';
+import ImageSlider from '../components/landingPageComponents/ImageSlider';
+import FieldWorkGallery from '../components/LandingPageComponents/FieldWorkGallery';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -69,7 +72,7 @@ const LandingPage = () => {
   }, []);
 
   return (
-    <div className="relative min-h-[500vh]">
+    <div className="relative">
       <ScrollAnimation />
 
       <div
@@ -93,6 +96,9 @@ const LandingPage = () => {
       {/* <div>
         <FieldWorkGallery/>
       </div> */}
+      <AboutUs/>
+      <ImageSlider/>
+      <FieldWorkGallery/>
       {/* Optional content after scroll */}
       <div className="h-screen bg-gray-200 flex justify-center items-center">
         <h2 className="text-2xl md:text-4xl text-black">Thank you for scrolling!</h2>

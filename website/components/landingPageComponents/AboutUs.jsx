@@ -2,7 +2,7 @@ import React from 'react';
 
 const AboutUs = () => {
   return (
-    <div className="w-full bg-[#f3e9dc] py-16 px-4 md:px-8 lg:px-16 overflow-hidden">
+    <div className="w-full bg-[#f3e9dc] mt-[-980px] py-16 px-4 md:px-8 lg:px-16 overflow-hidden">
       <div className="max-w-6xl mx-auto animate-fade-in">
         <h2 className="text-5xl font-bold text-gray-700 mb-12 text-center animate-fade-down">
           About Us

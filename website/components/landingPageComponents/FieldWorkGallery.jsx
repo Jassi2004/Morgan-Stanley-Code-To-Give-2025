@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useTransition, a } from '@react-spring/web';
-import './FieldWorkGallery.css';
 
 const FieldWorkGallery = () => {
   const fieldWorkData = [
@@ -122,10 +121,16 @@ const FieldWorkGallery = () => {
             }}
           >
             <div className="bg-white rounded-lg shadow-lg overflow-hidden h-full flex flex-col transition-all duration-300 hover:shadow-xl">
-              <div 
+              {/* <div 
                 className="w-full h-64 bg-cover bg-center" 
                 style={{ backgroundImage: `url(${item.image})` }}
-              />
+              /> */}
+               <img 
+      src={item.image} 
+      alt="Field work" 
+      className="w-full object-cover" 
+      style={{ height: `${item.height}px` }} 
+    />
               <div className="p-4 flex-grow">
                 <p className="text-gray-700 text-sm">{item.text}</p>
               </div>

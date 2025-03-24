@@ -35,6 +35,7 @@ function ImageSlider() {
 
   return (
     <div className="relative overflow-hidden w-full max-w-4xl mx-auto mt-8">
+      Hello
       <div className="flex items-center justify-between absolute inset-0 z-10">
         <button onClick={handlePrev} className="text-3xl text-gray-700 hover:text-black">
           <FiChevronLeft />
