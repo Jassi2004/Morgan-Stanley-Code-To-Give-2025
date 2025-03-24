@@ -8,14 +8,12 @@ import mongoose from "mongoose";
 
 
 
-
 const cookieOptions = {
-    maxAge : 7 * 24 * 60 * 60 * 1000,
-    secure : true,
-    httpOnly : true,
-    sameSite : "none"
-}
-
+    httpOnly: true,
+    secure: false, 
+    sameSite: "None",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+};
 const generateAccessAndRefreshTokens = async(userId) => {
     try{
         const user = await Employee.findById(userId);

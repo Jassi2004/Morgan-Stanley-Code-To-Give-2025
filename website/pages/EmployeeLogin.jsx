@@ -11,6 +11,7 @@ const EmployeeLogin = () => {
     e.preventDefault();
     const response = await fetch("http://localhost:8000/api/v1/employee/login", {
       method: "POST",
+      credentials : "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });

@@ -37,7 +37,7 @@ axios.interceptors.response.use(
  */
 const getAllStudents = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/all`);
+    const response = await axios.get(`${BASE_URL}/all`, {withCredentials : true});
     return {
       success: true,
       message: 'Students fetched successfully',
@@ -64,6 +64,7 @@ const updateStudent = async (studentId, updateData, files = null) => {
   try {
     let formData;
     let config = {};
+    console.log("upload-data : ", updateData );
 
     if (files) {
       formData = new FormData();
@@ -133,7 +134,7 @@ const updateStudent = async (studentId, updateData, files = null) => {
  */
 const getStudentProfile = async (studentId) => {
   try {
-    const response = await axios.post(`${BASE_URL}/profile`, { studentId });
+    const response = await axios.post(`${BASE_URL}/profile`, { studentId }, {withCredentials : true});
     return {
       success: true,
       message: 'Profile fetched successfully',

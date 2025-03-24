@@ -31,7 +31,6 @@ router.route("/upload-avatar").post(
 );
 
 router.route("/update-profile").put(
-    verifyStudent,
     upload.fields([
         { name: "avatar", maxCount: 1 },
         { name: "UDID", maxCount: 1 }
