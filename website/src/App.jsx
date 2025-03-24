@@ -23,8 +23,12 @@ function App() {
       <Routes>
       <Route path="/student/register" element={<StudentRegister/>}/>
         <Route path="/student/login" element={<StudentLogin/>}/>
+          <Route path="/employee/register" element={<EmployeeRegister />} />
+          <Route path="/employee/login" element={<EmployeeLogin />} />
           
         <Route path="/landing" element={<LandingPage/>}/> 
+
+        
         <Route path="/" element={<Layout />}>
           <Route index element={<Dashboard />} />
           <Route path="dashboard" element={<Dashboard />} />
@@ -39,8 +43,6 @@ function App() {
           {/* <Route path="/teachers/add" element={<AddTeacherForm />} /> */}
           <Route path="/aboutTeam" element={<Team />} />
           <Route path="/login/admin" element={<AdminLogin />} />
-          <Route path="/register/employee" element={<EmployeeRegister />} />
-          <Route path="/login/employee" element={<EmployeeLogin />} />
           <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
         </Route>
       </Routes>

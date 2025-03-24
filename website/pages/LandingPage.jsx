@@ -100,9 +100,42 @@ const LandingPage = () => {
       <ImageSlider/>
       <FieldWorkGallery/>
       {/* Optional content after scroll */}
-      <div className="h-screen bg-gray-200 flex justify-center items-center">
-        <h2 className="text-2xl md:text-4xl text-black">Thank you for scrolling!</h2>
-      </div>
+      <div className="max-w-md mx-auto mt-10 p-8 bg-white dark:bg-[var(--color-bg-accent)] rounded-2xl shadow-lg border border-[var(--color-border-secondary)] transition-all">
+  <h2 className="text-2xl font-semibold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)] mb-6">
+    Welcome! Choose Your Role
+  </h2>
+  
+  <div className="flex flex-col gap-4">
+    <a
+      href="/student/register"
+      className="w-full px-5 py-3 text-white bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] rounded-lg text-lg font-medium shadow-md hover:shadow-lg transition-transform transform hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-light)] focus:ring-offset-2"
+    >
+      Student Register
+    </a>
+
+    <a
+      href="/student/login"
+      className="w-full px-5 py-3 text-white bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] rounded-lg text-lg font-medium shadow-md hover:shadow-lg transition-transform transform hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-light)] focus:ring-offset-2"
+    >
+      Student Login
+    </a>
+
+    <a
+      href="/employee/register"
+      className="w-full px-5 py-3 text-white bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] rounded-lg text-lg font-medium shadow-md hover:shadow-lg transition-transform transform hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-light)] focus:ring-offset-2"
+    >
+      Employee Register
+    </a>
+
+    <a
+      href="/employee/login"
+      className="w-full px-5 py-3 text-white bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] rounded-lg text-lg font-medium shadow-md hover:shadow-lg transition-transform transform hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-light)] focus:ring-offset-2"
+    >
+      Employee Login
+    </a>
+  </div>
+</div>
+
     </div>
   );
 };
