@@ -1,5 +1,7 @@
 import mongoose, { Schema } from "mongoose";
 
+import { Grade } from "./grades.model.js";
+
 const studentReportSchema = new Schema({
     studentDetails : {
         type : Schema.Types.ObjectId,
@@ -68,28 +70,41 @@ const studentReportSchema = new Schema({
     timestamps : true
 })
 
-studentReportSchema.pre("save", function (next) {
-    const currentDate = new Date();
-    const year = currentDate.getFullYear();
-    const quarter = `Q${Math.ceil((currentDate.getMonth() + 1) / 3)}`;
+studentReportSchema.pre("save", async function (next) {
+    try {
+        let totalScore = 0;
+        let count = 0;
 
-    this.reportDetails = {
-        reportYear: year,
-        reportDate: currentDate,
-        reportQuarter: quarter
-    };
+        // Compute skill scores average
+        if (this.programFeedback?.programSkillsFeedback?.length) {
+            const skillTotal = this.programFeedback.programSkillsFeedback.reduce(
+                (acc, skill) => acc + skill.skillScore,
+                0
+            );
+            totalScore += skillTotal;
+            count += this.programFeedback.programSkillsFeedback.length;
+        }
 
-    if (this.programFeedback?.programSkillsFeedback?.length) {
-        const totalScore = this.programFeedback.programSkillsFeedback.reduce(
-            (acc, skill) => acc + skill.skillScore, 0
-        );
-        this.overallScore = totalScore / this.programFeedback.programSkillsFeedback.length;
-    } else {
-        this.overallScore = 0;
+        // Fetch assessment scores and compute their average
+        if (this.assessmentReport?.length) {
+            const grades = await Grade.find({ _id: { $in: this.assessmentReport } }).select("marks");
+            if (grades.length > 0) {
+                const gradeTotal = grades.reduce((acc, grade) => acc + grade.marks, 0); // Fixed variable name `acc`
+                totalScore += gradeTotal;
+                count += grades.length;
+            }
+        }
+
+        // Compute final overallScore
+        this.overallScore = count > 0 ? totalScore / count : 0;
+
+        next();
+    } catch (err) {
+        next(err);
     }
-
-    next();
 });
+
+
 
 
 
