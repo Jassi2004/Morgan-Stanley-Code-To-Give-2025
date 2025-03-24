@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { fetchStudentReportById, generateMonthlyReport, generateStudentQuarterlyReport } from "../controllers/studentReport.controller.js";
+import { fetchAllStudentReports, fetchStudentReportById, generateMonthlyReport, generateStudentQuarterlyReport } from "../controllers/studentReport.controller.js";
 
 const router = Router();
 
@@ -14,6 +14,9 @@ router.route("/generate-monthly")
 
 router.route("/fetch")
 .post(fetchStudentReportById);
+
+router.route("/fetch-all")
+.get(fetchAllStudentReports);
 
 
 

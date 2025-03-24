@@ -142,10 +142,48 @@ const fetchStudentReportById = asyncHandler(async(req, res) => {
     }
 })
 
+const fetchAllStudentReports = asyncHandler(async(req, res) => {
+    try{
+        
+        const allReports = await studentReport.find({}).populate("studentDetails", "StudentId firstName lastName program primaryDiagnosis guardianDetails.name guardianDetails.relation guardianDetails.contactNumber guardianDetails.parentEmail")
+        .populate({
+            path : "assessmentReport",
+            select : "program marks feedback date assessmentName"
+        })
+        .populate({
+            path : "monthlyReports",
+            select : "monthlyScore remarks timeFrame"
+        });
+
+        if(allReports.length == 0){
+            return res.status(200)
+            .json(
+                new ApiResponse(
+                    200,
+                    [],
+                    "No reports exists yet"
+                )
+            )
+        };
+        return res.status(200)
+        .json(
+            new ApiResponse(
+                200,
+                allReports,
+                "All reports fetched successfully"
+            )
+        )
+
+    }catch(err){
+        console.error(`Error occurred while fetching all student reports : ${err}`);
+        throw new ApiError(400, "Error occurred while fetching all students reports");
+    }
+})
+
 
 export { 
     generateStudentQuarterlyReport,
     generateMonthlyReport,
-    fetchStudentReportById
-    
+    fetchStudentReportById,
+    fetchAllStudentReports
 };
