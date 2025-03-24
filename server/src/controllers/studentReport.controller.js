@@ -4,8 +4,9 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { studentReport } from "../models/studentReport.model.js";
 import { Student } from "../models/students.model.js";
 import { Grade } from "../models/grades.model.js";
+import { monthlyReport } from "../models/monthlyReports.model.js";
 
-const generateStudentReport = asyncHandler(async (req, res) => {
+const generateStudentQuarterlyReport = asyncHandler(async (req, res) => {
     try {
         const {
             studentId,
@@ -27,12 +28,15 @@ const generateStudentReport = asyncHandler(async (req, res) => {
 
         const grades = await Grade.find({ student : student._id}).select("_id");
 
+        const monthlyReports = await monthlyReport.find({ studentDetails : student._id }).select("_id");
+
 
         const newReport = new studentReport({
             studentDetails: student._id,
             programFeedback,
             feedback,
-            assessmentReport : grades.map(grade => grade._id)
+            assessmentReport : grades.map(grade => grade._id),
+            monthlyReports : monthlyReports.map((report) => report._id),
         });
 
 
@@ -43,6 +47,10 @@ const generateStudentReport = asyncHandler(async (req, res) => {
         .populate({
             path : "assessmentReport",
             select : "program marks feedback date assessmentName"
+        })
+        .populate({
+            path : "monthlyReports",
+            select : "monthlyScore remarks timeFrame"
         })
 
 
@@ -61,4 +69,46 @@ const generateStudentReport = asyncHandler(async (req, res) => {
     }
 });
 
-export { generateStudentReport };
+
+const generateMonthlyReport = asyncHandler(async(req, res) => {
+    try{
+
+        const { studentId, monthlyScore, remarks, timeFrame } = req.body;
+        if(!studentId || !monthlyScore || !remarks){
+            throw new ApiError(400, "Required fields not provided");
+        } 
+
+        if(monthlyScore < 1 || monthlyScore > 5){
+            throw new ApiError(400, "Monthly Score must be between 0 and 100");
+        }
+
+        const currentDate = new Date();
+        const month = currentDate.toLocaleString("en-US", {month : "short"});
+        const year = currentDate.getFullYear().toString();
+        const quarter = `Q${Math.ceil((currentDate.getMonth() + 1) / 3)}`;
+
+        const report = await monthlyReport.create({
+            studentDetails : studentId,
+            monthlyScore,
+            remarks,
+            timeFrame : timeFrame || { month, year, quarter}
+        });
+
+        return res.status(201).json(
+            new ApiResponse(
+                201,
+                report,
+                "Student Monthly report successfully generated"
+            )
+        );
+
+
+    }catch(err){
+        console.error(`Error occurred while generating monthly reports : ${err}`);
+        throw new ApiError(400, "Error occurred while generating monthly reports !!");
+    }
+})
+
+
+
+export { generateStudentQuarterlyReport, generateMonthlyReport };
