@@ -113,7 +113,7 @@ export default function Home() {
             </View>
         );
     }
-
+    
     return (
         <View style={styles.container}>
             {/* Header */}
@@ -204,7 +204,7 @@ export default function Home() {
                 </View>
 
                 {/* Articles Section - Moved to top */}
-                <View style={styles.section}>
+            <View style={styles.section}>
                     <Text style={[styles.sectionTitle, { fontSize: scaledFont(18) }]}>{translations.articles}</Text>
                     <Text style={[styles.sectionSubtitle, { fontSize: scaledFont(14) }]}>{translations.todayTopPicks}</Text>
                     <ScrollView 
@@ -273,7 +273,7 @@ export default function Home() {
                                 <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>Effective teaching methods and accommodations for diverse learning needs...</Text>
                                 <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>7 min read • Education Tips</Text>
                             </View>
-                        </TouchableOpacity>
+                    </TouchableOpacity>
 
                         <TouchableOpacity 
                             style={styles.articleCard}
@@ -288,12 +288,12 @@ export default function Home() {
                                 <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>Developing social connections and communication through structured play activities...</Text>
                                 <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>6 min read • Activity Guide</Text>
                             </View>
-                        </TouchableOpacity>
+                    </TouchableOpacity>
                     </ScrollView>
-                </View>
+            </View>
 
-                {/* Schedule Section */}
-                <View style={styles.section}>
+            {/* Schedule Section */}
+            <View style={styles.section}>
                     <Text style={[styles.sectionTitle, { fontSize: scaledFont(18) }]}>{translations.todaySchedule}</Text>
                     <View style={styles.timetableContainer}>
                         <View style={styles.timeSlot}>
@@ -406,8 +406,8 @@ export default function Home() {
                                 <Text style={[styles.timelineDescription, { fontSize: scaledFont(12) }]}>
                                     Showcase your artwork and meet other young artists. Quiet room available.
                                 </Text>
-                            </View>
-                        </View>
+                </View>
+            </View>
 
                         <View style={styles.timelineEvent}>
                             <View style={[styles.timelineDot, { backgroundColor: '#FF9800' }]} />
