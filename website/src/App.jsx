@@ -15,6 +15,7 @@ import StudentProfile from "../components/student/StudentProfile";
 import AdminLogin from "../pages/AdminLogin";
 import EmployeeRegister from "../pages/EmplooyeeRegister";
 import EmployeeLogin from "../pages/EmployeeLogin";
+import LandingPage from "../pages/LandingPage"
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
       <Route path="/student/register" element={<StudentRegister/>}/>
         <Route path="/student/login" element={<StudentLogin/>}/>
           
+        <Route path="/landing" element={<LandingPage/>}/> 
         <Route path="/" element={<Layout />}>
           <Route index element={<Dashboard />} />
           <Route path="dashboard" element={<Dashboard />} />
