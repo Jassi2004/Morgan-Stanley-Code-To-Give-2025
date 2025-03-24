@@ -5,7 +5,7 @@ import ScrollAnimation from '../components/landingPageComponents/ScrollAnimation
 
 gsap.registerPlugin(ScrollTrigger);
 
-const StoryScroller = () => {
+const LandingPage = () => {
   const containerRef = useRef(null);
   const textRefs = useRef([]);
   textRefs.current = [];
@@ -74,14 +74,14 @@ const StoryScroller = () => {
 
       <div
         ref={containerRef}
-        className="relative h-screen w-1/3 sticky top-[-10px] z-10 flex justify-start items-center px-10"
+        className="h-full w-1/3 flex items-center py-5 m-4"
       >
-        <div className="flex flex-col space-y-8 text-left">
+        <div className="flex flex-col space-y-6 text-left">
           {storySequence.map((text, index) => (
             <h1
               key={index}
               ref={addToRefs}
-              className={`opacity-0 text-2xl md:text-4xl font-semibold transition-all duration-700 ease-in-out ${
+              className={`opacity-0 text-4xl md:text-6xl lg:text-3xl ml-5 font-semibold transition-all duration-700 ease-in-out ${
                 index < 3 ? 'text-white' : 'text-black'
               }`}
             >
@@ -101,4 +101,4 @@ const StoryScroller = () => {
   );
 };
 
-export default StoryScroller;
+export default LandingPage;
