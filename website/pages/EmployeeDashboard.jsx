@@ -70,11 +70,30 @@ function EmployeeDashboard() {
     }
 
     try {
-      // Add your API call here
+      const response = await fetch('http://localhost:8000/api/v1/grades/give-student', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          studentId: assignmentForm.id,
+          assignmentName: assignmentForm.name,
+          rating: assignmentForm.rating,
+          remarks: assignmentForm.remarks
+        }),
+        credentials: 'include' // This will send cookies if they exist
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit assignment marks');
+      }
+
+      const data = await response.json();
       toast.success('Assignment marks published successfully!');
-      setAssignmentForm({ id: '', name: '', rating: 0, remarks: '' });
+      setAssignmentForm({ id: '', name: '', rating: 0, remarks: '' }); // Reset form
     } catch (error) {
-      toast.error('Failed to publish assignment marks');
+      console.error('Error submitting assignment:', error);
+      toast.error(error.message || 'Failed to publish assignment marks');
     }
   };
 
@@ -263,13 +282,13 @@ function EmployeeDashboard() {
             </h2>
             <div className="space-y-4">
               <div>
-                <label className="text-sm text-[var(--color-text-secondary)]">Assignment ID</label>
+                <label className="text-sm text-[var(--color-text-secondary)]">Student ID</label>
                 <input
                   type="text"
                   value={assignmentForm.id}
                   onChange={(e) => setAssignmentForm({ ...assignmentForm, id: e.target.value })}
                   className="w-full p-2 mt-1 rounded-lg bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)]"
-                  placeholder="Enter Assignment ID"
+                  placeholder="Enter Student ID"
                 />
               </div>
               <div>
