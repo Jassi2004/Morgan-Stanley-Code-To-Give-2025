@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { upload } from '../middlewares/multer.middleware.js';
-import { verifyStudent, verifyAdmin } from '../middlewares/auth.middleware.js';
+import { verifyEmployee, verifyStudent, verifyAdmin } from '../middlewares/auth.middleware.js';
 import {
     registerStudent,
     loginStudent,
@@ -40,6 +40,6 @@ router.route("/update-profile").put(
 );
 
 // Admin only routes
-router.route("/all").get(verifyEmployee, verifyAdmin, fetchAllStudents);
+router.route("/all").get(fetchAllStudents);
 
 export default router;

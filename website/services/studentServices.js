@@ -37,7 +37,7 @@ axios.interceptors.response.use(
  */
 const getAllStudents = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/fetchAllStudents`);
+    const response = await axios.get(`${BASE_URL}/all`);
     return {
       success: true,
       message: 'Students fetched successfully',
