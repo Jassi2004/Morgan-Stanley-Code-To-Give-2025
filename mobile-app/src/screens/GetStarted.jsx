@@ -82,7 +82,7 @@ const GetStarted = () => {
     <View style={styles.mainContainer}>
       <StatusBar translucent backgroundColor="transparent" />
       <LinearGradient
-        colors={['rgba(76, 175, 80, 0.85)', 'rgba(46, 125, 50, 0.85)']}
+        colors={['rgba(76, 175, 80, 0.95)', 'rgba(46, 125, 50, 0.95)']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradientBackground}

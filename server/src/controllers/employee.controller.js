@@ -104,10 +104,12 @@ const loginEmployeeAccount = asyncHandler(async (req, res) => {
         // Generate tokens
         const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
 
+        // Set cookies with updated options
+        res.cookie("accessToken", accessToken, cookieOptions);
+        res.cookie("refreshToken", refreshToken, cookieOptions);
+
         return res
             .status(200)
-            .cookie("accessToken", accessToken, cookieOptions)
-            .cookie("refreshToken", refreshToken, cookieOptions)
             .json(
                 new ApiResponse(
                     200,

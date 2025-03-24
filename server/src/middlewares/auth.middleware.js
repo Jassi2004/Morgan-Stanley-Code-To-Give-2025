@@ -6,6 +6,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 
 // Utility to verify token
 const verifyToken = (token) => {
+
     if (!token) {
         throw new ApiError(403, "Unauthenticated request");
     }
@@ -19,10 +20,15 @@ export const verifyStudent = asyncHandler(async (req, res, next) => {
         console.log("token:", token);
 
         const decodedToken = verifyToken(token);
-        const user = await Student.findById(decodedToken?._id);
+        console.log("decodedToken:", decodedToken);
+        let user = await Student.findById(decodedToken?._id);
 
         if (!user) {
-            throw new ApiError(403, "Invalid Access Token");
+            user = await Employee.findById(decodedToken?._id);
+                if (!user) {
+                    throw new ApiError(403, "Invalid Access Token");
+                }
+
         }
 
         req.user = user;
