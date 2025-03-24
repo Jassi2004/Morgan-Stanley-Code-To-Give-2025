@@ -8,9 +8,9 @@ import bcrypt from "bcryptjs";
 
 const cookieOptions = {
   maxAge: 7 * 24 * 60 * 60 * 1000,
-  secure: true,
+  secure: false,
   httpOnly: true,
-  sameSite: "none",
+  sameSite: "lax",
 };
 const generateAccessAndRefreshToken = async (studentId) => {
   try {

@@ -63,7 +63,12 @@ const getAllStudents = async () => {
 const updateStudent = async (studentId, updateData, files = null) => {
   try {
     let formData;
-    let config = {};
+    let config = {
+      withCredentials: true,  // Add this to include credentials
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}` // Add the auth token
+      }
+    };
 
     if (files) {
       formData = new FormData();
@@ -95,9 +100,7 @@ const updateStudent = async (studentId, updateData, files = null) => {
         }
       });
 
-      config.headers = {
-        'Content-Type': 'multipart/form-data'
-      };
+      config.headers['Content-Type'] = 'multipart/form-data';
     }
 
     const response = await axios.put(
@@ -106,10 +109,8 @@ const updateStudent = async (studentId, updateData, files = null) => {
       config
     );
 
-    console.log(response.data);
-    
+    console.log('Update response:', response.data);  // Add this for debugging
 
-    // Ensure consistent response format
     return {
       success: true,
       message: 'Profile updated successfully',
@@ -117,10 +118,10 @@ const updateStudent = async (studentId, updateData, files = null) => {
     };
 
   } catch (error) {
-    console.error('Error updating student:', error);
+    console.error('Error updating student:', error.response || error);  // Enhanced error logging
     throw {
       success: false,
-      message: error.message || 'Failed to update student profile',
+      message: error.response?.data?.message || error.message || 'Failed to update student profile',
       data: null
     };
   }

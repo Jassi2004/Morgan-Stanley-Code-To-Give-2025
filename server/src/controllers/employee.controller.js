@@ -10,11 +10,13 @@ import mongoose from "mongoose";
 
 
 const cookieOptions = {
-    maxAge : 7 * 24 * 60 * 60 * 1000,
-    secure : true,
-    httpOnly : true,
-    sameSite : "none"
-}
+    httpOnly: true,
+    secure: false,  // Required for Chrome
+    sameSite: 'lax',  // Required for cross-origin
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    path: '/',
+    //domain: 'localhost'  // Specify the domain
+};
 
 const generateAccessAndRefreshTokens = async(userId) => {
     try{
@@ -106,10 +108,12 @@ const loginEmployeeAccount = asyncHandler(async (req, res) => {
         // Generate tokens
         const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
 
+        // Set cookies with updated options
+        res.cookie("accessToken", accessToken, cookieOptions);
+        res.cookie("refreshToken", refreshToken, cookieOptions);
+
         return res
             .status(200)
-            .cookie("accessToken", accessToken, cookieOptions)
-            .cookie("refreshToken", refreshToken, cookieOptions)
             .json(
                 new ApiResponse(
                     200,
