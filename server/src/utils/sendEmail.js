@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 
-export const sendEmail = async function(email, subject, message) {
+const sendEmail = async function(email, subject, message) {
     try {
         // Create transporter
         const transporter = nodemailer.createTransport({
@@ -44,3 +44,5 @@ export const sendEmail = async function(email, subject, message) {
 }
 
 
+
+export default sendEmail;

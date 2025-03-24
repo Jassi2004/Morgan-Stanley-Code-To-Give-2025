@@ -244,7 +244,7 @@ const AdminNotificationPanel = () => {
                     </button>
                     <button
                         onClick={() => setShowRejectModal(true)}
-                        className="px-6 py-2 bg-[var(--color-error)] text-white rounded-lg hover:bg-[var(--color-error-hover)] transition-colors"
+                        className="px-6 py-2 bg-[var(--color-danger)] text-white rounded-lg hover:bg-[var(--color-danger-light)] transition-colors"
                     >
                         Reject Registration
                     </button>
@@ -254,7 +254,7 @@ const AdminNotificationPanel = () => {
     };
 
     return (
-        <div className="bg-[var(--color-bg-secondary)] rounded-xl p-6">
+        <div className="bg-[var(--color-bg-secondary)] rounded-xl p-6 rounded-lg border border-[var(--color-border-primary)]">
             <h2 className="text-xl font-semibold mb-6 text-[var(--color-text-primary)]">Registration Requests</h2>
 
             {loading ? (

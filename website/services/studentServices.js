@@ -37,17 +37,21 @@ axios.interceptors.response.use(
  */
 const getAllStudents = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/all`, {withCredentials : true});
-    return {
-      success: true,
-      message: 'Students fetched successfully',
-      data: response.data.data
-    };
+    const response = await axios.get(`${BASE_URL}/fetchAllStudents`);
+    if (response.data?.success) {
+      return {
+        success: true,
+        message: response.data.message || 'Students fetched successfully',
+        data: response.data.data?.students || []
+      };
+    } else {
+      throw new Error(response.data?.message || 'Failed to fetch students');
+    }
   } catch (error) {
     console.error('Error fetching students:', error);
     throw {
       success: false,
-      message: error.message || 'Failed to fetch students',
+      message: error.response?.data?.message || error.message || 'Failed to fetch students',
       data: []
     };
   }
@@ -130,7 +134,15 @@ const updateStudent = async (studentId, updateData, files = null) => {
  */
 const getStudentProfile = async (studentId) => {
   try {
-    const response = await axios.post(`${BASE_URL}/profile`, { studentId }, {withCredentials : true});
+    let response;
+    if (studentId) {
+      // Admin viewing a specific student
+      response = await axios.get(`${BASE_URL}/profile/${studentId}`);
+    } else {
+      // Student viewing their own profile
+      response = await axios.get(`${BASE_URL}/profile`);
+    }
+    
     return {
       success: true,
       message: 'Profile fetched successfully',
@@ -140,7 +152,7 @@ const getStudentProfile = async (studentId) => {
     console.error('Error fetching student profile:', error);
     throw {
       success: false,
-      message: error.message || 'Failed to fetch student profile',
+      message: error.response?.data?.message || error.message || 'Failed to fetch student profile',
       data: null
     };
   }

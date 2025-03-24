@@ -1,5 +1,5 @@
-import { useContext, useState } from "react";
-import { Search, Plus, Eye, Edit, Trash2 } from "lucide-react";
+import { useContext, useState, useEffect } from "react";
+import { Search, Plus, Eye, Edit, Trash2, Calendar, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
 import EditStudent from "../components/student/EditStudent";
@@ -8,16 +8,17 @@ import { toast } from 'react-toastify';
 const Students = () => {
   const navigate = useNavigate();
   const { students, loading, error, refreshStudents } = useContext(AppContext);
-  // console.log(students);
   
   const [searchTerm, setSearchTerm] = useState("");
   const [diagnosisFilter, setDiagnosisFilter] = useState("all");
   const [programFilter, setProgramFilter] = useState("all");
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const studentsPerPage = 10;
 
   // Get unique diagnoses from students
-  const diagnoses = [...new Set(students.map(student => student.primaryDiagnosis))].filter(Boolean);
+  const diagnoses = ["Autism", "Down Syndrome", "ADHD", "Cerebral Palsy", "Others"];
 
   const programs = [
     "Multi",
@@ -41,10 +42,29 @@ const Students = () => {
       diagnosisFilter === "all" || student.primaryDiagnosis === diagnosisFilter;
 
     const matchesProgram =
-      programFilter === "all" || (student.programs && student.programs.includes(programFilter));
+      programFilter === "all" || student.program === programFilter;
 
     return matchesSearch && matchesDiagnosis && matchesProgram;
   });
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredStudents.length / studentsPerPage);
+  const startIndex = (currentPage - 1) * studentsPerPage;
+  const endIndex = startIndex + studentsPerPage;
+  const currentStudents = filteredStudents.slice(startIndex, endIndex);
+
+  const handlePreviousPage = () => {
+    setCurrentPage(prev => Math.max(prev - 1, 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage(prev => Math.min(prev + 1, totalPages));
+  };
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, diagnosisFilter, programFilter]);
 
   const handleEdit = (student) => {
     setSelectedStudent(student);
@@ -83,7 +103,7 @@ const Students = () => {
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">Students</h1>
+        <h1 className="text-3xl font-bold text-[var(--color-text-primary)]">Students</h1>
         <div className="flex flex-col md:flex-row gap-4">
           <div className="relative">
             <input
@@ -91,7 +111,7 @@ const Students = () => {
               placeholder="Search students..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full md:w-64 py-2 pl-10 pr-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border-primary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]"
+              className="w-full md:w-64 py-2.5 pl-10 pr-4 text-base rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border-primary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]"
             />
             <Search className="absolute left-3 top-2.5 text-[var(--color-text-accent)]" size={18} />
           </div>
@@ -100,7 +120,7 @@ const Students = () => {
             <select
               value={diagnosisFilter}
               onChange={(e) => setDiagnosisFilter(e.target.value)}
-              className="px-4 py-2 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border-primary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]"
+              className="px-4 py-2.5 text-base rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border-primary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]"
             >
               <option value="all">All Diagnoses</option>
               {diagnoses.map((diagnosis) => (
@@ -113,7 +133,7 @@ const Students = () => {
             <select
               value={programFilter}
               onChange={(e) => setProgramFilter(e.target.value)}
-              className="px-4 py-2 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border-primary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]"
+              className="px-4 py-2.5 text-base rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border-primary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]"
             >
               <option value="all">All Programs</option>
               {programs.map((program) => (
@@ -125,7 +145,7 @@ const Students = () => {
 
             <button
               onClick={() => navigate('/students/add')}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center"
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2.5 text-base rounded-lg flex items-center gap-2"
             >
               <Plus size={18} />
               Add Student
@@ -139,72 +159,98 @@ const Students = () => {
         <table className="min-w-full divide-y divide-[var(--color-border-primary)]">
           <thead className="bg-[var(--color-bg-secondary)]">
             <tr>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-secondary)] uppercase tracking-wider">
+              <th scope="col" className="px-6 py-4 text-left text-sm font-medium text-[var(--color-text-secondary)] uppercase tracking-wider">
                 Student ID
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-secondary)] uppercase tracking-wider">
-                Name
+              <th scope="col" className="px-6 py-4 text-left text-sm font-medium text-[var(--color-text-secondary)] uppercase tracking-wider">
+                Basic Info
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-secondary)] uppercase tracking-wider">
-                Primary Diagnosis
+              <th scope="col" className="px-6 py-4 text-left text-sm font-medium text-[var(--color-text-secondary)] uppercase tracking-wider">
+                Medical Info
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-secondary)] uppercase tracking-wider">
-                Programs
+              <th scope="col" className="px-6 py-4 text-left text-sm font-medium text-[var(--color-text-secondary)] uppercase tracking-wider">
+                Program Details
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-secondary)] uppercase tracking-wider">
-                Guardian
+              <th scope="col" className="px-6 py-4 text-left text-sm font-medium text-[var(--color-text-secondary)] uppercase tracking-wider">
+                Contact Info
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-secondary)] uppercase tracking-wider">
+              <th scope="col" className="px-6 py-4 text-left text-sm font-medium text-[var(--color-text-secondary)] uppercase tracking-wider">
                 Actions
               </th>
             </tr>
           </thead>
           <tbody className="bg-[var(--color-bg-primary)] divide-y divide-[var(--color-border-primary)]">
-            {filteredStudents.length > 0 ? (
-              filteredStudents.map((student, index) => (
+            {currentStudents.length > 0 ? (
+              currentStudents.map((student, index) => (
                 <tr key={student._id} className={index % 2 === 0 ? 'bg-[var(--color-bg-primary)]' : 'bg-[var(--color-bg-secondary)]'}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[var(--color-text-primary)]">
+                  <td className="px-6 py-4 whitespace-nowrap text-base font-medium text-[var(--color-text-primary)]">
                     {student.StudentId}
+                    {!student.isApproved && (
+                      <span className="ml-2 px-2.5 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                        Pending
+                      </span>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="h-10 w-10 flex-shrink-0">
                         <div className="h-10 w-10 rounded-full bg-[var(--color-brand)] flex items-center justify-center text-white">
-                          <span className="font-medium">{student.firstName?.charAt(0)}{student.lastName?.charAt(0)}</span>
+                          <span className="text-lg font-medium">{student.firstName?.charAt(0)}{student.lastName?.charAt(0)}</span>
                         </div>
                       </div>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-[var(--color-text-primary)]">
+                        <div className="text-base font-medium text-[var(--color-text-primary)]">
                           {student.firstName} {student.lastName}
                         </div>
-                        <div className="text-sm text-[var(--color-text-secondary)]">
+                        <div className="text-base text-[var(--color-text-secondary)]">
                           {student.studentEmail}
+                        </div>
+                        <div className="text-sm text-[var(--color-text-secondary)] flex items-center">
+                          <Calendar size={12} className="mr-1" />
+                          {new Date(student.dateOfBirth).toLocaleDateString()}
                         </div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--color-text-primary)]">
-                    {student.primaryDiagnosis}
-                    {student.comorbidity && (
-                      <span className="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                        Comorbidity
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--color-text-primary)]">
-                    {student.programs && student.programs.length > 0
-                      ? student.programs.join(", ")
-                      : "No programs assigned"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--color-text-primary)]">
+                  <td className="px-6 py-4 whitespace-nowrap text-base text-[var(--color-text-primary)]">
                     <div>
-                      <div className="text-sm">{student.guardianDetails?.name}</div>
-                      <div className="text-xs text-[var(--color-text-secondary)]">
-                        {student.guardianDetails?.relation}
+                      <div className="font-medium text-base">{student.primaryDiagnosis}</div>
+                      {student.comorbidity && (
+                        <span className="px-2.5 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                          Comorbidity
+                        </span>
+                      )}
+                      {student.allergies?.length > 0 && (
+                        <div className="text-sm text-[var(--color-text-secondary)]">
+                          Allergies: {student.allergies.join(", ")}
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-base text-[var(--color-text-primary)]">
+                    <div>
+                      <div className="font-medium text-base">{student.program || "No program assigned"}</div>
+                      <div className="text-sm text-[var(--color-text-secondary)]">
+                        Sessions: {student.numberOfSessions || 0}
+                      </div>
+                      <div className="text-sm text-[var(--color-text-secondary)]">
+                        Type: {student.sessionType}
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--color-text-primary)]">
+                  <td className="px-6 py-4 whitespace-nowrap text-base text-[var(--color-text-primary)]">
+                    <div>
+                      <div className="text-base">Father: {student.fathersName}</div>
+                      <div className="text-base">Mother: {student.mothersName}</div>
+                      <div className="text-sm text-[var(--color-text-secondary)]">
+                        Contact: {student.contactNumber}
+                      </div>
+                      <div className="text-sm text-[var(--color-text-secondary)]">
+                        Email: {student.parentEmail}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-base text-[var(--color-text-primary)]">
                     <div className="flex space-x-2">
                       <button
                         className="p-1 rounded-md text-[var(--color-text-secondary)] hover:text-[var(--color-brand)] hover:bg-[var(--color-bg-secondary)]"
@@ -231,7 +277,7 @@ const Students = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="6" className="px-6 py-4 text-center text-sm text-[var(--color-text-secondary)]">
+                <td colSpan="6" className="px-6 py-4 text-center text-base text-[var(--color-text-secondary)]">
                   No students found
                 </td>
               </tr>
@@ -241,22 +287,42 @@ const Students = () => {
       </div>
 
       {/* Pagination */}
-      {/* <div className="flex items-center justify-between">
-        <div className="text-sm text-[var(--color-text-secondary)]">
-          Showing <span className="font-medium">{filteredStudents.length}</span> of <span className="font-medium">{students.length}</span> students
+      {filteredStudents.length > 0 && (
+        <div className="flex items-center justify-between px-4 py-3 bg-[var(--color-bg-secondary)] border border-[var(--color-border-primary)] rounded-lg">
+          <div className="flex items-center text-sm text-[var(--color-text-secondary)]">
+            <span>
+              Showing {startIndex + 1} to {Math.min(endIndex, filteredStudents.length)} of {filteredStudents.length} students
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handlePreviousPage}
+              disabled={currentPage === 1}
+              className={`px-4 py-2 text-sm font-medium rounded-md ${
+                currentPage === 1
+                  ? 'text-[var(--color-text-disabled)] bg-[var(--color-bg-disabled)] cursor-not-allowed'
+                  : 'text-[var(--color-text-primary)] bg-[var(--color-bg-primary)] hover:bg-[var(--color-bg-hover)]'
+              }`}
+            >
+              Previous
+            </button>
+            <span className="px-4 py-2 text-sm font-medium text-[var(--color-text-primary)] bg-[var(--color-brand)] rounded-md">
+              {currentPage}
+            </span>
+            <button
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages}
+              className={`px-4 py-2 text-sm font-medium rounded-md ${
+                currentPage === totalPages
+                  ? 'text-[var(--color-text-disabled)] bg-[var(--color-bg-disabled)] cursor-not-allowed'
+                  : 'text-[var(--color-text-primary)] bg-[var(--color-bg-primary)] hover:bg-[var(--color-bg-hover)]'
+              }`}
+            >
+              Next
+            </button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <button className="px-3 py-1 rounded-md border border-[var(--color-border-primary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-secondary)]">
-            Previous
-          </button>
-          <button className="px-3 py-1 bg-[var(--color-brand)] text-white rounded-md hover:bg-opacity-90">
-            1
-          </button>
-          <button className="px-3 py-1 rounded-md border border-[var(--color-border-primary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-secondary)]">
-            Next
-          </button>
-        </div>
-      </div> */}
+      )}
 
       {/* Edit Modal */}
       {isEditModalOpen && selectedStudent && (

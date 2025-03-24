@@ -36,17 +36,15 @@ const registerStudent = asyncHandler(async (req, res) => {
     gender,
     dateOfBirth,
     primaryDiagnosis,
-    allergies,
-    transport,
     address,
-    guardianDetails,
-    preferredLanguage,
-    sessionType,
     fathersName,
     mothersName,
     parentEmail,
     contactNumber,
-    UDID // Optional field
+    allergies,
+    transport,
+    sessionType,
+    UDID
   } = req.body;
 
   // Generate StudentId
@@ -57,7 +55,7 @@ const registerStudent = asyncHandler(async (req, res) => {
     [
       firstName,
       lastName,
-      studentEmail, // Added to required fields
+      studentEmail,
       password,
       gender,
       dateOfBirth,
@@ -67,7 +65,12 @@ const registerStudent = asyncHandler(async (req, res) => {
       mothersName,
       parentEmail,
       contactNumber
-    ].some((field) => field === undefined || field.trim() === "")
+    ].some((field) => {
+      if (field === undefined || field === null) return true;
+      if (typeof field === 'string') return field.trim() === "";
+      if (typeof field === 'number') return field === 0;
+      return true;
+    })
   ) {
     throw new ApiError(400, "All required fields must be filled.");
   }
@@ -83,7 +86,7 @@ const registerStudent = asyncHandler(async (req, res) => {
     );
   }
 
-  // Create new student
+  // Create new student with default values for required fields
   const student = await Student.create({
     StudentId,
     firstName,
@@ -91,18 +94,19 @@ const registerStudent = asyncHandler(async (req, res) => {
     studentEmail,
     password,
     gender,
-    dateOfBirth,
+    dateOfBirth: new Date(dateOfBirth),
     primaryDiagnosis,
+    address,
+    fathersName,
+    mothersName,
+    parentEmail,
+    contactNumber: Number(contactNumber),
+    status: "Active",
+    isApproved: false,
+    
+    // Optional fields with defaults
     allergies: allergies || [],
     transport: transport || false,
-    address,
-    guardianDetails: {
-      name: fathersName,
-      relation: "Father",
-      contactNumber,
-      parentEmail
-    },
-    preferredLanguage: preferredLanguage || "English",
     sessionType: sessionType || "Offline",
     UDID: {
       isAvailable: UDID?.isAvailable || false,
@@ -111,46 +115,26 @@ const registerStudent = asyncHandler(async (req, res) => {
     }
   });
 
-  // Rest of the code remains the same...
-  const { accessToken, refreshToken } = await generateAccessAndRefreshToken(student._id);
+  // Create admin notification for new student registration
+  const adminNotification = await AdminNotification.create({
+    title: "New Student Registration",
+    message: `New student ${firstName} ${lastName} has registered. Please review and approve.`,
+    type: "STUDENT_REGISTRATION",
+    studentId: student._id,
+    status: "PENDING"
+  });
 
   const createdStudent = await Student.findById(student._id).select(
     "-password -refreshToken"
   );
 
   if (!createdStudent) {
-    throw new ApiError(500, "Failed to register student.");
+    throw new ApiError(500, "Something went wrong while registering the student");
   }
 
-  let notification;
-  try {
-    notification = await AdminNotification.create({
-      studentId: createdStudent._id,
-      message: `New student registration request from ${firstName} ${lastName}`,
-      type: "STUDENT_REGISTRATION",
-      status: "PENDING",
-    });
-    console.log("Admin notification created successfully:", notification);
-  } catch (error) {
-    console.error("Failed to create admin notification:", error);
-    throw new ApiError(500, "Failed to notify admin. Registration is incomplete.");
-  }
-
-  return res
-    .status(201)
-    .cookie("accessToken", accessToken, cookieOptions)
-    .cookie("refreshToken", refreshToken, cookieOptions)
-    .json(
-      new ApiResponse(
-        201,
-        {
-          student: createdStudent,
-          notification: notification,
-          tokens: { accessToken, refreshToken },
-        },
-        "Student registered successfully. Admin has been notified."
-      )
-    );
+  return res.status(201).json(
+    new ApiResponse(200, createdStudent, "Student registered successfully")
+  );
 });
 
 
@@ -227,16 +211,24 @@ const logoutStudent = asyncHandler(async (req, res) => {
 });
 
 const profilePage = asyncHandler(async (req, res) => {
-  const studentid = req.user?._id;
+  const studentId = req.params.studentId || req.user?._id;
 
-  if (!studentid) {
+  if (!studentId) {
     throw new ApiError(400, "Student ID is required for fetching profile data");
   }
 
-  const student = await Student.findById(studentid)
+  const student = await Student.findOne({ StudentId: studentId })
     .select("-password -refreshToken")
-    .populate("educators.primary", "name designation email")
-    .populate("educators.secondary", "name designation email");
+    .populate({
+      path: "educators.primary",
+      select: "name designation email",
+      match: { _id: { $exists: true } }
+    })
+    .populate({
+      path: "educators.secondary",
+      select: "name designation email",
+      match: { _id: { $exists: true } }
+    });
 
   if (!student) {
     throw new ApiError(404, "Student not found");
@@ -472,7 +464,13 @@ const updateProfile = asyncHandler(async (req, res) => {
       {
         new: true, // Return the updated document
         runValidators: true, // Validate updates
-        select: "-password -refreshToken" // Exclude sensitive fields
+        select: "-password -refreshToken", // Exclude sensitive fields
+        new: true, 
+        runValidators: true, 
+        select: "-password -refreshToken", 
+        new: true,
+        runValidators: true,
+        select: "-password -refreshToken",
       }
     );
 
