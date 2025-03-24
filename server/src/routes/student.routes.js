@@ -1,22 +1,46 @@
-import express from "express";
-import { registerStudent, loginStudent, logoutStudent, profilePage, changePassword, fetchAllStudents,updateProfile, uploadProfilePicture } from "../controllers/student.controller.js";
-import  { upload } from "../middlewares/multer.middleware.js";
-import { verifyStudent } from "../middlewares/auth.middleware.js";
+import { Router } from 'express';
+import { upload } from '../middlewares/multer.middleware.js';
+import { verifyStudent, verifyAdmin, verifyEmployee } from '../middlewares/auth.middleware.js';
+import {
+    registerStudent,
+    loginStudent,
+    logoutStudent,
+    profilePage,
+    changePassword,
+    fetchAllStudents,
+    updateProfile,
+    uploadProfilePicture
+} from '../controllers/student.controller.js';
 
-const router = express.Router();
+const router = Router();
 
-// Student Authentication Routes
-router.post("/register", registerStudent);
-router.post("/login", loginStudent);
-router.post("/logout", logoutStudent);
+// Public routes (no auth required)
+router.route("/register").post(registerStudent);
+router.route("/login").post(loginStudent);
 
+// Protected routes (require student authentication)
+router.route("/logout").get(logoutStudent);
+router.route("/profile/:studentId")
+  .get(profilePage);  // Admin access
+router.route("/profile")
+  .get(profilePage); // Student access to their own profile
+router.route("/change-password").post(changePassword);
 
-// Student Profile Routes
-router.post("/profile", profilePage);
-router.put("/change-password", changePassword);
-router.get("/fetchAllStudents", fetchAllStudents);
-router.put("/update-profile", updateProfile);
+// File upload routes with student authentication
+router.route("/upload-avatar").post(
+    upload.single("avatar"),
+    uploadProfilePicture
+);
 
-router.post("/uploadAvatar", verifyStudent, upload.single("avatar"), uploadProfilePicture);
+router.route("/update-profile").put(
+    upload.fields([
+        { name: "avatar", maxCount: 1 },
+        { name: "UDID", maxCount: 1 }
+    ]),
+    updateProfile
+);
+
+// Admin only routes
+router.route("/fetchAllStudents").get(fetchAllStudents);
 
 export default router;

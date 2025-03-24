@@ -1,14 +1,75 @@
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, PanResponder, Animated } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, PanResponder, Animated, Linking, ActivityIndicator, Image } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { FontAwesome } from '@expo/vector-icons';
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Navbar from '../components/Navbar';
+import { fetchTranslation } from '../utils/translate';
+import { useLanguage } from '../context/LanguageContext';
+import { getUserData } from '../utils/api';
 
 export default function Home() {
     const navigation = useNavigation();
     const [fontScale, setFontScale] = useState(1);
-    const [controlsVisible, setControlsVisible] = useState(true);
+    const [controlsVisible, setControlsVisible] = useState(false);
+    const [langSwitchVisible, setLangSwitchVisible] = useState(false);
     const pan = useRef(new Animated.ValueXY()).current;
+    const { language, changeLanguage } = useLanguage();
+    const [isTranslating, setIsTranslating] = useState(true);
+    const [userData, setUserData] = useState(null);
+
+    // Translation states
+    const [translations, setTranslations] = useState({
+        welcome: "Welcome Back",
+        todaySchedule: "Today's Schedule",
+        communicationClass: "Communication Class",
+        paintingClass: "Painting Class",
+        musicTherapy: "Music Therapy",
+        duration: "Duration",
+        checkAttendance: "Check My Attendance Report",
+        upcomingEvents: "Upcoming Events",
+        upcomingAppointments: "Upcoming Appointments",
+        articles: "Articles",
+        todayTopPicks: "Today's top Picks",
+        loading: "Loading...",
+        therapist: "Therapist",
+        faculty: "Faculty",
+        speechTherapy: "Speech Therapy",
+        artEducation: "Art Education",
+        occupationalTherapy: "Occupational Therapy"
+    });
+
+    // Fetch user data
+    useEffect(() => {
+        const loadUserData = async () => {
+            try {
+                const data = await getUserData();
+                setUserData(data);
+            } catch (error) {
+                console.error('Error loading user data:', error);
+            }
+        };
+        loadUserData();
+    }, []);
+
+    // Fetch translations when language changes
+    useEffect(() => {
+        const translateContent = async () => {
+            setIsTranslating(true);
+            try {
+                const translatedContent = {};
+                for (const [key, value] of Object.entries(translations)) {
+                    translatedContent[key] = await fetchTranslation(value, language);
+                }
+                setTranslations(translatedContent);
+            } catch (error) {
+                console.error('Error translating content:', error);
+            } finally {
+                setIsTranslating(false);
+            }
+        };
+
+        translateContent();
+    }, [language]);
 
     const panResponder = useRef(
         PanResponder.create({
@@ -38,52 +99,88 @@ export default function Home() {
     const showControls = () => {
         setControlsVisible(true);
     };
-    
+
+    const handleLanguageChange = (newLang) => {
+        changeLanguage(newLang);
+        setLangSwitchVisible(false);
+    };
+
+    if (isTranslating) {
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#4CAF50" />
+                <Text style={styles.loadingText}>{translations.loading}</Text>
+            </View>
+        );
+    }
+
     return (
         <View style={styles.container}>
-            {/* Show Controls Button (only visible when controls are hidden) */}
-            {!controlsVisible && (
-                <TouchableOpacity
-                    style={styles.showControlsButton}
-                    onPress={showControls}
-                >
-                    <FontAwesome name="text-height" size={20} color="#FFF" />
-                </TouchableOpacity>
-            )}
-
-            {/* Font Size Controls */}
-            {controlsVisible && (
-                <Animated.View
-                    style={[
-                        styles.fontControls,
-                        { transform: [{ translateX: pan.x }, { translateY: pan.y }] }
-                    ]}
-                    {...panResponder.panHandlers}
-                >
-                    <TouchableOpacity
-                        style={styles.closeButton}
-                        onPress={() => setControlsVisible(false)}
-                    >
-                        <FontAwesome name="times" size={16} color="#666" />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={styles.fontButton}
-                        onPress={decreaseFontSize}
-                    >
-                        <Text style={styles.fontButtonText}>A-</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={styles.fontButton}
-                        onPress={increaseFontSize}
-                    >
-                        <Text style={styles.fontButtonText}>A+</Text>
-                    </TouchableOpacity>
-                </Animated.View>
-            )}
-
             {/* Header */}
             <View style={styles.header}>
-                <Text style={[styles.headerTitle, { fontSize: scaledFont(20) }]}>Welcome Back, Soumya</Text>
+                <View style={styles.headerLeft}>
+                    {/* Font Size Control Button */}
+                    <TouchableOpacity
+                        style={styles.headerButton}
+                        onPress={() => {
+                            setControlsVisible(!controlsVisible);
+                            setLangSwitchVisible(false);
+                        }}
+                    >
+                        <FontAwesome name="text-height" size={24} color="#001F3F" />
+                    </TouchableOpacity>
+
+                    {/* Language Switch Button */}
+                    <TouchableOpacity
+                        style={[styles.headerButton, styles.languageButton]}
+                        onPress={() => {
+                            setLangSwitchVisible(!langSwitchVisible);
+                            setControlsVisible(false);
+                        }}
+                    >
+                        <FontAwesome name="language" size={20} color="#001F3F" />
+                        <Text style={styles.languageButtonText}>
+                            {language === 'en' ? 'English' : 'हिंदी'}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+
+                {/* Font Size Controls Popup */}
+                {controlsVisible && (
+                    <View style={[styles.popup, styles.fontControlsPopup]}>
+                        <TouchableOpacity
+                            style={styles.fontButton}
+                            onPress={decreaseFontSize}
+                        >
+                            <Text style={styles.fontButtonText}>A-</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={styles.fontButton}
+                            onPress={increaseFontSize}
+                        >
+                            <Text style={styles.fontButtonText}>A+</Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
+
+                {/* Language Switch Popup */}
+                {langSwitchVisible && (
+                    <View style={[styles.popup, styles.langSwitchPopup]}>
+                        <TouchableOpacity
+                            style={[styles.langButton, language === 'en' && styles.langButtonActive]}
+                            onPress={() => handleLanguageChange('en')}
+                        >
+                            <Text style={[styles.langButtonText, language === 'en' && styles.langButtonTextActive]}>English</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.langButton, language === 'hi' && styles.langButtonActive]}
+                            onPress={() => handleLanguageChange('hi')}
+                        >
+                            <Text style={[styles.langButtonText, language === 'hi' && styles.langButtonTextActive]}>हिंदी</Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
+
                 <TouchableOpacity 
                     style={styles.menuButton}
                     onPress={() => navigation.navigate('Notifications')}
@@ -92,58 +189,189 @@ export default function Home() {
                 </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            <ScrollView 
+                style={[
+                    styles.scrollContent,
+                    styles.scrollContentWithPadding
+                ]} 
+                showsVerticalScrollIndicator={false}
+            >
+                {/* Welcome Message */}
+                <View style={styles.welcomeSection}>
+                    <Text style={[styles.welcomeText, { fontSize: scaledFont(24) }]}>
+                        {translations.welcome}, {userData?.firstName || ''}
+                    </Text>
+                </View>
+
+                {/* Articles Section - Moved to top */}
+                <View style={styles.section}>
+                    <Text style={[styles.sectionTitle, { fontSize: scaledFont(18) }]}>{translations.articles}</Text>
+                    <Text style={[styles.sectionSubtitle, { fontSize: scaledFont(14) }]}>{translations.todayTopPicks}</Text>
+                    <ScrollView 
+                        horizontal={true}
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.articlesContainer}
+                    >
+                        <TouchableOpacity 
+                            style={styles.articleCard}
+                            onPress={() => Linking.openURL('https://medium.com/@maharshi11swati/understanding-neurodivergent-kids-their-strengths-and-challenges-31b90e266aa1')}
+                        >
+                            <Image 
+                                source={{ uri: 'https://images.unsplash.com/photo-1606092195730-5d7b9af1efc5?w=500&auto=format&fit=crop&q=80' }}
+                                style={styles.articleImage}
+                            />
+                            <View style={styles.articleContent}>
+                                <Text style={[styles.articleTitle, { fontSize: scaledFont(14) }]}>Understanding Neurodivergent Children</Text>
+                                <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>A comprehensive guide for parents and educators on supporting neurodivergent children...</Text>
+                                <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>8 min read • Expert Guide</Text>
+                            </View>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity 
+                            style={styles.articleCard}
+                            onPress={() => Linking.openURL('https://medium.com/invisible-illness/adhd-in-children-beyond-the-basics-understanding-executive-function-challenges-d2194c96af8b')}
+                        >
+                            <Image 
+                                source={{ uri: 'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=500&auto=format&fit=crop&q=80' }}
+                                style={styles.articleImage}
+                                
+                            />
+                            <View style={styles.articleContent}>
+                                <Text style={[styles.articleTitle, { fontSize: scaledFont(14) }]}>ADHD: Beyond the Basics</Text>
+                                <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>Understanding executive function challenges and practical strategies for support...</Text>
+                                <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>6 min read • Research Insights</Text>
+                            </View>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity 
+                            style={styles.articleCard}
+                            onPress={() => Linking.openURL('https://medium.com/autism-parenting/sensory-processing-in-autism-creating-supportive-environments-7d842f5a1e9c')}
+                        >
+                            <Image 
+                                source={{ uri: 'https://images.unsplash.com/photo-1607453998774-d533f65dac99?w=500&auto=format&fit=crop&q=80' }}
+                                style={styles.articleImage}
+            
+                            />
+                            <View style={styles.articleContent}>
+                                <Text style={[styles.articleTitle, { fontSize: scaledFont(14) }]}>Sensory Processing in Autism</Text>
+                                <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>Creating supportive environments and understanding sensory needs...</Text>
+                                <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>5 min read • Practical Guide</Text>
+                            </View>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity 
+                            style={styles.articleCard}
+                            onPress={() => Linking.openURL('https://medium.com/education-innovation/inclusive-education-strategies-for-neurodivergent-learners-9c4e8d2b5f3a')}
+                        >
+                            <Image 
+                                source={{ uri: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?w=500&auto=format&fit=crop&q=80' }}
+                                style={styles.articleImage}
+                                // defaultSource={require('../assets/placeholder.png')}
+                            />
+                            <View style={styles.articleContent}>
+                                <Text style={[styles.articleTitle, { fontSize: scaledFont(14) }]}>Inclusive Education Strategies</Text>
+                                <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>Effective teaching methods and accommodations for diverse learning needs...</Text>
+                                <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>7 min read • Education Tips</Text>
+                            </View>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity 
+                            style={styles.articleCard}
+                            onPress={() => Linking.openURL('https://medium.com/parenting-matters/building-social-skills-in-neurodivergent-children-through-play-3f9d2c8e4b5a')}
+                        >
+                            <Image 
+                                source={{ uri: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?w=500&auto=format&fit=crop&q=80' }}
+                                style={styles.articleImage}
+                            />
+                            <View style={styles.articleContent}>
+                                <Text style={[styles.articleTitle, { fontSize: scaledFont(14) }]}>Social Skills Through Play</Text>
+                                <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>Developing social connections and communication through structured play activities...</Text>
+                                <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>6 min read • Activity Guide</Text>
+                            </View>
+                        </TouchableOpacity>
+                    </ScrollView>
+                </View>
+
                 {/* Schedule Section */}
-            <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { fontSize: scaledFont(18) }]}>Hmmm, you seem tightly packed! Let's go through your schedule:</Text>
-                    <TouchableOpacity style={styles.classSection}>
-                        <View style={[styles.classIconContainer, { backgroundColor: '#E3F2FD' }]}>
-                            <FontAwesome name="comments" size={24} color="#1976D2" />
+                <View style={styles.section}>
+                    <Text style={[styles.sectionTitle, { fontSize: scaledFont(18) }]}>{translations.todaySchedule}</Text>
+                    <View style={styles.timetableContainer}>
+                        <View style={styles.timeSlot}>
+                            <View style={styles.timeColumn}>
+                                <Text style={[styles.timeText, { fontSize: scaledFont(14) }]}>10:00 - 11:30</Text>
+                            </View>
+                            <View style={[styles.classColumn, { backgroundColor: '#E3F2FD' }]}>
+                                <FontAwesome name="comments" size={20} color="#1976D2" />
+                                <Text style={[styles.classText, { fontSize: scaledFont(14) }]}>{translations.communicationClass}</Text>
+                            </View>
                         </View>
-                        <View style={styles.classInfo}>
-                            <Text style={[styles.className, { fontSize: scaledFont(16) }]}>Communication Class</Text>
-                            <Text style={[styles.classTime, { fontSize: scaledFont(14) }]}>10:00 AM</Text>
-                            <Text style={[styles.classDuration, { fontSize: scaledFont(12) }]}>Duration: 1h 30m</Text>
-                        </View>
-                        <FontAwesome name="chevron-right" size={20} color="#666" />
-                    </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.classSection}>
-                        <View style={[styles.classIconContainer, { backgroundColor: '#F3E5F5' }]}>
-                            <FontAwesome name="paint-brush" size={24} color="#7B1FA2" />
+                        <View style={styles.timeSlot}>
+                            <View style={styles.timeColumn}>
+                                <Text style={[styles.timeText, { fontSize: scaledFont(14) }]}>12:00 - 14:00</Text>
+                            </View>
+                            <View style={[styles.classColumn, { backgroundColor: '#F3E5F5' }]}>
+                                <FontAwesome name="paint-brush" size={20} color="#7B1FA2" />
+                                <Text style={[styles.classText, { fontSize: scaledFont(14) }]}>{translations.paintingClass}</Text>
+                            </View>
                         </View>
-                        <View style={styles.classInfo}>
-                            <Text style={[styles.className, { fontSize: scaledFont(16) }]}>Painting Class</Text>
-                            <Text style={[styles.classTime, { fontSize: scaledFont(14) }]}>12:00 PM</Text>
-                            <Text style={[styles.classDuration, { fontSize: scaledFont(12) }]}>Duration: 2h</Text>
-                        </View>
-                        <FontAwesome name="chevron-right" size={20} color="#666" />
-                    </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.classSection}>
-                        <View style={[styles.classIconContainer, { backgroundColor: '#E8F5E9' }]}>
-                            <FontAwesome name="music" size={24} color="#388E3C" />
+                        <View style={styles.timeSlot}>
+                            <View style={styles.timeColumn}>
+                                <Text style={[styles.timeText, { fontSize: scaledFont(14) }]}>15:00 - 16:00</Text>
+                            </View>
+                            <View style={[styles.classColumn, { backgroundColor: '#E8F5E9' }]}>
+                                <FontAwesome name="music" size={20} color="#388E3C" />
+                                <Text style={[styles.classText, { fontSize: scaledFont(14) }]}>{translations.musicTherapy}</Text>
+                            </View>
                         </View>
-                        <View style={styles.classInfo}>
-                            <Text style={[styles.className, { fontSize: scaledFont(16) }]}>Music Therapy</Text>
-                            <Text style={[styles.classTime, { fontSize: scaledFont(14) }]}>3:00 PM</Text>
-                            <Text style={[styles.classDuration, { fontSize: scaledFont(12) }]}>Duration: 1h</Text>
-                        </View>
-                        <FontAwesome name="chevron-right" size={20} color="#666" />
-                    </TouchableOpacity>
+                    </View>
 
                     <TouchableOpacity 
                         style={[styles.attendanceButton, { marginTop: 15 }]}
                         onPress={() => navigation.navigate('AttendanceReport')}
                     >
                         <FontAwesome name="calendar-check-o" size={20} color="#FFF" style={styles.attendanceIcon} />
-                        <Text style={[styles.buttonText, { fontSize: scaledFont(16) }]}>Check My Attendance Report</Text>
+                        <Text style={[styles.buttonText, { fontSize: scaledFont(16) }]}>{translations.checkAttendance}</Text>
                     </TouchableOpacity>
+                </View>
+
+                {/* Upcoming Appointments - Simplified */}
+                <View style={styles.section}>
+                    <Text style={[styles.sectionTitle, { fontSize: scaledFont(18) }]}>{translations.upcomingAppointments}</Text>
+                    <View style={styles.appointmentsContainer}>
+                        <View style={styles.appointmentRow}>
+                            <Text style={[styles.appointmentDate, { fontSize: scaledFont(14) }]}>May 16</Text>
+                            <View style={styles.appointmentMiddle}>
+                                <Text style={[styles.appointmentTime, { fontSize: scaledFont(14) }]}>10:30</Text>
+                                <Text style={[styles.appointmentPerson, { fontSize: scaledFont(14) }]}>Dr. Sarah J.</Text>
+                            </View>
+                            <Text style={[styles.appointmentType, { color: '#1976D2' }]}>{translations.speechTherapy}</Text>
+                        </View>
+
+                        <View style={styles.appointmentRow}>
+                            <Text style={[styles.appointmentDate, { fontSize: scaledFont(14) }]}>May 17</Text>
+                            <View style={styles.appointmentMiddle}>
+                                <Text style={[styles.appointmentTime, { fontSize: scaledFont(14) }]}>14:00</Text>
+                                <Text style={[styles.appointmentPerson, { fontSize: scaledFont(14) }]}>Prof. Chen</Text>
+                            </View>
+                            <Text style={[styles.appointmentType, { color: '#7B1FA2' }]}>{translations.artEducation}</Text>
+                        </View>
+
+                        <View style={styles.appointmentRow}>
+                            <Text style={[styles.appointmentDate, { fontSize: scaledFont(14) }]}>May 19</Text>
+                            <View style={styles.appointmentMiddle}>
+                                <Text style={[styles.appointmentTime, { fontSize: scaledFont(14) }]}>11:00</Text>
+                                <Text style={[styles.appointmentPerson, { fontSize: scaledFont(14) }]}>Dr. Emily P.</Text>
+                            </View>
+                            <Text style={[styles.appointmentType, { color: '#388E3C' }]}>{translations.occupationalTherapy}</Text>
+                        </View>
+                    </View>
                 </View>
 
                 {/* Upcoming Events Timeline */}
                 <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { fontSize: scaledFont(18) }]}>Upcoming Events</Text>
+                    <Text style={[styles.sectionTitle, { fontSize: scaledFont(18) }]}>{translations.upcomingEvents}</Text>
                     <View style={styles.timeline}>
                         <View style={styles.timelineEvent}>
                             <View style={[styles.timelineDot, { backgroundColor: '#4CAF50' }]} />
@@ -166,8 +394,8 @@ export default function Home() {
                                 <Text style={[styles.timelineDescription, { fontSize: scaledFont(12) }]}>
                                     Interactive group session focusing on friendship and communication.
                                 </Text>
-                </View>
-            </View>
+                            </View>
+                        </View>
 
                         <View style={styles.timelineEvent}>
                             <View style={[styles.timelineDot, { backgroundColor: '#9C27B0' }]} />
@@ -178,8 +406,8 @@ export default function Home() {
                                 <Text style={[styles.timelineDescription, { fontSize: scaledFont(12) }]}>
                                     Showcase your artwork and meet other young artists. Quiet room available.
                                 </Text>
-                </View>
-            </View>
+                            </View>
+                        </View>
 
                         <View style={styles.timelineEvent}>
                             <View style={[styles.timelineDot, { backgroundColor: '#FF9800' }]} />
@@ -193,106 +421,6 @@ export default function Home() {
                         </View>
                     </View>
                 </View>
-
-                {/* Upcoming Appointments */}
-                <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { fontSize: scaledFont(18) }]}>Upcoming Appointments</Text>
-                    <View style={styles.appointmentsContainer}>
-                        <TouchableOpacity style={styles.appointmentCard}>
-                            <View style={[styles.appointmentType, { backgroundColor: '#E3F2FD' }]}>
-                                <Text style={[styles.appointmentTypeText, { color: '#1976D2' }]}>Therapist</Text>
-                            </View>
-                            <View style={styles.appointmentInfo}>
-                                <Text style={[styles.appointmentDate, { fontSize: scaledFont(14) }]}>May 16th, 2024</Text>
-                                <Text style={[styles.appointmentTime, { fontSize: scaledFont(14) }]}>10:30 AM</Text>
-                                <Text style={[styles.appointmentPerson, { fontSize: scaledFont(16) }]}>Dr. Sarah Johnson</Text>
-                                <Text style={[styles.appointmentSpecialty, { fontSize: scaledFont(12) }]}>Speech Therapy</Text>
-                            </View>
-                            <FontAwesome name="chevron-right" size={20} color="#666" />
-                        </TouchableOpacity>
-
-                        <TouchableOpacity style={styles.appointmentCard}>
-                            <View style={[styles.appointmentType, { backgroundColor: '#F3E5F5' }]}>
-                                <Text style={[styles.appointmentTypeText, { color: '#7B1FA2' }]}>Faculty</Text>
-                            </View>
-                            <View style={styles.appointmentInfo}>
-                                <Text style={[styles.appointmentDate, { fontSize: scaledFont(14) }]}>May 17th, 2024</Text>
-                                <Text style={[styles.appointmentTime, { fontSize: scaledFont(14) }]}>2:00 PM</Text>
-                                <Text style={[styles.appointmentPerson, { fontSize: scaledFont(16) }]}>Prof. Michael Chen</Text>
-                                <Text style={[styles.appointmentSpecialty, { fontSize: scaledFont(12) }]}>Art Education</Text>
-                            </View>
-                            <FontAwesome name="chevron-right" size={20} color="#666" />
-                        </TouchableOpacity>
-
-                        <TouchableOpacity style={styles.appointmentCard}>
-                            <View style={[styles.appointmentType, { backgroundColor: '#E8F5E9' }]}>
-                                <Text style={[styles.appointmentTypeText, { color: '#388E3C' }]}>Therapist</Text>
-                            </View>
-                            <View style={styles.appointmentInfo}>
-                                <Text style={[styles.appointmentDate, { fontSize: scaledFont(14) }]}>May 19th, 2024</Text>
-                                <Text style={[styles.appointmentTime, { fontSize: scaledFont(14) }]}>11:00 AM</Text>
-                                <Text style={[styles.appointmentPerson, { fontSize: scaledFont(16) }]}>Dr. Emily Parker</Text>
-                                <Text style={[styles.appointmentSpecialty, { fontSize: scaledFont(12) }]}>Occupational Therapy</Text>
-                            </View>
-                            <FontAwesome name="chevron-right" size={20} color="#666" />
-                        </TouchableOpacity>
-                </View>
-            </View>
-
-                {/* Articles Section */}
-                <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { fontSize: scaledFont(18) }]}>Articles</Text>
-                    <Text style={[styles.sectionSubtitle, { fontSize: scaledFont(14) }]}>Today's Top Picks For You</Text>
-                    <ScrollView 
-                        horizontal={true}
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={styles.articlesContainer}
-                    >
-                        <TouchableOpacity style={styles.articleCard}>
-                            <View style={[styles.articleImage, { backgroundColor: '#E3F2FD' }]}>
-                                <FontAwesome name="book" size={24} color="#1976D2" />
-                            </View>
-                            <View style={styles.articleContent}>
-                                <Text style={[styles.articleTitle, { fontSize: scaledFont(14) }]}>Understanding Sensory Processing</Text>
-                                <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>Learn about sensory challenges and effective coping strategies...</Text>
-                                <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>5 min read • Expert Article</Text>
-                            </View>
-                </TouchableOpacity>
-
-                        <TouchableOpacity style={styles.articleCard}>
-                            <View style={[styles.articleImage, { backgroundColor: '#F3E5F5' }]}>
-                                <FontAwesome name="heart" size={24} color="#7B1FA2" />
-                            </View>
-                            <View style={styles.articleContent}>
-                                <Text style={[styles.articleTitle, { fontSize: scaledFont(14) }]}>Building Social Connections</Text>
-                                <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>Tips for helping your child develop meaningful friendships...</Text>
-                                <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>7 min read • Parent Guide</Text>
-                            </View>
-                </TouchableOpacity>
-
-                        <TouchableOpacity style={styles.articleCard}>
-                            <View style={[styles.articleImage, { backgroundColor: '#E8F5E9' }]}>
-                                <FontAwesome name="lightbulb-o" size={24} color="#388E3C" />
-                            </View>
-                            <View style={styles.articleContent}>
-                                <Text style={[styles.articleTitle, { fontSize: scaledFont(14) }]}>Creative Expression Through Art</Text>
-                                <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>How art therapy can help with emotional expression...</Text>
-                                <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>4 min read • Therapy Insights</Text>
-                            </View>
-                </TouchableOpacity>
-
-                        <TouchableOpacity style={styles.articleCard}>
-                            <View style={[styles.articleImage, { backgroundColor: '#FFF3E0' }]}>
-                                <FontAwesome name="star" size={24} color="#F57C00" />
-                            </View>
-                            <View style={styles.articleContent}>
-                                <Text style={[styles.articleTitle, { fontSize: scaledFont(14) }]}>Success Stories</Text>
-                                <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>Inspiring journeys of children who overcame challenges...</Text>
-                                <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>6 min read • Community Stories</Text>
-                            </View>
-                </TouchableOpacity>
-                    </ScrollView>
-            </View>
 
                 {/* Add padding at bottom to ensure content is visible above footer */}
                 <View style={{ height: 80 }} />
@@ -314,7 +442,7 @@ const styles = StyleSheet.create({
     },
     header: {
         flexDirection: 'row',
-        justifyContent: 'center',
+        justifyContent: 'space-between',
         alignItems: 'center',
         padding: 15,
         backgroundColor: '#FFF',
@@ -322,17 +450,15 @@ const styles = StyleSheet.create({
         borderBottomColor: '#eee',
         paddingTop: 45,
     },
-    headerTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#001F3F',
-        flex: 1,
-        textAlign: 'center',
+    headerLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    headerButton: {
+        padding: 5,
+        marginRight: 10,
     },
     menuButton: {
-        position: 'absolute',
-        right: 15,
-        top: 45,
         padding: 5,
     },
     section: {
@@ -357,44 +483,153 @@ const styles = StyleSheet.create({
         fontSize: 16,
         textAlign: 'center',
     },
-    classSection: {
+    timetableContainer: {
+        backgroundColor: '#FFF',
+        borderRadius: 8,
+        overflow: 'hidden',
+    },
+    timeSlot: {
+        flexDirection: 'row',
+        borderBottomWidth: 1,
+        borderBottomColor: '#eee',
+    },
+    timeColumn: {
+        width: 100,
+        padding: 12,
+        justifyContent: 'center',
+        backgroundColor: '#FAFAFA',
+    },
+    timeText: {
+        color: '#666',
+        fontWeight: '500',
+    },
+    classColumn: {
+        flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#FFFFFF',
+        padding: 12,
+        paddingLeft: 16,
+    },
+    classText: {
+        marginLeft: 12,
+        color: '#333',
+        fontWeight: '500',
+    },
+    appointmentRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#eee',
+    },
+    appointmentDate: {
+        width: 60,
+        color: '#666',
+        fontWeight: '500',
+    },
+    appointmentMiddle: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 10,
+    },
+    appointmentTime: {
+        color: '#333',
+        marginRight: 10,
+    },
+    appointmentPerson: {
+        color: '#333',
+        fontWeight: '500',
+    },
+    appointmentType: {
+        fontSize: 12,
+        fontWeight: '600',
+    },
+    attendanceButton: {
+        backgroundColor: '#4CAF50',
         padding: 15,
-        borderRadius: 12,
-        marginVertical: 8,
+        borderRadius: 8,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 3,
         elevation: 2,
     },
-    classIconContainer: {
-        width: 50,
-        height: 50,
+    attendanceIcon: {
+        marginRight: 10,
+    },
+    popup: {
+        position: 'absolute',
+        top: 85,
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
         borderRadius: 12,
+        padding: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 3,
+        elevation: 5,
+        zIndex: 1000,
+    },
+    fontControlsPopup: {
+        left: 10,
+        flexDirection: 'row',
+    },
+    langSwitchPopup: {
+        left: 60,
+    },
+    langButton: {
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+        marginVertical: 4,
+        backgroundColor: '#F5F5F5',
+    },
+    langButtonActive: {
+        backgroundColor: '#4CAF50',
+    },
+    langButtonText: {
+        fontSize: 16,
+        color: '#333',
+        fontWeight: '500',
+    },
+    langButtonTextActive: {
+        color: '#FFF',
+    },
+    loadingContainer: {
+        flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 15,
+        backgroundColor: "#F5F5F5",
     },
-    classInfo: {
-        flex: 1,
-    },
-    className: {
+    loadingText: {
+        marginTop: 10,
         fontSize: 16,
+        color: '#4CAF50',
+        fontWeight: '600',
+    },
+    welcomeSection: {
+        padding: 20,
+        backgroundColor: '#FFF',
+        marginHorizontal: 10,
+        marginTop: 10,
+        borderRadius: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 5,
+        elevation: 3,
+    },
+    welcomeText: {
+        fontSize: 24,
         fontWeight: 'bold',
-        color: '#333',
-        marginBottom: 4,
+        color: '#001F3F',
     },
-    classTime: {
-        fontSize: 14,
-        color: '#666',
-        marginBottom: 2,
-    },
-    classDuration: {
-        fontSize: 12,
-        color: '#888',
+    scrollContentWithPadding: {
+        paddingTop: 10,
     },
     timeline: {
         paddingLeft: 20,
@@ -465,9 +700,8 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
     },
     articleImage: {
-        height: 100,
-        justifyContent: 'center',
-        alignItems: 'center',
+        height: 150,
+        width: '100%',
     },
     articleContent: {
         padding: 15,
@@ -489,115 +723,22 @@ const styles = StyleSheet.create({
     appointmentsContainer: {
         marginTop: 10,
     },
-    appointmentCard: {
+    appointmentCard: undefined,
+    appointmentTypeText: undefined,
+    appointmentInfo: undefined,
+    appointmentSpecialty: undefined,
+    languageButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#FFFFFF',
-        padding: 15,
-        borderRadius: 12,
-        marginVertical: 8,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
-        elevation: 2,
-    },
-    appointmentType: {
-        paddingHorizontal: 12,
+        backgroundColor: '#F0F0F0',
+        paddingHorizontal: 10,
         paddingVertical: 6,
-        borderRadius: 8,
-        marginRight: 15,
+        borderRadius: 15,
     },
-    appointmentTypeText: {
-        fontWeight: '600',
-        fontSize: 12,
-    },
-    appointmentInfo: {
-        flex: 1,
-    },
-    appointmentDate: {
-        color: '#333',
+    languageButtonText: {
+        marginLeft: 5,
+        fontSize: 14,
         fontWeight: '500',
-        marginBottom: 2,
-    },
-    appointmentTime: {
-        color: '#666',
-        marginBottom: 4,
-    },
-    appointmentPerson: {
-        fontWeight: 'bold',
-        color: '#333',
-        marginBottom: 2,
-    },
-    appointmentSpecialty: {
-        color: '#666',
-        fontStyle: 'italic',
-    },
-    attendanceButton: {
-        backgroundColor: '#4CAF50',
-        padding: 15,
-        borderRadius: 8,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
-        elevation: 2,
-    },
-    attendanceIcon: {
-        marginRight: 10,
-    },
-    fontControls: {
-        position: 'absolute',
-        right: 15,
-        top: 100,
-        zIndex: 999,
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        borderRadius: 12,
-        padding: 8,
-        flexDirection: 'column',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 3,
-        elevation: 5,
-    },
-    closeButton: {
-        alignSelf: 'flex-end',
-        padding: 5,
-        marginBottom: 5,
-    },
-    showControlsButton: {
-        position: 'absolute',
-        right: 15,
-        top: 100,
-        zIndex: 999,
-        backgroundColor: '#4CAF50',
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        justifyContent: 'center',
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 3,
-        elevation: 5,
-    },
-    fontButton: {
-        width: 40,
-        height: 40,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#4CAF50',
-        borderRadius: 20,
-        marginVertical: 5,
-    },
-    fontButtonText: {
-        color: '#FFF',
-        fontSize: 16,
-        fontWeight: 'bold',
+        color: '#001F3F',
     },
 });

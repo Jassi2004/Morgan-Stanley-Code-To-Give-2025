@@ -29,7 +29,6 @@ const getEducatorDetails = async (educatorId) => {
     const response = await api.get('/employee/fetch-all-employees');
     if (response.data?.data) {
       const allEmployees = response.data.data;
-      // console.log("All employees:", allEmployees.map(emp => ({ id: emp._id, name: emp.name })));
       
       const educator = allEmployees.find(emp => emp._id.toString() === educatorId.toString());
       console.log("Found educator:", educator ? {
@@ -38,7 +37,8 @@ const getEducatorDetails = async (educatorId) => {
         designation: educator.designation,
         department: educator.department,
         email: educator.email,
-        phone: educator.phone
+        phone: educator.phone,
+        avatar: educator.avatar
       } : 'Not found');
       
       if (educator) {
@@ -48,7 +48,11 @@ const getEducatorDetails = async (educatorId) => {
           email: educator.email,
           phone: educator.phone,
           department: educator.department,
-          _id: educator._id
+          _id: educator._id,
+          avatar: educator.avatar || {
+            public_id: null,
+            secure_url: null
+          }
         };
       }
     }
@@ -236,38 +240,122 @@ export const getNotifications = async () => {
 // Feedback APIs
 export const sendFeedbackToEducator = async (studentId, educatorId, content, rating) => {
   try {
+      console.log('Sending feedback with data:', { studentId, educatorId, content, rating });
       const response = await api.post(`/feedback/sendFeedback`, {
           studentId,
           educatorId,
           content,
           rating
       });
+      console.log('Feedback send response:', response.data);
       return response.data;
   } catch (error) {
-      console.error('Error sending feedback:', error);
+      console.error('Error sending feedback:', error.response?.data || error.message);
       throw error;
   }
 };
 
-export const getReceivedFeedbacks = async (educatorId) => {
+export const getReceivedFeedbacks = async (educatorId, studentId) => {
   try {
-      const response = await api.get(`/feedback/getReceivedFeedbacks/${educatorId}`);
-      return response.data;
+    if (!educatorId || !studentId) {
+      throw new Error("Educator ID and Student ID are required");
+    }
+
+    console.log(
+      "Fetching received feedbacks for educator:",
+      educatorId,
+      "from student:",
+      studentId
+    );
+
+    const response = await api.get(
+      `/feedback/getReceivedFeedbacks/${educatorId}/${studentId}`
+    );
+
+    console.log("Received feedbacks from backend:", response.data); // Log the feedback data
+
+    if (response.status === 404) {
+      return {
+        success: true,
+        data: [],
+        message: "No feedback found",
+      };
+    }
+
+    return {
+      success: true,
+      data: response.data?.data || [],
+      message: response.data?.message || "Feedbacks retrieved successfully",
+    };
   } catch (error) {
-      console.error('Error getting received feedbacks:', error);
-      throw error;
+    console.error("Error fetching feedbacks:", error); // Log the error for debugging
+
+    return {
+      success: false,
+      data: [],
+      message: error.response?.data?.message || "Failed to retrieve feedbacks",
+      error: error.message,
+    };
   }
 };
 
-export const getSentFeedbacks = async (studentId) => {
+// Handle Student Registration
+export const handleSignup = async (formData) => {
   try {
-      const response = await api.get(`/feedback/getSentFeedbacks/${studentId}`);
-      return response.data;
+    console.log("Attempting signup with data:", formData);
+    
+    // Format the data according to the backend schema
+    const signupData = {
+      StudentId: `STU${Date.now()}`, // Generate a unique student ID
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      studentEmail: formData.studentEmail,
+      password: formData.password,
+      gender: formData.gender,
+      dateOfBirth: formData.dateOfBirth,
+      primaryDiagnosis: formData.primaryDiagnosis,
+      enrollmentYear: new Date(),
+      address: formData.address,
+      guardianDetails: {
+        name: formData.guardianDetails,
+        relation: "Parent/Guardian",
+        contactNumber: formData.guardianContact,
+        parentEmail: formData.parentEmail
+      },
+      transport: formData.transportRequired,
+      allergies: formData.allergies ? [formData.allergies] : [],
+      medicalHistory: {
+        notes: formData.medicalHistory
+      },
+      deviceAccess: [formData.deviceAccess],
+      preferredLanguage: "English"
+    };
+
+    const response = await api.post("/student/register", signupData);
+    
+    if (response.data?.data) {
+      return { 
+        success: true,
+        data: response.data.data
+      };
+    }
+    
+    return { 
+      success: false, 
+      message: response.data?.message || "Registration failed" 
+    };
   } catch (error) {
-      console.error('Error getting sent feedbacks:', error);
-      throw error;
+    console.error("Signup Error:", {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status
+    });
+    
+    return { 
+      success: false, 
+      message: error.response?.data?.message || "Failed to register student"
+    };
   }
 };
-
 
 export default api;

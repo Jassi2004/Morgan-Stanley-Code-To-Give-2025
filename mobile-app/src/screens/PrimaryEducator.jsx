@@ -4,18 +4,70 @@ import { FontAwesome } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { getUserData, sendFeedbackToEducator, getReceivedFeedbacks } from '../utils/api';
 import Navbar from '../components/Navbar';
+import { fetchTranslation } from '../utils/translate';
+import { useLanguage } from '../context/LanguageContext';
 
 const DEFAULT_EDUCATOR_IMAGE = "https://res.cloudinary.com/dh2gwea4g/image/upload/v1710834756/educator_default_kxoxyk.png";
 
 export default function PrimaryEducator() {
     const navigation = useNavigation();
+    const { language } = useLanguage();
     const [rating, setRating] = useState(0);
     const [feedback, setFeedback] = useState('');
     const [educatorData, setEducatorData] = useState(null);
     const [receivedFeedbacks, setReceivedFeedbacks] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [isTranslating, setIsTranslating] = useState(true);
     const scrollViewRef = useRef(null);
     const inputRef = useRef(null);
+
+    // Translation states
+    const [translations, setTranslations] = useState({
+        primaryEducator: "Primary Educator",
+        educatorDetails: "Educator Details",
+        name: "Name",
+        specialty: "Specialty",
+        email: "Email",
+        phone: "Phone",
+        department: "Department",
+        notAssigned: "Not Assigned",
+        specialistDefault: "Special Education Specialist",
+        provideFeedback: "Provide Feedback",
+        rateExperience: "Rate your experience:",
+        yourFeedback: "Your feedback:",
+        feedbackPlaceholder: "Write your feedback here...",
+        submitFeedback: "Submit Feedback",
+        receivedFeedback: "Received Feedback",
+        viewAllFeedback: "View All Feedback",
+        noFeedbackYet: "No feedback received yet",
+        errorSelectRating: "Please select a rating",
+        errorEnterFeedback: "Please enter feedback message",
+        errorSubmitFeedback: "Unable to submit feedback. Missing required information.",
+        successFeedback: "Feedback submitted successfully",
+        errorGeneric: "Unable to submit feedback. Please try again.",
+        na: "N/A",
+        loading: "Loading..."
+    });
+
+    // Fetch translations when language changes
+    useEffect(() => {
+        const translateContent = async () => {
+            setIsTranslating(true);
+            try {
+                const translatedContent = {};
+                for (const [key, value] of Object.entries(translations)) {
+                    translatedContent[key] = await fetchTranslation(value, language);
+                }
+                setTranslations(translatedContent);
+            } catch (error) {
+                console.error('Error translating content:', error);
+            } finally {
+                setIsTranslating(false);
+            }
+        };
+
+        translateContent();
+    }, [language]);
 
     useEffect(() => {
         loadEducatorData();
@@ -26,8 +78,13 @@ export default function PrimaryEducator() {
         try {
             const userData = await getUserData();
             if (userData?.educatorDetails?.primary) {
-                setEducatorData(userData.educatorDetails.primary);
-                console.log("Primary Educator Data:", userData.educatorDetails.primary);
+                const translatedEducator = {
+                    ...userData.educatorDetails.primary,
+                    name: await fetchTranslation(userData.educatorDetails.primary.name || '', language),
+                    specialty: await fetchTranslation(userData.educatorDetails.primary.specialty || translations.specialistDefault, language),
+                    department: await fetchTranslation(userData.educatorDetails.primary.department || '', language)
+                };
+                setEducatorData(translatedEducator);
             }
         } catch (error) {
             console.error("Error loading educator data:", error);
@@ -39,25 +96,43 @@ export default function PrimaryEducator() {
             setIsLoading(true);
             const userData = await getUserData();
             const educatorId = userData?.educatorDetails?.primary?._id;
+            const studentId = userData?._id;
 
-            if (!educatorId) {
-                console.error('Educator ID not found');
+            if (!educatorId || !studentId) {
+                console.error('Educator ID or Student ID not found:', { educatorId, studentId });
                 return;
             }
 
-            const response = await getReceivedFeedbacks(educatorId);
-            if (response.statusCode === 200) {
-                setReceivedFeedbacks(response.data);
+            const response = await getReceivedFeedbacks(educatorId, studentId);
+
+            if (response.success) {
+                // Translate feedback content
+                const translatedFeedbacks = await Promise.all(response.data.map(async (feedback) => ({
+                    ...feedback,
+                    content: await fetchTranslation(feedback.content || '', language)
+                })));
+                setReceivedFeedbacks(translatedFeedbacks || []);
+            } else {
+                console.log('No feedbacks found or error:', response.message);
+                setReceivedFeedbacks([]);
             }
         } catch (error) {
             console.error('Error loading received feedback:', error);
-            if (error.response?.status !== 404) { // Ignore 404 errors as they just mean no feedback yet
-                Alert.alert('Error', 'Unable to load feedback. Please try again later.');
-            }
+            setReceivedFeedbacks([]);
         } finally {
             setIsLoading(false);
         }
     };
+
+    // Update loadEducatorData and loadReceivedFeedback when language changes
+    useEffect(() => {
+        if (educatorData) {
+            loadEducatorData();
+        }
+        if (receivedFeedbacks.length > 0) {
+            loadReceivedFeedback();
+        }
+    }, [language]);
 
     const handleRating = (selectedRating) => {
         setRating(selectedRating);
@@ -66,12 +141,12 @@ export default function PrimaryEducator() {
     const handleSubmitFeedback = async () => {
         try {
             if (!rating) {
-                Alert.alert('Error', 'Please select a rating');
+                Alert.alert('Error', translations.errorSelectRating);
                 return;
             }
 
             if (!feedback.trim()) {
-                Alert.alert('Error', 'Please enter feedback message');
+                Alert.alert('Error', translations.errorEnterFeedback);
                 return;
             }
 
@@ -80,26 +155,28 @@ export default function PrimaryEducator() {
             const educatorId = userData?.educatorDetails?.primary?._id;
 
             if (!studentId || !educatorId) {
-                Alert.alert('Error', 'Unable to submit feedback. Missing required information.');
+                Alert.alert('Error', translations.errorSubmitFeedback);
                 return;
             }
 
-            const response = await sendFeedbackToEducator(studentId, educatorId, feedback, rating);
+            setIsLoading(true);
+            // Translate feedback before sending
+            const translatedFeedback = await fetchTranslation(feedback, language);
+            const response = await sendFeedbackToEducator(studentId, educatorId, translatedFeedback, rating);
 
-            if (response.statusCode === 201) {
-                Alert.alert('Success', 'Feedback submitted successfully');
-                // Reset form
+            if (response.success) {
+                Alert.alert('Success', translations.successFeedback);
                 setRating(0);
                 setFeedback('');
-                // Refresh received feedback
-                loadReceivedFeedback();
+                await loadReceivedFeedback();
+            } else {
+                Alert.alert('Error', response.message || translations.errorGeneric);
             }
         } catch (error) {
             console.error('Error submitting feedback:', error);
-            Alert.alert(
-                'Error',
-                error.response?.data?.message || 'Unable to submit feedback. Please try again.'
-            );
+            Alert.alert('Error', error.response?.data?.message || translations.errorGeneric);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -115,6 +192,33 @@ export default function PrimaryEducator() {
         }, 100);
     };
 
+    // Get the profile image URL
+    const getProfileImageUrl = () => {
+        if (educatorData?.avatar?.secure_url) {
+            return educatorData.avatar.secure_url;
+            console.log(educatorData.avatar.secure_url);
+        }
+        return DEFAULT_EDUCATOR_IMAGE;
+    };
+
+    if (isTranslating) {
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#4CAF50" />
+                <Text style={styles.loadingText}>{translations.loading}</Text>
+            </View>
+        );
+    }
+
+    if (isLoading) {
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#4CAF50" />
+                <Text style={styles.loadingText}>{translations.loading}</Text>
+            </View>
+        );
+    }
+
     return (
         <KeyboardAvoidingView 
             style={styles.container}
@@ -123,7 +227,7 @@ export default function PrimaryEducator() {
         >
             {/* Header */}
             <View style={styles.header}>
-                <Text style={styles.headerTitle}>Primary Educator</Text>
+                <Text style={styles.headerTitle}>{translations.primaryEducator}</Text>
                 <TouchableOpacity 
                     style={styles.menuButton}
                     onPress={() => navigation.navigate('Notifications')}
@@ -142,47 +246,48 @@ export default function PrimaryEducator() {
                 <View style={styles.section}>
                     <View style={styles.imageContainer}>
                         <Image 
-                            source={{ uri: DEFAULT_EDUCATOR_IMAGE }} 
+                            source={{ uri: getProfileImageUrl() }} 
                             style={styles.profileImage}
+                            defaultSource={{ uri: DEFAULT_EDUCATOR_IMAGE }}
                         />
                     </View>
 
                     {/* Educator Details */}
-                    <Text style={styles.sectionTitle}>Educator Details</Text>
+                    <Text style={styles.sectionTitle}>{translations.educatorDetails}</Text>
 
                     <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Name:</Text>
-                        <Text style={styles.detailValue}>{educatorData?.name || 'Not Assigned'}</Text>
+                        <Text style={styles.detailLabel}>{translations.name}:</Text>
+                        <Text style={styles.detailValue}>{educatorData?.name || translations.notAssigned}</Text>
                     </View>
 
                     <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Specialty:</Text>
-                        <Text style={styles.detailValue}>{educatorData?.specialty || 'Special Education Specialist'}</Text>
+                        <Text style={styles.detailLabel}>{translations.specialty}:</Text>
+                        <Text style={styles.detailValue}>{educatorData?.specialty || translations.specialistDefault}</Text>
                     </View>
 
                     <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Email:</Text>
-                        <Text style={styles.detailValue}>{educatorData?.email || 'N/A'}</Text>
+                        <Text style={styles.detailLabel}>{translations.email}:</Text>
+                        <Text style={styles.detailValue}>{educatorData?.email || translations.na}</Text>
                     </View>
 
                     <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Phone:</Text>
-                        <Text style={styles.detailValue}>{educatorData?.phone || 'N/A'}</Text>
+                        <Text style={styles.detailLabel}>{translations.phone}:</Text>
+                        <Text style={styles.detailValue}>{educatorData?.phone || translations.na}</Text>
                     </View>
 
                     <View style={[styles.detailRow, { borderBottomWidth: 0 }]}>
-                        <Text style={styles.detailLabel}>Department:</Text>
-                        <Text style={styles.detailValue}>{educatorData?.department || 'N/A'}</Text>
+                        <Text style={styles.detailLabel}>{translations.department}:</Text>
+                        <Text style={styles.detailValue}>{educatorData?.department || translations.na}</Text>
                     </View>
                 </View>
 
                 {/* Feedback Section */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Provide Feedback</Text>
+                    <Text style={styles.sectionTitle}>{translations.provideFeedback}</Text>
                     
                     {/* Rating */}
                     <View style={styles.ratingContainer}>
-                        <Text style={styles.ratingLabel}>Rate your experience:</Text>
+                        <Text style={styles.ratingLabel}>{translations.rateExperience}</Text>
                         <View style={styles.starsContainer}>
                             {[1, 2, 3, 4, 5].map((star) => (
                                 <TouchableOpacity
@@ -202,13 +307,13 @@ export default function PrimaryEducator() {
 
                     {/* Feedback Text Input */}
                     <View style={styles.feedbackContainer}>
-                        <Text style={styles.feedbackLabel}>Your feedback:</Text>
+                        <Text style={styles.feedbackLabel}>{translations.yourFeedback}</Text>
                         <TextInput
                             ref={inputRef}
                             style={styles.feedbackInput}
                             multiline
                             numberOfLines={4}
-                            placeholder="Write your feedback here..."
+                            placeholder={translations.feedbackPlaceholder}
                             value={feedback}
                             onChangeText={setFeedback}
                             onFocus={handleFocus}
@@ -221,17 +326,17 @@ export default function PrimaryEducator() {
                         onPress={handleSubmitFeedback}
                     >
                         <FontAwesome name="paper-plane" size={20} color="#FFF" style={styles.buttonIcon} />
-                        <Text style={styles.buttonText}>Submit Feedback</Text>
+                        <Text style={styles.buttonText}>{translations.submitFeedback}</Text>
                     </TouchableOpacity>
                 </View>
 
                 {/* Received Feedback Section */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Received Feedback</Text>
+                    <Text style={styles.sectionTitle}>{translations.receivedFeedback}</Text>
                     
                     {isLoading ? (
                         <ActivityIndicator size="large" color="#4CAF50" />
-                    ) : receivedFeedbacks.length > 0 ? (
+                    ) : receivedFeedbacks && receivedFeedbacks.length > 0 ? (
                         <>
                             {/* Latest Feedback Card */}
                             {receivedFeedbacks.slice(0, 1).map((feedback) => (
@@ -241,7 +346,7 @@ export default function PrimaryEducator() {
                                             {new Date(feedback.createdAt).toLocaleDateString()}
                                         </Text>
                                         <View style={styles.feedbackRating}>
-                                            {[...Array(feedback.rating)].map((_, index) => (
+                                            {[...Array(parseInt(feedback.rating))].map((_, index) => (
                                                 <FontAwesome
                                                     key={index}
                                                     name="star"
@@ -255,9 +360,7 @@ export default function PrimaryEducator() {
                                     <Text style={styles.feedbackText}>
                                         "{feedback.content}"
                                     </Text>
-                                    <Text style={styles.feedbackAuthor}>
-                                        - {feedback.senderId?.firstName} {feedback.senderId?.lastName}
-                                    </Text>
+                                    
                                 </View>
                             ))}
 
@@ -269,12 +372,12 @@ export default function PrimaryEducator() {
                                     educatorName: educatorData?.name
                                 })}
                             >
-                                <Text style={styles.viewAllText}>View All Feedback</Text>
+                                <Text style={styles.viewAllText}>{translations.viewAllFeedback}</Text>
                                 <FontAwesome name="angle-right" size={20} color="#4CAF50" />
                             </TouchableOpacity>
                         </>
                     ) : (
-                        <Text style={styles.noFeedbackText}>No feedback received yet</Text>
+                        <Text style={styles.noFeedbackText}>{translations.noFeedbackYet}</Text>
                     )}
                 </View>
 
@@ -481,5 +584,17 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         fontStyle: 'italic',
         marginVertical: 20,
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#F5F5F5',
+    },
+    loadingText: {
+        marginTop: 10,
+        fontSize: 16,
+        color: '#4CAF50',
+        fontWeight: '600',
     },
 });

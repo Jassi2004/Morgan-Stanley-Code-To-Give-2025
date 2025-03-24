@@ -2,7 +2,8 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Student } from "../models/students.model.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
+import { AdminNotification } from "../models/adminNotification.model.js";
 import bcrypt from "bcryptjs";
 
 const cookieOptions = {
@@ -28,7 +29,6 @@ const generateAccessAndRefreshToken = async (studentId) => {
 
 const registerStudent = asyncHandler(async (req, res) => {
   const {
-    StudentId,
     firstName,
     lastName,
     studentEmail,
@@ -36,17 +36,23 @@ const registerStudent = asyncHandler(async (req, res) => {
     gender,
     dateOfBirth,
     primaryDiagnosis,
-    enrollmentYear,
     address,
-    guardianDetails,
-    preferredLanguage,
+    fathersName,
+    mothersName,
+    parentEmail,
+    contactNumber,
+    allergies,
     transport,
-    UDID,
+    sessionType,
+    UDID
   } = req.body;
 
+  // Generate StudentId
+  const StudentId = `STU${Date.now()}`;
+
+  // Validate required fields
   if (
     [
-      StudentId,
       firstName,
       lastName,
       studentEmail,
@@ -54,87 +60,83 @@ const registerStudent = asyncHandler(async (req, res) => {
       gender,
       dateOfBirth,
       primaryDiagnosis,
-      enrollmentYear,
       address,
-    ].some((field) => field === undefined || field.trim() === "")
+      fathersName,
+      mothersName,
+      parentEmail,
+      contactNumber
+    ].some((field) => {
+      if (field === undefined || field === null) return true;
+      if (typeof field === 'string') return field.trim() === "";
+      if (typeof field === 'number') return field === 0;
+      return true;
+    })
   ) {
-    throw new ApiError(400, "All required fields must be filled");
+    throw new ApiError(400, "All required fields must be filled.");
   }
 
+  // Check for existing student
   const existingStudent = await Student.findOne({
     $or: [{ studentEmail }, { StudentId }],
   });
   if (existingStudent) {
-    throw new ApiError(409, "Student with the same email or ID already exists");
+    throw new ApiError(
+      409,
+      "Student with the same email or ID already exists."
+    );
   }
 
-  // const avatarLocalPath = req.files?.avatar?.[0]?.path;
-  // if (!avatarLocalPath) {
-  //   throw new ApiError(400, "Avatar is required");
-  // }
-  // const avatar = await uploadOnCloudinary(avatarLocalPath);
-  // if (!avatar) {
-  //   throw new ApiError(500, "Failed to upload avatar");
-  // }
-
-  // let UDIDUrls = {};
-  // if (UDID?.isAvailable && req.files?.UDID?.[0]?.path) {
-  //   UDIDUrls = await uploadOnCloudinary(req.files.UDID[0].path);
-  // }
-
+  // Create new student with default values for required fields
   const student = await Student.create({
     StudentId,
     firstName,
     lastName,
     studentEmail,
     password,
-    // avatar: {
-    //   public_id: avatar.public_id,
-    //   secure_url: avatar.secure_url,
-    // },
     gender,
-    dateOfBirth,
+    dateOfBirth: new Date(dateOfBirth),
     primaryDiagnosis,
-    enrollmentYear,
     address,
-    guardianDetails,
-    preferredLanguage: preferredLanguage || "English",
+    fathersName,
+    mothersName,
+    parentEmail,
+    contactNumber: Number(contactNumber),
+    status: "Active",
+    isApproved: false,
+    
+    // Optional fields with defaults
+    allergies: allergies || [],
     transport: transport || false,
+    sessionType: sessionType || "Offline",
     UDID: {
       isAvailable: UDID?.isAvailable || false,
-      // public_id: UDIDUrls?.public_id || "",
-      // secure_url: UDIDUrls?.secure_url || "",
-    },
-    educator: [],
+      public_id: UDID?.public_id || "",
+      secure_url: UDID?.secure_url || ""
+    }
   });
 
-  const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
-    student._id
-  );
+  // Create admin notification for new student registration
+  const adminNotification = await AdminNotification.create({
+    title: "New Student Registration",
+    message: `New student ${firstName} ${lastName} has registered. Please review and approve.`,
+    type: "STUDENT_REGISTRATION",
+    studentId: student._id,
+    status: "PENDING"
+  });
 
   const createdStudent = await Student.findById(student._id).select(
     "-password -refreshToken"
   );
 
   if (!createdStudent) {
-    throw new ApiError(500, "Failed to register student");
+    throw new ApiError(500, "Something went wrong while registering the student");
   }
 
-  return res
-    .status(201)
-    .cookie("accessToken", accessToken, cookieOptions)
-    .cookie("refreshToken", refreshToken, cookieOptions)
-    .json(
-      new ApiResponse(
-        201,
-        {
-          student: createdStudent,
-          tokens: { accessToken, refreshToken },
-        },
-        "Student registered successfully"
-      )
-    );
+  return res.status(201).json(
+    new ApiResponse(200, createdStudent, "Student registered successfully")
+  );
 });
+
 
 const loginStudent = asyncHandler(async (req, res) => {
   const { studentEmail, password } = req.body;
@@ -149,7 +151,9 @@ const loginStudent = asyncHandler(async (req, res) => {
   }
 
   if (!student.isApproved) {
-    throw new ApiError(403, "Your account is pending admin approval");
+    return res.status(200).json({
+      message: "Please wait for admin approval before logging in."
+    });
   }
 
   const isPasswordCorrect = await student.isPasswordCorrect(password);
@@ -207,64 +211,85 @@ const logoutStudent = asyncHandler(async (req, res) => {
 });
 
 const profilePage = asyncHandler(async (req, res) => {
-  const studentid = req.user?._id;
+  const studentId = req.params.studentId || req.user?._id;
 
-  if (!studentid) {
+  if (!studentId) {
     throw new ApiError(400, "Student ID is required for fetching profile data");
   }
 
-  const student = await Student.findById(studentid)
+  const student = await Student.findOne({ StudentId: studentId })
     .select("-password -refreshToken")
-    .populate("educator", "name designation email")
-    .populate("programs", "name description");
+    .populate({
+      path: "educators.primary",
+      select: "name designation email",
+      match: { _id: { $exists: true } }
+    })
+    .populate({
+      path: "educators.secondary",
+      select: "name designation email",
+      match: { _id: { $exists: true } }
+    });
 
   if (!student) {
     throw new ApiError(404, "Student not found");
   }
 
   const profileData = {
+    basicInfo: {
+      StudentId: student.StudentId,
+      firstName: student.firstName,
+      lastName: student.lastName,
+      studentEmail: student.studentEmail,
+      gender: student.gender,
+      dateOfBirth: student.dateOfBirth,
+      avatar: student.avatar,
+      UDID: student.UDID
+    },
     enrollmentStatus: {
       isApproved: student.isApproved,
       status: student.status,
-      enrollmentYear: student.enrollmentYear.getFullYear(),
-    },
-    assignedStaff: {
-      primaryEducator: student.educator[0] || null,
-      secondaryEducator: student.educator[1] || null,
-    },
-    programs: {
-      enrolledPrograms: student.programs,
-      numberOfSessions: student.numberOfSessions,
-      timings: student.timings,
-      daysOfWeek: student.daysOfWeek,
-      sessionType: student.sessionType,
-    },
-    basicInfo: {
-      name: `${student.firstName} ${student.lastName}`,
-      email: student.studentEmail,
-      gender: student.gender,
-      dateOfBirth: student.dateOfBirth,
-      StudentId: student.StudentId,
-      avatar: student.avatar,
-      UDID: student.UDID,
+      enrollmentYear: student.enrollmentYear
     },
     medicalInfo: {
       primaryDiagnosis: student.primaryDiagnosis,
       comorbidity: student.comorbidity,
       allergies: student.allergies,
-      medicalHistory: student.medicalHistory,
+      medicalHistory: {
+        medications: student.medicalHistory?.medications || [],
+        surgeries: student.medicalHistory?.surgeries || [],
+        notes: student.medicalHistory?.notes
+      }
     },
-    guardianInfo: student.guardianDetails,
+    programDetails: {
+      program: student.program,
+      numberOfSessions: student.numberOfSessions,
+      timings: student.timings,
+      daysOfWeek: student.daysOfWeek,
+      sessionType: student.sessionType
+    },
+    educatorInfo: {
+      primary: student.educators?.primary || null,
+      secondary: student.educators?.secondary || null
+    },
+    guardianDetails: {
+      name: student.guardianDetails?.name,
+      relation: student.guardianDetails?.relation,
+      contactNumber: student.guardianDetails?.contactNumber,
+      parentEmail: student.guardianDetails?.parentEmail
+    },
     preferences: {
       preferredLanguage: student.preferredLanguage,
-      deviceAccess: student.deviceAccess,
-      transport: student.transport,
+      transport: student.transport
     },
     address: student.address,
-    strengths: student.strengths,
-    weaknesses: student.weaknesses,
+    strengths: student.strengths || [],
+    weaknesses: student.weaknesses || [],
     comments: student.comments,
-    progressReports: student.progressReports,
+    progressReports: student.progressReports?.map(report => ({
+      date: report.date,
+      educator: report.educator,
+      report: report.report
+    })) || []
   };
 
   return res
@@ -406,6 +431,7 @@ const updateProfile = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Student not found");
   }
 
+<<<<<<< HEAD
   if (req.files?.avatar?.[0]?.path) {
     const avatar = await uploadOnCloudinary(req.files.avatar[0].path);
     if (avatar) {
@@ -413,17 +439,31 @@ const updateProfile = asyncHandler(async (req, res) => {
         public_id: avatar.public_id,
         secure_url: avatar.secure_url,
       };
+=======
+  // Handle file uploads if present
+  if (req.files) {
+    // Handle avatar upload
+    if (req.files.avatar?.[0]?.path) {
+      const avatar = await uploadOnCloudinary(req.files.avatar[0].path);
+      if (avatar?.secure_url) {
+        updates.avatar = {
+          public_id: avatar.public_id,
+          secure_url: avatar.secure_url,
+        };
+      }
+>>>>>>> 77012740207d65271b40dfebfd58e05081ee5865
     }
-  }
 
-  if (req.files?.UDID?.[0]?.path) {
-    const UDID = await uploadOnCloudinary(req.files.UDID[0].path);
-    if (UDID) {
-      updates.UDID = {
-        isAvailable: true,
-        public_id: UDID.public_id,
-        secure_url: UDID.secure_url,
-      };
+    // Handle UDID upload
+    if (req.files.UDID?.[0]?.path) {
+      const UDID = await uploadOnCloudinary(req.files.UDID[0].path);
+      if (UDID?.secure_url) {
+        updates.UDID = {
+          isAvailable: true,
+          public_id: UDID.public_id,
+          secure_url: UDID.secure_url,
+        };
+      }
     }
   }
 
@@ -434,6 +474,7 @@ const updateProfile = asyncHandler(async (req, res) => {
       {
         new: true, // Return the updated document
         runValidators: true, // Validate updates
+<<<<<<< HEAD
         select: "-password -refreshToken", // Exclude sensitive fields
         new: true, 
         runValidators: true, 
@@ -441,10 +482,12 @@ const updateProfile = asyncHandler(async (req, res) => {
         new: true,
         runValidators: true,
         select: "-password -refreshToken",
+=======
+        select: "-password -refreshToken" // Exclude sensitive fields
+>>>>>>> 77012740207d65271b40dfebfd58e05081ee5865
       }
     );
 
-    // Ensure the update was successful
     if (!updatedStudent) {
       throw new ApiError(500, "Failed to update student information");
     }
@@ -463,44 +506,58 @@ const updateProfile = asyncHandler(async (req, res) => {
 });
 
 const uploadProfilePicture = asyncHandler(async (req, res) => {
-  try {
-    const studentid = req.user?._id;
-    console.log(studentid);
-    if (!studentid) {
-      throw new ApiError(400, "Student ID is required");
-    }
+  const studentid = req.user?._id;
 
-    if (!req.file) {
-      throw new ApiError(400, "Please upload avatar file");
-    }
-
-    const localFilePath = req.file?.path;
-    const avatar = await uploadOnCloudinary(localFilePath);
-
-    if (!avatar.secure_url) {
-      throw new ApiError(400, "Please try again, avatar not updated");
-    }
-
-    const student = await Student.findById(studentid);
-    if (!student) {
-      throw new ApiError(404, "Student not found");
-    }
-
-    student.avatar.public_id = avatar.public_id;
-    student.avatar.secure_url = avatar.secure_url;
-
-    await student.save({ validateBeforeSave: false });
-
-
-    return res
-      .status(200)
-      .json(new ApiResponse(200, student, "Avatar uploaded successfully"));
-  } catch (error) {
-    console.error(
-      `Error occurred while updating profile picture: ${error.message}`
-    );
-    throw new ApiError(400, "Error occurred while uploading profile picture");
+  if (!studentid) {
+    throw new ApiError(400, "Student ID is required");
   }
+
+  if (!req.file) {
+    throw new ApiError(400, "Please upload avatar file");
+  }
+
+  const student = await Student.findById(studentid);
+  if (!student) {
+    throw new ApiError(404, "Student not found");
+  }
+
+  // Upload to cloudinary
+  const localFilePath = req.file.path;
+  const avatar = await uploadOnCloudinary(localFilePath);
+
+  if (!avatar?.secure_url) {
+    throw new ApiError(400, "Failed to upload avatar to cloud storage");
+  }
+
+  // Delete old avatar from cloudinary if exists
+  if (student.avatar?.public_id) {
+    try {
+      await deleteFromCloudinary(student.avatar.public_id);
+    } catch (error) {
+      console.error("Failed to delete old avatar:", error);
+      // Continue with update even if delete fails
+    }
+  }
+
+  // Update student avatar
+  student.avatar = {
+    public_id: avatar.public_id,
+    secure_url: avatar.secure_url
+  };
+
+  const updatedStudent = await student.save({ validateBeforeSave: false });
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200, 
+        {
+          avatar: updatedStudent.avatar
+        },
+        "Avatar uploaded successfully"
+      )
+    );
 });
 
 export {
