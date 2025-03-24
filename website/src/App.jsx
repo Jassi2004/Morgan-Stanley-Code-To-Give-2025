@@ -16,8 +16,12 @@ import AdminLogin from "../pages/AdminLogin";
 import EmployeeRegister from "../pages/EmplooyeeRegister";
 import EmployeeLogin from "../pages/EmployeeLogin";
 import LandingPage from "../pages/LandingPage"
+<<<<<<< HEAD
+import ChatBot from "../components/chatbotComponents/chatbottemp";
+=======
 import EmployeeProfile from "../pages/EmployeeProfile"
 import AdminProfile from "../pages/AdminProfile"
+>>>>>>> 4490747967bb084c48d396c063975e0851bf1658
 
 function App() {
   return (
@@ -27,6 +31,7 @@ function App() {
         <Route path="/student/login" element={<StudentLogin/>}/>
           <Route path="/employee/register" element={<EmployeeRegister />} />
           <Route path="/employee/login" element={<EmployeeLogin />} />
+          <Route path="/chatbot" element={<ChatBot />} />
           
         <Route path="/landing" element={<LandingPage/>}/> 
 
