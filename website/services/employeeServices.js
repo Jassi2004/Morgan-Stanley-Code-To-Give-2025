@@ -43,7 +43,8 @@ export const addEducator = async (educatorData) => {
     const response = await axios.post(`${BASE_URL}/employees/addEducator`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
-      }
+      },
+      withCredentials : true
     });
 
     return response.data;
@@ -59,7 +60,7 @@ export const addEducator = async (educatorData) => {
  */
 export const getAllEmployees = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/fetch-all-employees`);
+    const response = await axios.get(`${BASE_URL}/fetch-all-employees`, {withCredentials : true});
     return response.data;
   } catch (error) {
     console.error('Error fetching employees:', error);

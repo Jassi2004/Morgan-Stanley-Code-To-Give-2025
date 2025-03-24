@@ -68,6 +68,7 @@ const updateStudent = async (studentId, updateData, files = null) => {
   try {
     let formData;
     let config = {};
+    console.log("upload-data : ", updateData );
 
     if (files) {
       formData = new FormData();
