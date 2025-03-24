@@ -9,21 +9,25 @@ const EmployeeLogin = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const response = await fetch("http://localhost:8000/api/v1/employee/login", {
-      method: "POST",
-      credentials : "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    console.log(response);
-    
-    if(response.status == 200){
-        navigate("/");
-    }else{
-        window.alert("Wrong credentials")
+    try {
+      const response = await fetch("http://localhost:8000/api/v1/employee/login", {
+        method: "POST",
+        credentials : "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      
+      const data = await response.json();
+      
+      if(response.status === 200){
+        localStorage.setItem('educatorId', data.data.user._id);
+        navigate("/employee/dashboard");
+      } else {
+        window.alert(data.message || "Wrong credentials");
+      }
+    } catch (error) {
+      window.alert("An error occurred. Please try again.");
     }
-    const data = await response.json();
-    console.log(data);
   };
 
   return (

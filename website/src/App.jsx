@@ -16,6 +16,8 @@ import AdminLogin from "../pages/AdminLogin";
 import EmployeeRegister from "../pages/EmplooyeeRegister";
 import EmployeeLogin from "../pages/EmployeeLogin";
 import LandingPage from "../pages/LandingPage"
+import EmployeeProfile from "../pages/EmployeeProfile"
+import AdminProfile from "../pages/AdminProfile"
 
 function App() {
   return (
@@ -42,6 +44,8 @@ function App() {
           <Route path="/register/employee" element={<EmployeeRegister />} />
           <Route path="/login/employee" element={<EmployeeLogin />} />
           <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
+          <Route path="/employee/profile" element={<EmployeeProfile />} />
+          <Route path="/admin/profile" element={<AdminProfile />} />
         </Route>
       </Routes>
     </Router>
