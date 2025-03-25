@@ -92,7 +92,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
               `}
               style={{ maxWidth: isOpen ? '200px' : '0' }}
             >
-              Spectrum Hope
+              Ishanya
             </h1>
           </div>
           <button 
