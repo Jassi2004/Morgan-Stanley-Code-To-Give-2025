@@ -21,6 +21,7 @@ const EmployeeLogin = () => {
       
       if(response.status === 200){
         localStorage.setItem('educatorId', data.data.user._id);
+        localStorage.setItem("educatorData", JSON.stringify(data.data));
         navigate("/employee/dashboard");
       } else {
         window.alert(data.message || "Wrong credentials");

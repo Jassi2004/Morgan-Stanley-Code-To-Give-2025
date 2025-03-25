@@ -118,10 +118,16 @@ const loginEmployeeAccount = asyncHandler(async (req, res) => {
                             _id: user._id,
                             name: user.name,
                             email: user.email,
+                            gender : user.gender,
+                            phone: user.phone,
+                            DOB: user.DOB,
                             employeeId: user.employeeId,
                             avatar: user.avatar,
                             designation: user.designation,
-                            department: user.department
+                            department: user.department,
+                            status : user.status,
+                            workLocation : user.workLocation,
+                            dateOfJoining : user.dateOfJoining,
                         },
                         accessToken,
                         refreshToken

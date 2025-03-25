@@ -16,6 +16,11 @@ import { motion } from 'framer-motion';
 
 function EmployeeProfile() {
   // Dummy data - in real app, this would come from API
+  const educatorData = JSON.parse(localStorage.getItem('educatorData')) || {};
+  console.log("educatorData : ", educatorData)
+  const employee = educatorData?.user || {};
+
+
   const employeeData = {
     name: "Dr. Sarah Johnson",
     designation: "Senior Special Educator",
@@ -161,7 +166,7 @@ function EmployeeProfile() {
                 className="relative -mt-20"
               >
                 <img 
-                  src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80"
+                  src={employee?.avatar?.secure_url}
                   alt="Profile"
                   className="w-40 h-40 rounded-full border-4 border-[var(--color-bg-primary)] object-cover"
                 />
@@ -171,13 +176,13 @@ function EmployeeProfile() {
                   variants={itemVariants}
                   className="text-3xl font-bold text-[var(--color-text-primary)]"
                 >
-                  {employeeData.name}
+                  {employee.name}
                 </motion.h1>
                 <motion.p 
                   variants={itemVariants}
                   className="text-lg text-[var(--color-text-secondary)]"
                 >
-                  {employeeData.designation}
+                  {employee.designation}
                 </motion.p>
                 <motion.div 
                   variants={itemVariants}
@@ -185,11 +190,11 @@ function EmployeeProfile() {
                 >
                   <span className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
                     <School className="w-4 h-4" />
-                    {employeeData.program}
+                    {employee.program || "Spruha"}
                   </span>
                   <span className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
                     <Users className="w-4 h-4" />
-                    {employeeData.department}
+                    {employee.department}
                   </span>
                 </motion.div>
               </div>
@@ -216,19 +221,19 @@ function EmployeeProfile() {
               >
                 <div className="flex items-center gap-3">
                   <Mail className="w-5 h-5 text-[var(--color-brand)]" />
-                  <span>{employeeData.email}</span>
+                  <span>{employee.email}</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <Phone className="w-5 h-5 text-[var(--color-brand)]" />
-                  <span>{employeeData.phone}</span>
+                  <span>{employee.phone}</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <MapPin className="w-5 h-5 text-[var(--color-brand)]" />
-                  <span>{employeeData.workLocation}</span>
+                  <span>{employee.workLocation}</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <Calendar className="w-5 h-5 text-[var(--color-brand)]" />
-                  <span>Joined {new Date(employeeData.dateOfJoining).toLocaleDateString()}</span>
+                  <span>Joined {new Date(employee.dateOfJoining).toLocaleDateString()}</span>
                 </div>
               </motion.div>
             </motion.div>
