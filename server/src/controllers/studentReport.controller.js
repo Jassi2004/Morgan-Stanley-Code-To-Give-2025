@@ -178,8 +178,8 @@ const fetchStudentReportById = asyncHandler(async(req, res) => {
 });
 
 const fetchAllStudentReports = asyncHandler(async(req, res) => {
+    // console.log("Fetching all student reports");
     try{
-        
         const allReports = await studentReport.find({}).populate("studentDetails", "StudentId firstName lastName program primaryDiagnosis guardianDetails.name guardianDetails.relation guardianDetails.contactNumber guardianDetails.parentEmail")
         .populate({
             path : "assessmentReport",
@@ -189,7 +189,7 @@ const fetchAllStudentReports = asyncHandler(async(req, res) => {
             path : "monthlyReports",
             select : "monthlyScore remarks timeFrame"
         });
-
+        // console.log(allReports);
         if(allReports.length == 0){
             return res.status(200)
             .json(
