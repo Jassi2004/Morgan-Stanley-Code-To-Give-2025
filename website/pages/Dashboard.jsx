@@ -9,6 +9,7 @@ import PerformanceGraph from '../components/dashboardComponents/PerformanceGraph
 import { useNavigate } from 'react-router-dom';
 import { AppContext } from "../context/AppContext";
 import { motion, AnimatePresence } from 'framer-motion';
+import Orb from '../src/Backgrounds/Orb/Orb';
 
 function DashBoard() {
   const navigate = useNavigate();
@@ -128,6 +129,11 @@ function DashBoard() {
 
   return (
     <div className="min-h-screen bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] transition-colors duration-300">
+      <div>
+
+      {/* <Orb/> */}
+
+      </div>
       {/* Welcome Banner */}
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
@@ -173,7 +179,7 @@ function DashBoard() {
         {/* Stats Grid */}
         <motion.div 
           variants={containerVariants}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-5"
         >
           {stats.map((stat, index) => (
             <motion.div
@@ -227,7 +233,8 @@ function DashBoard() {
             variants={itemVariants}
             className="bg-[var(--color-bg-secondary)] p-6 rounded-xl border border-[var(--color-border-primary)] shadow-lg"
           >
-            <motion.h2 
+            <Orb/>
+            {/* <motion.h2 
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.6 }}
@@ -254,7 +261,7 @@ function DashBoard() {
                   Teachers: {counts.totalTeachers ? ((counts.activeTeachers / counts.totalTeachers) * 100).toFixed(1) : 0}%
                 </p>
               </div>
-            </div>
+            </div> */}
           </motion.div>
 
           {/* Notice Board */}
