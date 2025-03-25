@@ -206,7 +206,7 @@ const TimelineScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ImageBackground 
-        source={require('../assets/background.jpg')} 
+        source={require('../../assets/bgApp.jpg')} 
         style={styles.backgroundImage}
         resizeMode="cover"
       >
