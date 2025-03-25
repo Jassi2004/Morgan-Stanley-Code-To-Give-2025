@@ -137,6 +137,7 @@ export const AppProvider = ({ children }) => {
 
     const contextValue = {
         darkMode,
+        reports,
         setDarkMode,
         students,
         employees,
