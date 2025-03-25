@@ -292,6 +292,77 @@ export default function Home() {
                     </ScrollView>
             </View>
 
+            {/* Success Stories Section */}
+            <View style={styles.section}>
+                <Text style={[styles.sectionTitle, { fontSize: scaledFont(18) }]}>Success Stories</Text>
+                <Text style={[styles.sectionSubtitle, { fontSize: scaledFont(14) }]}>Inspiring journeys of children with ADHD</Text>
+                <ScrollView 
+                    horizontal={true}
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.articlesContainer}
+                >
+                    <TouchableOpacity 
+                        style={styles.articleCard}
+                        onPress={() => Linking.openURL('https://medium.com/@adhdparenting/from-struggle-to-success-how-early-intervention-transformed-my-sons-life-8f2d3c4e5a1b')}
+                    >
+                        <Image 
+                            source={{ uri: 'https://images.unsplash.com/photo-1491013516836-7db643ee125a?w=500&auto=format&fit=crop&q=80' }}
+                            style={styles.articleImage}
+                        />
+                        <View style={styles.articleContent}>
+                            <Text style={[styles.articleTitle, { fontSize: scaledFont(14) }]}>From Struggle to Success</Text>
+                            <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>How early intervention and personalized support helped my son thrive with ADHD...</Text>
+                            <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>5 min read • Parent Story</Text>
+                        </View>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                        style={styles.articleCard}
+                        onPress={() => Linking.openURL('https://medium.com/education-innovation/breaking-barriers-how-inclusive-education-helped-my-adhd-child-excel-9c4e8d2b5f3a')}
+                    >
+                        <Image 
+                            source={{ uri: 'https://images.unsplash.com/photo-1577896851231-70ef18881754?w=500&auto=format&fit=crop&q=80' }}
+                            style={styles.articleImage}
+                        />
+                        <View style={styles.articleContent}>
+                            <Text style={[styles.articleTitle, { fontSize: scaledFont(14) }]}>Breaking Barriers</Text>
+                            <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>A teacher's perspective on creating an inclusive classroom for ADHD students...</Text>
+                            <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>6 min read • Teacher's Journey</Text>
+                        </View>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                        style={styles.articleCard}
+                        onPress={() => Linking.openURL('https://medium.com/mental-health/empowering-adhd-kids-through-art-and-music-therapy-7d842f5a1e9c')}
+                    >
+                        <Image 
+                            source={{ uri: 'https://images.unsplash.com/photo-1514119412350-e174d90d280e?w=500&auto=format&fit=crop&q=80' }}
+                            style={styles.articleImage}
+                        />
+                        <View style={styles.articleContent}>
+                            <Text style={[styles.articleTitle, { fontSize: scaledFont(14) }]}>Art & Music Therapy Success</Text>
+                            <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>How creative therapies helped my child develop focus and confidence...</Text>
+                            <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>4 min read • Therapy Journey</Text>
+                        </View>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                        style={styles.articleCard}
+                        onPress={() => Linking.openURL('https://medium.com/parenting-matters/from-homework-battles-to-academic-achievement-adhd-success-story-3f9d2c8e4b5a')}
+                    >
+                        <Image 
+                            source={{ uri: 'https://images.unsplash.com/photo-1488998427799-e3362cec87c3?w=500&auto=format&fit=crop&q=80' }}
+                            style={styles.articleImage}
+                        />
+                        <View style={styles.articleContent}>
+                            <Text style={[styles.articleTitle, { fontSize: scaledFont(14) }]}>Academic Achievement</Text>
+                            <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>Transforming homework struggles into learning success with ADHD...</Text>
+                            <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>7 min read • Academic Journey</Text>
+                        </View>
+                    </TouchableOpacity>
+                </ScrollView>
+            </View>
+
             {/* Schedule Section */}
             <View style={styles.section}>
                     <Text style={[styles.sectionTitle, { fontSize: scaledFont(18) }]}>{translations.todaySchedule}</Text>
