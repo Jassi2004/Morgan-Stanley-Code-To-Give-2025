@@ -1,30 +1,40 @@
-import React, { useContext, useState, useEffect } from 'react';
-import { Users, GraduationCap, FileText, TrendingUp, UserCheck, School, Bell, Trash2, Target, Award } from 'lucide-react';
-import { toast, ToastContainer } from 'react-toastify';
-import DashboardCard from '../components/dashboardComponents/DashboardCard';
-import AttendanceChart from '../components/dashboardComponents/AttendanceChart';
-import SessionSchedule from '../components/dashboardComponents/SessionSchedule';
-import AdminNotificationPanel from '../components/dashboardComponents/AdminNotificationPanel';
-import PerformanceGraph from '../components/dashboardComponents/PerformanceGraph';
-import { useNavigate } from 'react-router-dom';
+import React, { useContext, useState, useEffect } from "react";
+import {
+  Users,
+  GraduationCap,
+  FileText,
+  TrendingUp,
+  UserCheck,
+  School,
+  Bell,
+  Trash2,
+  Target,
+  Award,
+} from "lucide-react";
+import { toast, ToastContainer } from "react-toastify";
+import DashboardCard from "../components/dashboardComponents/DashboardCard";
+import AttendanceChart from "../components/dashboardComponents/AttendanceChart";
+import SessionSchedule from "../components/dashboardComponents/SessionSchedule";
+import AdminNotificationPanel from "../components/dashboardComponents/AdminNotificationPanel";
+import PerformanceGraph from "../components/dashboardComponents/PerformanceGraph";
+import { useNavigate } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
-import { motion, AnimatePresence } from 'framer-motion';
-import Orb from '../src/Backgrounds/Orb/Orb';
+import { motion, AnimatePresence } from "framer-motion";
+import Orb from "../src/Backgrounds/Orb/Orb";
 
 import { FaUserGraduate, FaUserTie } from "react-icons/fa";
-import UploadStudentData from '../components/dashboardComponents/UploadStudentData';
-import UploadEmployeeData from '../components/dashboardComponents/UploadEmployeeData';
-
+import UploadStudentData from "../components/dashboardComponents/UploadStudentData";
+import UploadEmployeeData from "../components/dashboardComponents/UploadEmployeeData";
 
 // import ChatBot from '../components/chatbotComponents/Chatbot';
-import ChatBot from '../components/chatbotComponents/Chatbot';
-
+import ChatBot from "../components/chatbotComponents/Chatbot";
+import Folder from "../src/blocks/components/Folder";
 
 function DashBoard() {
   const navigate = useNavigate();
   const { counts, loading, error, addNotification } = useContext(AppContext);
-  
-  const [noticeText, setNoticeText] = useState('');
+
+  const [noticeText, setNoticeText] = useState("");
   const [publishLoading, setPublishLoading] = useState(false);
   const [notificationError, setNotificationError] = useState(null);
 
@@ -32,8 +42,6 @@ function DashBoard() {
   const [employeeDataUpload, setEmployeeDataUpload] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
 
-
-  
   const stats = [
     {
       title: "Active Students",
@@ -43,7 +51,8 @@ function DashBoard() {
       color: "bg-blue-500",
       trend: "+12%",
       trendColor: "text-green-500",
-      bgImage: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1471&q=80"
+      bgImage:
+        "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1471&q=80",
     },
     {
       title: "Active Teachers",
@@ -53,16 +62,20 @@ function DashBoard() {
       color: "bg-purple-500",
       trend: "+8%",
       trendColor: "text-green-500",
-      bgImage: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
+      bgImage:
+        "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
     },
     {
       title: "Student-Teacher Ratio",
-      value: counts.totalTeachers ? (counts.activeStudents / counts.activeTeachers).toFixed(1) : 0,
+      value: counts.totalTeachers
+        ? (counts.activeStudents / counts.activeTeachers).toFixed(1)
+        : 0,
       icon: UserCheck,
       color: "bg-green-500",
       trend: "Optimal",
       trendColor: "text-green-500",
-      bgImage: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
+      bgImage:
+        "https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
     },
   ];
 
@@ -71,9 +84,9 @@ function DashBoard() {
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1
-      }
-    }
+        staggerChildren: 0.1,
+      },
+    },
   };
 
   const itemVariants = {
@@ -83,21 +96,21 @@ function DashBoard() {
       opacity: 1,
       transition: {
         duration: 0.5,
-        ease: "easeOut"
-      }
+        ease: "easeOut",
+      },
     },
     hover: {
       scale: 1.02,
       transition: {
         duration: 0.2,
-        ease: "easeInOut"
-      }
-    }
+        ease: "easeInOut",
+      },
+    },
   };
 
   const handlePublishNotice = async () => {
     if (!noticeText.trim()) {
-      toast.error('Please enter a notification message');
+      toast.error("Please enter a notification message");
       return;
     }
 
@@ -105,13 +118,13 @@ function DashBoard() {
     try {
       await addNotification({
         message: noticeText,
-        type: 'GENERAL',
-        priority: 'NORMAL'
+        type: "GENERAL",
+        priority: "NORMAL",
       });
-      setNoticeText('');
-      toast.success('Notification published successfully!');
+      setNoticeText("");
+      toast.success("Notification published successfully!");
     } catch (error) {
-      toast.error('Failed to publish notification. Please try again.');
+      toast.error("Failed to publish notification. Please try again.");
     } finally {
       setPublishLoading(false);
     }
@@ -120,7 +133,9 @@ function DashBoard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-48">
-        <div className="text-lg text-[var(--color-text-secondary)]">Loading dashboard...</div>
+        <div className="text-lg text-[var(--color-text-secondary)]">
+          Loading dashboard...
+        </div>
       </div>
     );
   }
@@ -135,18 +150,16 @@ function DashBoard() {
 
   return (
     <div className="min-h-screen bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] transition-colors duration-300">
-      <div>
-
-      </div>
+      <div></div>
       {/* Welcome Banner */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
         className="relative h-64 bg-gradient-to-r from-[var(--color-brand)] to-[var(--color-brand-dark)] overflow-hidden rounded-b-3xl"
       >
         <div className="absolute inset-0">
-          <img 
+          <img
             src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
             alt="Banner"
             className="w-full h-full object-cover opacity-20"
@@ -154,7 +167,7 @@ function DashBoard() {
         </div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-8 lg:px-8 h-full flex items-start">
           <div className="pt-24">
-            <motion.h1 
+            <motion.h1
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2, duration: 0.5 }}
@@ -162,7 +175,7 @@ function DashBoard() {
             >
               Welcome back, Admin!
             </motion.h1>
-            <motion.p 
+            <motion.p
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4, duration: 0.5 }}
@@ -174,14 +187,14 @@ function DashBoard() {
         </div>
       </motion.div>
 
-      <motion.main 
+      <motion.main
         initial="hidden"
         animate="visible"
         variants={containerVariants}
         className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-20"
       >
         {/* Stats Grid */}
-        <motion.div 
+        <motion.div
           variants={containerVariants}
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-5"
         >
@@ -194,7 +207,7 @@ function DashBoard() {
             >
               {/* Background Image */}
               <div className="absolute inset-0 opacity-5 group-hover:opacity-10 transition-opacity duration-300">
-                <img 
+                <img
                   src={stat.bgImage}
                   alt=""
                   className="w-full h-full object-cover"
@@ -210,16 +223,18 @@ function DashBoard() {
                     {stat.trend}
                   </span>
                 </div>
-                
+
                 <div className="space-y-2">
-                  <p className="text-sm text-[var(--color-text-secondary)]">{stat.title}</p>
+                  <p className="text-sm text-[var(--color-text-secondary)]">
+                    {stat.title}
+                  </p>
                   <p className="text-2xl font-bold text-[var(--color-text-primary)]">
                     {stat.value}
                   </p>
                   {stat.total && (
-                  <p className="text-sm text-[var(--color-text-secondary)]">
-                    out of {stat.total} total
-                  </p>
+                    <p className="text-sm text-[var(--color-text-secondary)]">
+                      out of {stat.total} total
+                    </p>
                   )}
                 </div>
               </div>
@@ -247,52 +262,79 @@ function DashBoard() {
               </div>
 
               <div className="space-y-2">
-                <p className="text-sm text-[var(--color-text-secondary)]">{""}</p>
-                <p className="text-2xl font-bold text-[var(--color-text-primary)]">{""}</p>
+                <p className="text-sm text-[var(--color-text-secondary)]">
+                  {""}
+                </p>
+                <p className="text-2xl font-bold text-[var(--color-text-primary)]">
+                  {""}
+                </p>
               </div>
 
               {/* Buttons */}
-              <div className="mt-4 flex flex-col gap-8">
-                <button className="flex items-center gap-2 cursor-pointer" variant="default" onClick={() => setStudentDataUpload(true)}>
-                  <FaUserGraduate className="text-2xl" />
-                  Upload Student Data
-                </button>
 
-                <button className="flex items-center gap-2 cursor-pointer" variant="outline" onClick={() => setEmployeeDataUpload(true)}>
-                  <FaUserTie className="text-2xl" />
-                  Upload Employees Data
-                </button>
+              <div className="mt-4 flex flex-col justify-center gap-x-2">
+              <span className="text-center text-lg font-semibold mt-[-10px]">Upload</span>
+
+                <div className="flex flex items-center">
+                  <div className="flex flex-col items-center">
+                    <div
+                      className="flex flex-col items-center justify-center h-32 w-32 cursor-pointer"
+                      onClick={() => setStudentDataUpload(true)}
+                    >
+                      <Folder
+                        size={1}
+                        color="#00d8ff"
+                        className="custom-folder"
+                      />
+                      <span className="mt-2 text-center">Student Data</span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col items-center">
+                    <div
+                      className="flex flex-col items-center justify-center h-32 w-32 cursor-pointer"
+                      onClick={() => setEmployeeDataUpload(true)}
+                    >
+                      <Folder
+                        size={1}
+                        color="#00d8ff"
+                        className="custom-folder"
+                      />
+                      <span className="mt-2 text-center">Employee Data</span>
+                    </div>
+                  </div>
+                </div>
               </div>
+
+
+
             </div>
           </motion.div>
         </motion.div>
 
         {/* Main Content Grid */}
-        <motion.div 
+        <motion.div
           variants={containerVariants}
           className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8"
         >
           {/* Chat Bot */}
-          <motion.div 
-        onClick={() => setIsChatOpen(true)} 
-        variants={itemVariants}
-        className="bg-[var(--color-bg-secondary)] p-6 rounded-xl border border-[var(--color-border-primary)] shadow-lg"
-      >
-        <Orb/>
-      </motion.div>
+          <motion.div
+            onClick={() => setIsChatOpen(true)}
+            variants={itemVariants}
+            className="bg-[var(--color-bg-secondary)] p-6 rounded-xl border border-[var(--color-border-primary)] shadow-lg"
+          >
+            <Orb />
+          </motion.div>
 
-      <ChatBot 
-        isOpen={isChatOpen} 
-        onClose={() => setIsChatOpen(false)} 
-      />
+          <ChatBot isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
 
           {/* Notice Board */}
-          <motion.div 
+          <motion.div
             variants={itemVariants}
             className="bg-[var(--color-bg-secondary)] p-6 rounded-xl border border-[var(--color-border-primary)] shadow-lg"
           >
             <div className="flex items-center justify-between mb-6">
-              <motion.h2 
+              <motion.h2
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.6 }}
@@ -317,20 +359,22 @@ function DashBoard() {
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                  onClick={handlePublishNotice}
-                  disabled={publishLoading || !noticeText.trim()}
+                onClick={handlePublishNotice}
+                disabled={publishLoading || !noticeText.trim()}
                 className={`w-full py-3 bg-[var(--color-brand)] text-white rounded-lg hover:bg-[var(--color-brand-dark)] transition-all duration-200 ${
-                  (publishLoading || !noticeText.trim()) ? 'opacity-50 cursor-not-allowed' : ''
+                  publishLoading || !noticeText.trim()
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
                 }`}
               >
-                {publishLoading ? 'Publishing...' : 'Publish Notice'}
+                {publishLoading ? "Publishing..." : "Publish Notice"}
               </motion.button>
             </div>
           </motion.div>
         </motion.div>
 
         {/* Charts and Data */}
-        <motion.div 
+        <motion.div
           variants={containerVariants}
           className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8"
         >
@@ -338,7 +382,7 @@ function DashBoard() {
           <SessionSchedule />
         </motion.div>
 
-        <motion.div 
+        <motion.div
           variants={containerVariants}
           className="grid grid-cols-1 lg:grid-cols-2 gap-8"
         >
@@ -347,19 +391,14 @@ function DashBoard() {
         </motion.div>
       </motion.main>
       <ToastContainer position="top-right" autoClose={3000} theme="colored" />
-      {
-        studentDataUpload && (
-          <UploadStudentData onClose={() => setStudentDataUpload(false)} />
-        )
-      }
-      {
-        employeeDataUpload && (
-          <UploadEmployeeData onClose={() => setEmployeeDataUpload(false)}/> 
-        )
-      }
+      {studentDataUpload && (
+        <UploadStudentData onClose={() => setStudentDataUpload(false)} />
+      )}
+      {employeeDataUpload && (
+        <UploadEmployeeData onClose={() => setEmployeeDataUpload(false)} />
+      )}
     </div>
   );
 }
 
 export default DashBoard;
- 
