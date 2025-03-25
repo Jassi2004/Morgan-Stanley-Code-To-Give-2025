@@ -44,7 +44,7 @@ const generateStudentQuarterlyReport = asyncHandler(async (req, res) => {
         await newReport.save();
 
 
-        const report = await studentReport.findById(newReport._id).populate("studentDetails", "StudentId firstName lastName program primaryDiagnosis guardianDetails.name guardianDetails.relation guardianDetails.contactNumber guardianDetails.parentEmail")
+        const report = await studentReport.findById(newReport._id).populate("studentDetails", "StudentId", "firstName", "lastName", "contactNumber", "altContactNumber", "program", "primaryDiagnosis", "motherName", "fatherName", "parentEmail")
         .populate({
             path : "assessmentReport",
             select : "program marks feedback date assessmentName"
@@ -180,7 +180,7 @@ const fetchStudentReportById = asyncHandler(async(req, res) => {
 const fetchAllStudentReports = asyncHandler(async(req, res) => {
     // console.log("Fetching all student reports");
     try{
-        const allReports = await studentReport.find({}).populate("studentDetails", "StudentId firstName lastName program primaryDiagnosis guardianDetails.name guardianDetails.relation guardianDetails.contactNumber guardianDetails.parentEmail")
+        const allReports = await studentReport.find().populate("studentDetails", "StudentId", "firstName", "lastName", "contactNumber", "altContactNumber", "program", "primaryDiagnosis", "motherName", "fatherName" ,"parentEmail")
         .populate({
             path : "assessmentReport",
             select : "program marks feedback date assessmentName"

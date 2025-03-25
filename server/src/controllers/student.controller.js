@@ -2,7 +2,10 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Student } from "../models/students.model.js";
-import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
+import {
+  uploadOnCloudinary,
+  deleteFromCloudinary,
+} from "../utils/cloudinary.js";
 import { AdminNotification } from "../models/adminNotification.model.js";
 import bcrypt from "bcryptjs";
 import xlsx from "xlsx";
@@ -43,14 +46,16 @@ const registerStudent = asyncHandler(async (req, res) => {
     fathersName,
     mothersName,
     parentEmail,
-    contactNumber,
     allergies,
     transport,
     sessionType,
-    UDID
+    contactNumber,
+    altContactNumber,
   } = req.body;
 
-  // Generate StudentId
+  console.log(req.body);
+
+
   const StudentId = `STU${Date.now()}`;
 
   // Validate required fields
@@ -67,18 +72,17 @@ const registerStudent = asyncHandler(async (req, res) => {
       fathersName,
       mothersName,
       parentEmail,
-      contactNumber
+      contactNumber,
     ].some((field) => {
       if (field === undefined || field === null) return true;
-      if (typeof field === 'string') return field.trim() === "";
-      if (typeof field === 'number') return field === 0;
+      if (typeof field === "string") return field.trim() === "";
+      if (typeof field === "number") return field === 0;
       return true;
     })
   ) {
     throw new ApiError(400, "All required fields must be filled.");
   }
 
-  // Check for existing student
   const existingStudent = await Student.findOne({
     $or: [{ studentEmail }, { StudentId }],
   });
@@ -87,6 +91,24 @@ const registerStudent = asyncHandler(async (req, res) => {
       409,
       "Student with the same email or ID already exists."
     );
+  }
+
+  let avatar = null;
+  let UDID = null;
+
+  if (req.files) {
+    if (req.files.avatar) {
+      const avatarPath = req.files.avatar[0].path;
+      const { secure_url, public_id } = await uploadOnCloudinary(avatarPath);
+      avatar = { secure_url, public_id };
+    }
+    if (req.files.UDIDDocument) {
+      {
+        const UDIDPath = req.files.UDIDDocument[0].path;
+        const { secure_url, public_id } = await uploadOnCloudinary(UDIDPath);
+        UDID = { secure_url, public_id, isAvailable: true };
+      }
+    }
   }
 
   // Create new student with default values for required fields
@@ -104,27 +126,28 @@ const registerStudent = asyncHandler(async (req, res) => {
     mothersName,
     parentEmail,
     contactNumber: Number(contactNumber),
+    altContactNumber: Number(altContactNumber) || undefined,
     status: "Active",
-    isApproved: false,
-    
+    avatar: avatar || undefined,
+
     // Optional fields with defaults
     allergies: allergies || [],
     transport: transport || false,
     sessionType: sessionType || "Offline",
-    UDID: {
-      isAvailable: UDID?.isAvailable || false,
-      public_id: UDID?.public_id || "",
-      secure_url: UDID?.secure_url || ""
-    }
+    UDID: UDID || {
+      isAvailable: false,
+      secure_url: "",
+      public_id: "",
+    },
   });
 
   // Create admin notification for new student registration
-  const adminNotification = await AdminNotification.create({
+  await AdminNotification.create({
     title: "New Student Registration",
     message: `New student ${firstName} ${lastName} has registered. Please review and approve.`,
     type: "STUDENT_REGISTRATION",
     studentId: student._id,
-    status: "PENDING"
+    status: "PENDING",
   });
 
   const createdStudent = await Student.findById(student._id).select(
@@ -132,14 +155,18 @@ const registerStudent = asyncHandler(async (req, res) => {
   );
 
   if (!createdStudent) {
-    throw new ApiError(500, "Something went wrong while registering the student");
+    throw new ApiError(
+      500,
+      "Something went wrong while registering the student"
+    );
   }
 
-  return res.status(201).json(
-    new ApiResponse(200, createdStudent, "Student registered successfully")
-  );
+  return res
+    .status(201)
+    .json(
+      new ApiResponse(200, createdStudent, "Student registered successfully")
+    );
 });
-
 
 const loginStudent = asyncHandler(async (req, res) => {
   const { studentEmail, password } = req.body;
@@ -153,9 +180,9 @@ const loginStudent = asyncHandler(async (req, res) => {
     throw new ApiError(401, "Invalid email or password");
   }
 
-  if (!student.isApproved) {
+  if (student.approval.status === "PENDING") {
     return res.status(200).json({
-      message: "Please wait for admin approval before logging in."
+      message: "Please wait for admin approval before logging in.",
     });
   }
 
@@ -215,22 +242,24 @@ const logoutStudent = asyncHandler(async (req, res) => {
 
 const profilePage = asyncHandler(async (req, res) => {
   const studentId = req.params.studentId || req.user?._id;
+  // console.log("Student Id: ", studentId);
 
   if (!studentId) {
     throw new ApiError(400, "Student ID is required for fetching profile data");
   }
+
 
   const student = await Student.findOne({ StudentId: studentId })
     .select("-password -refreshToken")
     .populate({
       path: "educators.primary",
       select: "name designation email",
-      match: { _id: { $exists: true } }
+      match: { _id: { $exists: true } },
     })
     .populate({
       path: "educators.secondary",
       select: "name designation email",
-      match: { _id: { $exists: true } }
+      match: { _id: { $exists: true } },
     });
 
   if (!student) {
@@ -246,12 +275,14 @@ const profilePage = asyncHandler(async (req, res) => {
       gender: student.gender,
       dateOfBirth: student.dateOfBirth,
       avatar: student.avatar,
-      UDID: student.UDID
+      UDID: student.UDID,
+      contactNumber: student.contactNumber,
+      altContactNumber: student.altContactNumber,
     },
     enrollmentStatus: {
-      isApproved: student.isApproved,
+      approvalStatus: student.approval.status,
       status: student.status,
-      enrollmentYear: student.enrollmentYear
+      enrollmentYear: student.enrollmentYear,
     },
     medicalInfo: {
       primaryDiagnosis: student.primaryDiagnosis,
@@ -260,39 +291,39 @@ const profilePage = asyncHandler(async (req, res) => {
       medicalHistory: {
         medications: student.medicalHistory?.medications || [],
         surgeries: student.medicalHistory?.surgeries || [],
-        notes: student.medicalHistory?.notes
-      }
+        notes: student.medicalHistory?.notes,
+      },
     },
     programDetails: {
       program: student.program,
       numberOfSessions: student.numberOfSessions,
       timings: student.timings,
       daysOfWeek: student.daysOfWeek,
-      sessionType: student.sessionType
+      sessionType: student.sessionType,
     },
     educatorInfo: {
       primary: student.educators?.primary || null,
-      secondary: student.educators?.secondary || null
+      secondary: student.educators?.secondary || null,
     },
     guardianDetails: {
-      name: student.guardianDetails?.name,
-      relation: student.guardianDetails?.relation,
-      contactNumber: student.guardianDetails?.contactNumber,
-      parentEmail: student.guardianDetails?.parentEmail
+      fathersName: student.fathersName,
+      mothersName: student.mothersName,
+      parentEmail: student.parentEmail
     },
     preferences: {
       preferredLanguage: student.preferredLanguage,
-      transport: student.transport
+      transport: student.transport,
     },
     address: student.address,
     strengths: student.strengths || [],
     weaknesses: student.weaknesses || [],
     comments: student.comments,
-    progressReports: student.progressReports?.map(report => ({
-      date: report.date,
-      educator: report.educator,
-      report: report.report
-    })) || []
+    progressReports:
+      student.progressReports?.map((report) => ({
+        date: report.date,
+        educator: report.educator,
+        report: report.report,
+      })) || [],
   };
 
   return res
@@ -395,12 +426,11 @@ const approveStudent = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Student not found");
   }
 
-  if (student.isApproved) {
+  if (student.approval.status === "approved") {
     throw new ApiError(400, "Student is already approved");
   }
 
-  // Update student with approved status, educators, and programs
-  student.isApproved = true;
+  student.approval.status = "approved";
   student.educator = educatorIds;
   student.programs = programIds;
   student.status = "Active";
@@ -460,20 +490,38 @@ const updateProfile = asyncHandler(async (req, res) => {
     }
   }
 
+  updates.basicInfo = JSON.parse(updates.basicInfo);
+
+  console.log("Updates:", updates);
+
   try {
     const updatedStudent = await Student.findOneAndUpdate(
       { StudentId: studentId },
-      { $set: updates },
+      { 
+        $set: {
+          firstName: updates?.basicInfo?.firstName || student.firstName,
+          lastName: updates?.basicInfo?.lastName || student.lastName,
+          email: updates?.basicInfo?.studentEmail || student.email,
+          gender: updates?.basicInfo?.gender || student.gender,
+          dateOfBirth: updates?.basicInfo?.dateOfBirth || student.dateOfBirth, 
+          contactNumber: updates?.basicInfo?.contactNumber || student.contactNumber,
+          altContactNumber: updates?.basicInfo?.altContactNumber || student.altContactNumber,
+
+          educators: {
+            primary: updates?.educators?.primary || student.educators.primary,
+            secondary: updates?.educators?.secondary || student.educators.secondary,
+          },
+
+          address: updates?.address || student.address,
+          avatar: updates?.avatar || student.avatar,
+          UDID: updates?.UDID || student.UDID,
+          comments: updates?.comments || student.comments,
+        }
+      },
       {
         new: true, // Return the updated document
         runValidators: true, // Validate updates
         select: "-password -refreshToken", // Exclude sensitive fields
-        new: true, 
-        runValidators: true, 
-        select: "-password -refreshToken", 
-        new: true,
-        runValidators: true,
-        select: "-password -refreshToken",
       }
     );
 
@@ -531,22 +579,20 @@ const uploadProfilePicture = asyncHandler(async (req, res) => {
   // Update student avatar
   student.avatar = {
     public_id: avatar.public_id,
-    secure_url: avatar.secure_url
+    secure_url: avatar.secure_url,
   };
 
   const updatedStudent = await student.save({ validateBeforeSave: false });
 
-  return res
-    .status(200)
-    .json(
-      new ApiResponse(
-        200, 
-        {
-          avatar: updatedStudent.avatar
-        },
-        "Avatar uploaded successfully"
-      )
-    );
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        avatar: updatedStudent.avatar,
+      },
+      "Avatar uploaded successfully"
+    )
+  );
 });
 
 const uploadStudentDataFromExcel = asyncHandler(async (req, res) => {
@@ -564,60 +610,100 @@ const uploadStudentDataFromExcel = asyncHandler(async (req, res) => {
       throw new ApiError(400, "Excel file is empty or has an invalid format");
     }
 
-    const validPrimaryDiagnosis = ["Autism", "Down Syndrome", "ADHD", "Cerebral Palsy", "Others"];
-    const validPrograms = ["Multi", "Job Readiness", "Vocation", "Spruha", "Suyog", "Sameti", "Shaale", "Siddhi", "Sattva"];
+    const validPrimaryDiagnosis = [
+      "Autism",
+      "Down Syndrome",
+      "ADHD",
+      "Cerebral Palsy",
+      "Others",
+    ];
+    const validPrograms = [
+      "Multi",
+      "Job Readiness",
+      "Vocation",
+      "Spruha",
+      "Suyog",
+      "Sameti",
+      "Shaale",
+      "Siddhi",
+      "Sattva",
+    ];
     const validSessionTypes = ["Online", "Offline"];
 
-    const students = await Promise.all(sheetData.map(async (row) => {
-      // Normalize and Validate Enrollment Year
-      let enrollmentYear = row["Enrollment Year"] ? new Date(row["Enrollment Year"]) : null;
-      if (!enrollmentYear || enrollmentYear < new Date("2015-01-01") || enrollmentYear > new Date()) {
-        enrollmentYear = new Date(); // Default to current year if invalid
-      }
+    const students = await Promise.all(
+      sheetData.map(async (row) => {
+        // Normalize and Validate Enrollment Year
+        let enrollmentYear = row["Enrollment Year"]
+          ? new Date(row["Enrollment Year"])
+          : null;
+        if (
+          !enrollmentYear ||
+          enrollmentYear < new Date("2015-01-01") ||
+          enrollmentYear > new Date()
+        ) {
+          enrollmentYear = new Date(); // Default to current year if invalid
+        }
 
-      // Convert Educator Names to ObjectId
-      let primaryEducator = null;
-      let secondaryEducator = null;
-      if (row["Educator"]) {
-        const primary = await Employee.findOne({ name: row["Educator"] });
-        primaryEducator = primary ? primary._id : null;
-      }
-      if (row["Secondary Educator"]) {
-        const secondary = await Employee.findOne({ name: row["Secondary Educator"] });
-        secondaryEducator = secondary ? secondary._id : null;
-      }
+        // Convert Educator Names to ObjectId
+        let primaryEducator = null;
+        let secondaryEducator = null;
+        if (row["Educator"]) {
+          const primary = await Employee.findOne({ name: row["Educator"] });
+          primaryEducator = primary ? primary._id : null;
+        }
+        if (row["Secondary Educator"]) {
+          const secondary = await Employee.findOne({
+            name: row["Secondary Educator"],
+          });
+          secondaryEducator = secondary ? secondary._id : null;
+        }
 
-      return {
-        StudentId: row["Student ID"] || `STU${Date.now()}`, // Generate ID if missing
-        firstName: row["First Name"] || "Unknown",
-        lastName: row["Last Name"] || "Unknown",
-        studentEmail: row["Student Email"] || `student${Date.now()}@email.com`,
-        password: row["Password"] || "Default@123", // Hardcoded password
-        gender: row["Gender"] || "Not Specified",
-        dateOfBirth: row["DOB"] ? new Date(row["DOB"]) : new Date("2000-01-01"), // Default DOB
-        primaryDiagnosis: validPrimaryDiagnosis.includes(row["Primary Diagnosis"]) ? row["Primary Diagnosis"] : "Others",
-        comorbidity: row["Comorbidity"] === "Yes",
-        enrollmentYear,
-        program: validPrograms.includes(row["Program"]) ? row["Program"] : "Multi",
-        numberOfSessions: row["Number of Sessions"] || 0,
-        timings: row["Timings"] || "09:00 - 10:00",
-        daysOfWeek: row["Days of Week"] ? row["Days of Week"].split(",") : ["All"],
-        sessionType: validSessionTypes.includes(row["Session Type"]) ? row["Session Type"] : "Offline",
-        address: row["Address"] || "Unknown",
-        transport: row["Transport"] === "Yes",
-        status: row["Status"] || "Active",
-        UDID: row["UDID"] || null,
-        educators: {
-          primary: primaryEducator,
-          secondary: secondaryEducator,
-        },
-        fathersName: row["Father's Name"] || "Unknown",
-        mothersName: row["Mother's Name"] || "Unknown",
-        parentEmail: row["Parent Email"] || "parent@email.com",
-        contactNumber: row["Contact Number"] || "0000000000",
-        password : row["Password"]
-      };
-    }));
+        return {
+          StudentId: row["Student ID"] || `STU${Date.now()}`, // Generate ID if missing
+          firstName: row["First Name"] || "Unknown",
+          lastName: row["Last Name"] || "Unknown",
+          studentEmail:
+            row["Student Email"] || `student${Date.now()}@email.com`,
+          password: row["Password"] || "Default@123", // Hardcoded password
+          gender: row["Gender"] || "Not Specified",
+          dateOfBirth: row["DOB"]
+            ? new Date(row["DOB"])
+            : new Date("2000-01-01"), // Default DOB
+          primaryDiagnosis: validPrimaryDiagnosis.includes(
+            row["Primary Diagnosis"]
+          )
+            ? row["Primary Diagnosis"]
+            : "Others",
+          comorbidity: row["Comorbidity"] === "Yes",
+          enrollmentYear,
+          program: validPrograms.includes(row["Program"])
+            ? row["Program"]
+            : "Multi",
+          numberOfSessions: row["Number of Sessions"] || 0,
+          timings: row["Timings"] || "09:00 - 10:00",
+          daysOfWeek: row["Days of Week"]
+            ? row["Days of Week"].split(",")
+            : ["All"],
+          sessionType: validSessionTypes.includes(row["Session Type"])
+            ? row["Session Type"]
+            : "Offline",
+          address: row["Address"] || "Unknown",
+          transport: row["Transport"] === "Yes",
+          status: row["Status"] || "Active",
+          UDID: row["UDID"] || null,
+          educators: {
+            primary: primaryEducator,
+            secondary: secondaryEducator,
+          },
+          fathersName: row["Father's Name"] || "Unknown",
+          mothersName: row["Mother's Name"] || "Unknown",
+          parentEmail: row["Parent Email"] || "parent@email.com",
+          contactNumber: row["Contact Number"] || "0000000000",
+          altContactNumber: row["Alternate Contact Number"] || undefined,
+          password: row["Password"],
+        };
+      })
+    );
 
     await Student.insertMany(students);
 
@@ -626,21 +712,19 @@ const uploadStudentDataFromExcel = asyncHandler(async (req, res) => {
       console.log(`File ${filePath} successfully deleted..`);
     }
 
-    res.status(201)
-    .json(
-      new ApiResponse(
-        201,
-        students,
-        "Student data added successfully"
-      )
-    )
+    res
+      .status(201)
+      .json(new ApiResponse(201, students, "Student data added successfully"));
   } catch (err) {
-    console.error(`Error occurred while uploading student data from excel: ${err}`);
-    throw new ApiError(400, `Error occurred while uploading student data: ${err.message}`);
+    console.error(
+      `Error occurred while uploading student data from excel: ${err}`
+    );
+    throw new ApiError(
+      400,
+      `Error occurred while uploading student data: ${err.message}`
+    );
   }
 });
-
-
 
 export {
   registerStudent,
@@ -652,5 +736,5 @@ export {
   updateProfile,
   approveStudent,
   uploadProfilePicture,
-  uploadStudentDataFromExcel
+  uploadStudentDataFromExcel,
 };

@@ -210,12 +210,14 @@ const Students = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="h-10 w-10 flex-shrink-0">
-                        <div className="h-10 w-10 rounded-full bg-[var(--color-brand)] flex items-center justify-center text-white">
+                        {student.avatar.secure_url ? 
+                        <img src={student.avatar.secure_url} alt="avatar" className="h-10 w-10 rounded-full" />
+                        : <div className="h-10 w-10 rounded-full bg-[var(--color-brand)] flex items-center justify-center text-white">
                           <span className="font-medium">
                             {student.firstName?.charAt(0)}
                             {student.lastName?.charAt(0) || ""}
                           </span>
-                        </div>
+                        </div>}
                       </div>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-[var(--color-text-primary)]">
@@ -241,12 +243,14 @@ const Students = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        student.isApproved
+                        student.approval.status === "approved"
                           ? "bg-green-100 text-green-800"
-                          : "bg-yellow-100 text-yellow-800"
+                          : student.approval.status === "rejected" 
+                            ? "bg-red-100 text-red-800" 
+                            : "bg-yellow-100 text-yellow-800"
                       }`}
                     >
-                      {student.isApproved ? "Active" : "Pending"}
+                      {student.approval.status}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--color-text-primary)]">

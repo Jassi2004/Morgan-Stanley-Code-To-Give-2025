@@ -5,12 +5,13 @@ import Students from "../pages/Students";
 import Teachers from "../pages/Teachers";
 import StudentRegister from "../pages/StudentRegister";
 import StudentLogin from "../pages/StudentLogin";
-import AddTeacherForm from "../components/form/AddTeacherForm";
+// import AddTeacherForm from "../components/form/AddTeacherForm";
 import AddStudentForm from "../components/form/AddStudentForm";
 import Team from "../pages/Team";
 import EmployeeDashboard from "../pages/EmployeeDashboard";
 import AddEducatorForm from "../components/form/AddEducatorForm";
-import EditStudent from "../components/student/EditStudent";
+// import EditStudent from "../components/student/EditStudent";
+import StudentProfileView from "../components/student/StudentProfileView";
 import StudentProfile from "../components/student/StudentProfile";
 import AdminLogin from "../pages/AdminLogin";
 import EmployeeRegister from "../pages/EmplooyeeRegister";
@@ -19,6 +20,7 @@ import LandingPage2 from "../pages/LandingPage";
 import EmployeeProfile from "../pages/EmployeeProfile"
 import AdminProfile from "../pages/AdminProfile"
 import ViewReport from "../pages/ViewReport"
+import EditStudent from "../components/student/EditStudent";
 
 
 function App() {
@@ -34,14 +36,14 @@ function App() {
         
         <Route path="/" element={<Layout />}>
           <Route index element={<Dashboard />} />
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="students" element={<Students />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/students" element={<Students />} />
           <Route path="/students/add" element={<AddStudentForm />} />
-          <Route path="students/:studentId" element={<StudentProfile />} />
-          <Route path="students/:studentId/edit" element={<StudentProfile />} />
-          <Route path="reports/:studentId" element={<ViewReport />} />
+          <Route path="/students/:studentId" element={<StudentProfileView />} />
+          <Route path="/students/:studentId/edit" element={<EditStudent />} />
+          <Route path="/reports/:studentId" element={<ViewReport />} />
 
-          <Route path="teachers" element={<Teachers />} />
+          <Route path="/teachers" element={<Teachers />} />
           <Route path="/teachers/add" element={<AddEducatorForm />} />
           <Route path="/aboutTeam" element={<Team />} />
           <Route path="/login/admin" element={<AdminLogin />} />

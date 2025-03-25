@@ -293,11 +293,11 @@ const approveStudentAccount = asyncHandler(async(req, res) => {
         if(!student){
             throw new ApiError(404, "No student exists with that id");
         }
-        if(student.isApproved){
+        if(student.approval.status === "Approved"){
             throw new ApiError(400, "Student already approved");
         }
 
-        student.isApproved = true;
+        student.approval.status = "Approved";
         await student.save();
 
         return res.status(200)
