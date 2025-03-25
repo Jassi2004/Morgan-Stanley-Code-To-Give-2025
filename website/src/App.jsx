@@ -54,6 +54,11 @@ function App() {
           <Route path="/aboutTeam" element={<Team />} />
           <Route path="/login/admin" element={<AdminLogin />} />
           <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
+<<<<<<< HEAD
+          {/* <Route path="/employee/profile" element={<EmployeeProfile />} /> */}
+          {/* <Route path="/admin/profile" element={<AdminProfile />} /> */}
+=======
+>>>>>>> 7e948ab455c50bea0fd4e12b48718f2b610d11ce
           <Route path="/employee/profile" element={<EmployeeProfile />} />
           <Route path="/admin/profile" element={<AdminProfile />} />
           {/* <Route path="/generate-report" element={<GenerateReport/>} /> */}
