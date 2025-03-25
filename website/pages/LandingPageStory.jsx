@@ -37,7 +37,7 @@ const LandingPageStory = () => {
         end: `+=${storySequence.length * 500}`,
         scrub: true,
         pin: true,
-        markers: true,
+        // markers: true,
       },
     });
 
