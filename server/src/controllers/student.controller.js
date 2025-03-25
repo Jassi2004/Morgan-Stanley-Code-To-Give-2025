@@ -5,6 +5,9 @@ import { Student } from "../models/students.model.js";
 import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
 import { AdminNotification } from "../models/adminNotification.model.js";
 import bcrypt from "bcryptjs";
+import xlsx from "xlsx";
+import fs from "fs";
+import { Employee } from "../models/employee.model.js";
 
 const cookieOptions = {
   maxAge: 7 * 24 * 60 * 60 * 1000,
@@ -546,6 +549,99 @@ const uploadProfilePicture = asyncHandler(async (req, res) => {
     );
 });
 
+const uploadStudentDataFromExcel = asyncHandler(async (req, res) => {
+  try {
+    if (!req.file) {
+      throw new ApiError(400, "Please upload an Excel file");
+    }
+
+    const filePath = req.file.path;
+    const workbook = xlsx.readFile(filePath);
+    const sheetName = workbook.SheetNames[0];
+    const sheetData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+    if (!sheetData.length) {
+      throw new ApiError(400, "Excel file is empty or has an invalid format");
+    }
+
+    const validPrimaryDiagnosis = ["Autism", "Down Syndrome", "ADHD", "Cerebral Palsy", "Others"];
+    const validPrograms = ["Multi", "Job Readiness", "Vocation", "Spruha", "Suyog", "Sameti", "Shaale", "Siddhi", "Sattva"];
+    const validSessionTypes = ["Online", "Offline"];
+
+    const students = await Promise.all(sheetData.map(async (row) => {
+      // Normalize and Validate Enrollment Year
+      let enrollmentYear = row["Enrollment Year"] ? new Date(row["Enrollment Year"]) : null;
+      if (!enrollmentYear || enrollmentYear < new Date("2015-01-01") || enrollmentYear > new Date()) {
+        enrollmentYear = new Date(); // Default to current year if invalid
+      }
+
+      // Convert Educator Names to ObjectId
+      let primaryEducator = null;
+      let secondaryEducator = null;
+      if (row["Educator"]) {
+        const primary = await Employee.findOne({ name: row["Educator"] });
+        primaryEducator = primary ? primary._id : null;
+      }
+      if (row["Secondary Educator"]) {
+        const secondary = await Employee.findOne({ name: row["Secondary Educator"] });
+        secondaryEducator = secondary ? secondary._id : null;
+      }
+
+      return {
+        StudentId: row["Student ID"] || `STU${Date.now()}`, // Generate ID if missing
+        firstName: row["First Name"] || "Unknown",
+        lastName: row["Last Name"] || "Unknown",
+        studentEmail: row["Student Email"] || `student${Date.now()}@email.com`,
+        password: row["Password"] || "Default@123", // Hardcoded password
+        gender: row["Gender"] || "Not Specified",
+        dateOfBirth: row["DOB"] ? new Date(row["DOB"]) : new Date("2000-01-01"), // Default DOB
+        primaryDiagnosis: validPrimaryDiagnosis.includes(row["Primary Diagnosis"]) ? row["Primary Diagnosis"] : "Others",
+        comorbidity: row["Comorbidity"] === "Yes",
+        enrollmentYear,
+        program: validPrograms.includes(row["Program"]) ? row["Program"] : "Multi",
+        numberOfSessions: row["Number of Sessions"] || 0,
+        timings: row["Timings"] || "09:00 - 10:00",
+        daysOfWeek: row["Days of Week"] ? row["Days of Week"].split(",") : ["All"],
+        sessionType: validSessionTypes.includes(row["Session Type"]) ? row["Session Type"] : "Offline",
+        address: row["Address"] || "Unknown",
+        transport: row["Transport"] === "Yes",
+        status: row["Status"] || "Active",
+        UDID: row["UDID"] || null,
+        educators: {
+          primary: primaryEducator,
+          secondary: secondaryEducator,
+        },
+        fathersName: row["Father's Name"] || "Unknown",
+        mothersName: row["Mother's Name"] || "Unknown",
+        parentEmail: row["Parent Email"] || "parent@email.com",
+        contactNumber: row["Contact Number"] || "0000000000",
+        password : row["Password"]
+      };
+    }));
+
+    await Student.insertMany(students);
+
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      console.log(`File ${filePath} successfully deleted..`);
+    }
+
+    res.status(201)
+    .json(
+      new ApiResponse(
+        201,
+        students,
+        "Student data added successfully"
+      )
+    )
+  } catch (err) {
+    console.error(`Error occurred while uploading student data from excel: ${err}`);
+    throw new ApiError(400, `Error occurred while uploading student data: ${err.message}`);
+  }
+});
+
+
+
 export {
   registerStudent,
   loginStudent,
@@ -556,4 +652,5 @@ export {
   updateProfile,
   approveStudent,
   uploadProfilePicture,
+  uploadStudentDataFromExcel
 };
