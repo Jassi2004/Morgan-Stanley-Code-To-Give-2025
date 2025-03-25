@@ -95,8 +95,7 @@ const Students = () => {
   };
 
   const handleViewReports = (student) => {
-    setSelectedStudent(student);
-    setIsViewReportsModalOpen(true);
+    navigate(`/reports/${student.StudentId}`);
   };
 
   if (loading) {
