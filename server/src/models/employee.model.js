@@ -15,7 +15,7 @@ const employeeSchema = new Schema({
     },
     gender : {
         type : String,
-        enum : ["MALE", "FEMALE"]
+        required : [true, "Gender is required "]
     },
     email : {
         type : String,
@@ -63,7 +63,7 @@ const employeeSchema = new Schema({
     },
     program : {
         type : String,
-        enum : ["Multi", "Job Readiness", "Vocation", "Spruha", "Suyog", "Sameti", "Shaale", "Siddhi", "Sattva"],
+        enum : ["MULTI", "Job Readiness", "Vocation", "Spruha", "Suyog", "Sameti", "Shaale", "Siddhi", "Sattva"],
         required : [true, "Program is required"]
     },
     phone : {

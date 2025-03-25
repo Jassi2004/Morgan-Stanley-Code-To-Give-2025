@@ -9,7 +9,8 @@ import {
     changePassword,
     fetchAllStudents,
     updateProfile,
-    uploadProfilePicture
+    uploadProfilePicture,
+    uploadStudentDataFromExcel
 } from '../controllers/student.controller.js';
 
 const router = Router();
@@ -31,6 +32,9 @@ router.route("/upload-avatar").post(
     upload.single("avatar"),
     uploadProfilePicture
 );
+
+router.route("/upload-excel")
+.post(upload.single("file"), uploadStudentDataFromExcel);
 
 router.route("/update-profile").put(
     upload.fields([
