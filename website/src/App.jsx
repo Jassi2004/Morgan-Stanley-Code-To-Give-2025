@@ -31,7 +31,7 @@ function App() {
         <Route path="/student/login" element={<StudentLogin/>}/>
         <Route path="/employee/register" element={<EmployeeRegister />} />
         <Route path="/employee/login" element={<EmployeeLogin />} />
-        <Route path="/chatbot" element={<ChatBot />} />
+        {/* <Route path="/chatbot" element={<ChatBot />} /> */}
         <Route path="/landing" element={<LandingPage2/>}/> 
         
         <Route path="/" element={<Layout />}>
