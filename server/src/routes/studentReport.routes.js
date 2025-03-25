@@ -1,13 +1,28 @@
 import { Router } from "express";
-import { generateStudentReport } from "../controllers/studentReport.controller.js";
+import { 
+    fetchAllStudentReports, 
+    fetchStudentReportById, 
+    generateMonthlyReport, 
+    generateStudentQuarterlyReport,
+    updateQuarterlyReport 
+} from "../controllers/studentReport.controller.js";
 
 const router = Router();
 
-
 router.route("/generate")
-.post(generateStudentReport);
+.post(generateStudentQuarterlyReport);
 
+router.route("/generate-monthly")
+.post(generateMonthlyReport);
 
+router.route("/update-quarterly")
+.patch(updateQuarterlyReport);
+
+router.route("/fetch")
+.post(fetchStudentReportById);
+
+router.route("/fetch-all")
+.get(fetchAllStudentReports);
 
 export default router;
 

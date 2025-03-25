@@ -16,6 +16,12 @@ import AdminLogin from "../pages/AdminLogin";
 import EmployeeRegister from "../pages/EmplooyeeRegister";
 import EmployeeLogin from "../pages/EmployeeLogin";
 import LandingPage from "../pages/LandingPage"
+import LandingPage2 from "../pages/LandingPage2";
+import LandingPage3 from "../pages/LandingPage3";
+import EmployeeProfile from "../pages/EmployeeProfile"
+import AdminProfile from "../pages/AdminProfile"
+import ViewReport from "../pages/ViewReport"
+
 
 function App() {
   return (
@@ -25,8 +31,7 @@ function App() {
         <Route path="/student/login" element={<StudentLogin/>}/>
           <Route path="/employee/register" element={<EmployeeRegister />} />
           <Route path="/employee/login" element={<EmployeeLogin />} />
-          
-        <Route path="/landing" element={<LandingPage/>}/> 
+          <Route path="/landing" element={<LandingPage2/>}/> 
 
         
         <Route path="/" element={<Layout />}>
@@ -44,6 +49,12 @@ function App() {
           <Route path="/aboutTeam" element={<Team />} />
           <Route path="/login/admin" element={<AdminLogin />} />
           <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
+          {/* <Route path="/employee/profile" element={<EmployeeProfile />} /> */}
+          {/* <Route path="/admin/profile" element={<AdminProfile />} /> */}
+          <Route path="/employee/profile" element={<EmployeeProfile />} />
+          <Route path="/admin/profile" element={<AdminProfile />} />
+          {/* <Route path="/generate-report" element={<GenerateReport/>} /> */}
+          <Route path="/view-report" element={<ViewReport/>} />
         </Route>
       </Routes>
     </Router>

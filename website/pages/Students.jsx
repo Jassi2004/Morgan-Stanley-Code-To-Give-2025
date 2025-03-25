@@ -1,9 +1,25 @@
 import { useContext, useState, useEffect } from "react";
-import { Search, Plus, Eye, Edit, Trash2, Calendar, AlertCircle } from "lucide-react";
+import { Search, Plus, Eye, Edit, Trash2, Calendar, AlertCircle, FileText, ClipboardList } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
 import EditStudent from "../components/student/EditStudent";
+import GenerateReport from "./GenerateReport";
 import { toast } from 'react-toastify';
+
+const ActionButton = ({ icon: Icon, label, onClick, colorClass = "text-[var(--color-brand)]" }) => (
+  <div className="relative group">
+    <button
+      className={`p-1.5 rounded-md text-[var(--color-text-secondary)] hover:${colorClass} hover:bg-[var(--color-bg-secondary)] transition-all duration-200 transform hover:scale-110`}
+      onClick={onClick}
+    >
+      <Icon size={18} />
+    </button>
+    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-sm rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap">
+      {label}
+      <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-800"></div>
+    </div>
+  </div>
+);
 
 const Students = () => {
   const navigate = useNavigate();
@@ -14,6 +30,8 @@ const Students = () => {
   const [programFilter, setProgramFilter] = useState("all");
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isGenerateReportModalOpen, setIsGenerateReportModalOpen] = useState(false);
+  const [isViewReportsModalOpen, setIsViewReportsModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const studentsPerPage = 10;
 
@@ -76,6 +94,16 @@ const Students = () => {
     setIsEditModalOpen(false);
     setSelectedStudent(null);
     toast.success('Student details updated successfully');
+  };
+
+  const handleGenerateReport = (student) => {
+    setSelectedStudent(student);
+    setIsGenerateReportModalOpen(true);
+  };
+
+  const handleViewReports = (student) => {
+    setSelectedStudent(student);
+    setIsViewReportsModalOpen(true);
   };
 
   if (loading) {
@@ -251,26 +279,37 @@ const Students = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-base text-[var(--color-text-primary)]">
-                    <div className="flex space-x-2">
-                      <button
-                        className="p-1 rounded-md text-[var(--color-text-secondary)] hover:text-[var(--color-brand)] hover:bg-[var(--color-bg-secondary)]"
+                    <div className="flex items-center space-x-3">
+                      <ActionButton
+                        icon={Eye}
+                        label="View Profile"
                         onClick={() => navigate(`/students/${student.StudentId}`)}
-                      >
-                        <Eye size={18} />
-                      </button>
+                      />
 
-                      <button
-                        className="p-1 rounded-md text-[var(--color-text-secondary)] hover:text-[var(--color-brand)] hover:bg-[var(--color-bg-secondary)]"
+                      <ActionButton
+                        icon={Edit}
+                        label="Edit Profile"
                         onClick={() => navigate(`/students/${student.StudentId}/edit`)}
-                      >
-                        <Edit size={18} />
-                      </button>
-                      <button
-                        className="p-1 rounded-md text-[var(--color-text-secondary)] hover:text-red-500 hover:bg-[var(--color-bg-secondary)]"
-                        onClick={() => {/* Handle delete */ }}
-                      >
-                        <Trash2 size={18} />
-                      </button>
+                      />
+
+                      <ActionButton
+                        icon={Trash2}
+                        label="Delete Student"
+                        onClick={() => {/* Handle delete */}}
+                        colorClass="text-red-500"
+                      />
+
+                      <ActionButton
+                        icon={FileText}
+                        label="Generate Report"
+                        onClick={() => handleGenerateReport(student)}
+                      />
+
+                      <ActionButton
+                        icon={ClipboardList}
+                        label="View Reports"
+                        onClick={() => handleViewReports(student)}
+                      />
                     </div>
                   </td>
                 </tr>
@@ -334,6 +373,24 @@ const Students = () => {
           }}
           onUpdate={handleEditComplete}
         />
+      )}
+
+      {/* Generate Report Modal */}
+      {isGenerateReportModalOpen && selectedStudent && (
+        <GenerateReport
+          isOpen={isGenerateReportModalOpen}
+          onClose={() => {
+            setIsGenerateReportModalOpen(false);
+            setSelectedStudent(null);
+          }}
+          studentId={selectedStudent.StudentId}
+        />
+      )}
+
+      {/* View Reports Modal */}
+      {isViewReportsModalOpen && selectedStudent && (
+        // Implement view reports functionality
+        <div>View Reports Modal</div>
       )}
     </div>
   );

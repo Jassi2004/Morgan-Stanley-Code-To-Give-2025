@@ -1,6 +1,6 @@
 
 import { Router } from "express";
-import { addEducator, approveStudentAccount, createEmployeeAccount, deleteEmployeeAccount, fetchAllEmployees, fetchStudentsAssignedToEducator, getEmployeeProfile, loginEmployeeAccount, logoutEmployee, uploadProfilePicture } from "../controllers/employee.controller.js";
+import { addEducator, approveStudentAccount, createEmployeeAccount, deleteEmployeeAccount, fetchAllEmployees, fetchStudentsAssignedToEducator, getEmployeeProfile, loginEmployeeAccount, logoutEmployee, uploadEmployeesDataFromExcel, uploadProfilePicture } from "../controllers/employee.controller.js";
 import { verifyAdmin, verifyEmployee } from "../middlewares/auth.middleware.js";
 import  { upload } from "../middlewares/multer.middleware.js";
 
@@ -22,6 +22,9 @@ router.route("/login")
 
 router.route("/get-my-profile")
 .get(getEmployeeProfile);
+
+router.route("/upload-excel")
+.post(upload.single("file"), uploadEmployeesDataFromExcel);
 
 
 
