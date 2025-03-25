@@ -47,6 +47,9 @@ function App() {
           <Route path="/aboutTeam" element={<Team />} />
           <Route path="/login/admin" element={<AdminLogin />} />
           <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
+
+
+
           {/* <Route path="/employee/profile" element={<EmployeeProfile />} /> */}
           {/* <Route path="/admin/profile" element={<AdminProfile />} /> */}
           <Route path="/employee/profile" element={<EmployeeProfile />} />
