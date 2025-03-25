@@ -3,9 +3,20 @@ import { Plus, Trash2, CheckCircle2, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const GenerateReport = ({ isOpen, onClose, studentId }) => {
+  const SKILL_CATEGORIES = [
+    'Cognitive',
+    'Communication',
+    'Behavior',
+    'Attention',
+    'Others'
+  ];
+
   const [formData, setFormData] = useState({
     studentId: studentId || '',
-    skills: [{ skillName: '', marks: 0 }],
+    monthlyScore: SKILL_CATEGORIES.map(skill => ({
+      skillName: skill,
+      marks: 0
+    })),
     timeFrame: {
       month: '',
       year: new Date().getFullYear(),
@@ -16,29 +27,16 @@ const GenerateReport = ({ isOpen, onClose, studentId }) => {
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [error, setError] = useState('');
 
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
 
-  const addSkill = () => {
+  const updateSkill = (skillName, marks) => {
     setFormData(prev => ({
       ...prev,
-      skills: [...prev.skills, { skillName: '', marks: 0 }]
-    }));
-  };
-
-  const removeSkill = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      skills: prev.skills.filter((_, i) => i !== index)
-    }));
-  };
-
-  const updateSkill = (index, field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      skills: prev.skills.map((skill, i) => 
-        i === index ? { ...skill, [field]: value } : skill
+      monthlyScore: prev.monthlyScore.map(skill => 
+        skill.skillName === skillName ? { ...skill, marks: parseInt(marks) } : skill
       )
     }));
   };
@@ -46,28 +44,84 @@ const GenerateReport = ({ isOpen, onClose, studentId }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsGenerating(true);
+    setError('');
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    setIsGenerating(false);
-    setIsSuccess(true);
-    
-    // Reset form after success
-    setTimeout(() => {
-      setIsSuccess(false);
-      setFormData({
-        studentId: studentId || '',
-        skills: [{ skillName: '', marks: 0 }],
+    try {
+      const requestData = {
+        studentId: formData.studentId,
+        monthlyScore: formData.monthlyScore,
+        remarks: formData.remarks,
         timeFrame: {
-          month: '',
-          year: new Date().getFullYear(),
-          quarter: ''
+          month: formData.timeFrame.month,
+          year: formData.timeFrame.year.toString(),
+          quarter: formData.timeFrame.quarter
+        }
+      };
+
+      // First, generate monthly report
+      const monthlyResponse = await fetch('http://localhost:8000/api/v1/student-report/generate-monthly', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        remarks: ''
+        body: JSON.stringify(requestData)
       });
-      onClose(); // Close the modal after success
-    }, 2000);
+
+      const monthlyData = await monthlyResponse.json();
+
+      if (!monthlyResponse.ok) {
+        throw new Error(monthlyData.message || 'Failed to generate monthly report');
+      }
+
+      // Then, update quarterly report
+      const quarterlyResponse = await fetch('http://localhost:8000/api/v1/student-report/update-quarterly', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          studentId: formData.studentId,
+          timeFrame: {
+            quarter: formData.timeFrame.quarter,
+            year: formData.timeFrame.year.toString()
+          }
+        })
+      });
+
+      const quarterlyData = await quarterlyResponse.json();
+
+      if (!quarterlyResponse.ok) {
+        throw new Error(quarterlyData.message || 'Failed to update quarterly report');
+      }
+
+      setIsSuccess(true);
+      
+      // Reset form after success
+      setTimeout(() => {
+        setIsSuccess(false);
+        setFormData({
+          studentId: studentId || '',
+          monthlyScore: SKILL_CATEGORIES.map(skill => ({
+            skillName: skill,
+            marks: 0
+          })),
+          timeFrame: {
+            month: '',
+            year: new Date().getFullYear(),
+            quarter: ''
+          },
+          remarks: ''
+        });
+        onClose();
+      }, 2000);
+
+    } catch (error) {
+      console.error('Error generating report:', error);
+      setError(error.message || 'Failed to generate report. Please try again.');
+      setIsSuccess(false);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -130,45 +184,23 @@ const GenerateReport = ({ isOpen, onClose, studentId }) => {
                   <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-2">
                     Skills Assessment
                   </label>
-                  {formData.skills.map((skill, index) => (
-                    <div key={index} className="flex gap-4 mb-4">
-                      <input
-                        type="text"
-                        value={skill.skillName}
-                        onChange={(e) => updateSkill(index, 'skillName', e.target.value)}
-                        className="flex-1 px-4 py-2 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border-primary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]"
-                        placeholder="Skill name"
-                        required
-                      />
+                  {SKILL_CATEGORIES.map((skillName) => (
+                    <div key={skillName} className="flex gap-4 mb-4">
+                      <div className="flex-1 px-4 py-2 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border-primary)] text-[var(--color-text-primary)]">
+                        {skillName}
+                      </div>
                       <input
                         type="number"
                         min="0"
                         max="5"
-                        value={skill.marks}
-                        onChange={(e) => updateSkill(index, 'marks', parseInt(e.target.value))}
+                        value={formData.monthlyScore.find(s => s.skillName === skillName)?.marks || 0}
+                        onChange={(e) => updateSkill(skillName, e.target.value)}
                         className="w-24 px-4 py-2 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border-primary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]"
-                        placeholder="Marks (0-5)"
+                        placeholder="0-5"
                         required
                       />
-                      {formData.skills.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeSkill(index)}
-                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors duration-200"
-                        >
-                          <Trash2 size={20} />
-                        </button>
-                      )}
                     </div>
                   ))}
-                  <button
-                    type="button"
-                    onClick={addSkill}
-                    className="flex items-center gap-2 text-[var(--color-brand)] hover:text-[var(--color-brand-dark)] transition-colors duration-200"
-                  >
-                    <Plus size={20} />
-                    <span>Add Skill</span>
-                  </button>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -266,6 +298,30 @@ const GenerateReport = ({ isOpen, onClose, studentId }) => {
                   </button>
                 </div>
               </div>
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
+                  role="alert"
+                >
+                  <span className="block sm:inline">{error}</span>
+                  <span
+                    className="absolute top-0 bottom-0 right-0 px-4 py-3"
+                    onClick={() => setError('')}
+                  >
+                    <svg
+                      className="fill-current h-6 w-6 text-red-500"
+                      role="button"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                    >
+                      <title>Close</title>
+                      <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z" />
+                    </svg>
+                  </span>
+                </motion.div>
+              )}
             </motion.form>
           )}
         </AnimatePresence>
