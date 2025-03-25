@@ -16,12 +16,12 @@ import AdminLogin from "../pages/AdminLogin";
 import EmployeeRegister from "../pages/EmplooyeeRegister";
 import EmployeeLogin from "../pages/EmployeeLogin";
 import LandingPage from "../pages/LandingPage"
-<<<<<<< HEAD
 import ChatBot from "../components/chatbotComponents/chatbottemp";
-=======
 import EmployeeProfile from "../pages/EmployeeProfile"
 import AdminProfile from "../pages/AdminProfile"
->>>>>>> 4490747967bb084c48d396c063975e0851bf1658
+// import GenerateReport from "../pages/GenerateReport"
+import ViewReport from "../pages/ViewReport"
+
 
 function App() {
   return (
@@ -53,6 +53,8 @@ function App() {
           <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
           <Route path="/employee/profile" element={<EmployeeProfile />} />
           <Route path="/admin/profile" element={<AdminProfile />} />
+          {/* <Route path="/generate-report" element={<GenerateReport/>} /> */}
+          <Route path="/view-report" element={<ViewReport/>} />
         </Route>
       </Routes>
     </Router>
