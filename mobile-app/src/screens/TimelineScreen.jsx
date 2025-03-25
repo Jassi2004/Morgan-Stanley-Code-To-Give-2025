@@ -1,8 +1,10 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, SafeAreaView, Text, ImageBackground, TouchableWithoutFeedback  } from 'react-native';
+import { View, StyleSheet, ScrollView, SafeAreaView, Text, ImageBackground, TouchableWithoutFeedback, Dimensions, Animated, Easing } from 'react-native';
 import MonthButton from '../components/MonthButton';
 import ProgressModal from '../components/ProgressModal';
 import { LinearGradient } from 'expo-linear-gradient';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const TimelineScreen = () => {
   const [selectedMonth, setSelectedMonth] = useState(null);
@@ -10,6 +12,14 @@ const TimelineScreen = () => {
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [welcomeVisible, setWelcomeVisible] = useState(true);
   const scrollViewRef = useRef(null);
+
+  // Animation values
+  const headerAnim = useRef(new Animated.Value(-50)).current;
+  const headerOpacity = useRef(new Animated.Value(0)).current;
+  const welcomeScale = useRef(new Animated.Value(0.9)).current;
+  const welcomeOpacity = useRef(new Animated.Value(0)).current;
+  const yearScale = useRef(new Animated.Value(0.9)).current;
+  const yearOpacity = useRef(new Animated.Value(0)).current;
 
   // Expanded progress data including previous year
   const progressData = {
@@ -169,21 +179,63 @@ const TimelineScreen = () => {
   }, []);
   
 
+  useEffect(() => {
+    // Animate header
+    Animated.parallel([
+      Animated.spring(headerAnim, {
+        toValue: 0,
+        useNativeDriver: true,
+        damping: 15,
+      }),
+      Animated.spring(headerOpacity, {
+        toValue: 1,
+        useNativeDriver: true,
+        damping: 15,
+      }),
+    ]).start();
+
+    // Animate welcome overlay if visible
+    if (welcomeVisible) {
+      Animated.parallel([
+        Animated.spring(welcomeScale, {
+          toValue: 1,
+          useNativeDriver: true,
+          damping: 15,
+        }),
+        Animated.spring(welcomeOpacity, {
+          toValue: 1,
+          useNativeDriver: true,
+          damping: 15,
+        }),
+      ]).start();
+    }
+  }, []);
+
   const handleWelcomeDismiss = () => {
-    setWelcomeVisible(false);
+    Animated.parallel([
+      Animated.timing(welcomeScale, {
+        toValue: 0.9,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(welcomeOpacity, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setWelcomeVisible(false);
+    });
   };
 
+  // Enhanced month press handler with animations
   const handleMonthPress = (month) => {
-    // Hide welcome message if it's visible
     if (welcomeVisible) {
       setWelcomeVisible(false);
     }
 
-    // Determine which year's data to use
     const currentDate = new Date();
     const years = [currentDate.getFullYear(), currentDate.getFullYear() - 1, currentDate.getFullYear() - 2];
-    
-    // Find the first year that has data for the selected month
     const validYear = years.find(year => 
       progressData[year] && progressData[year][month]
     );
@@ -200,8 +252,87 @@ const TimelineScreen = () => {
   };
 
   // Render years in descending order
-  const yearsToRender = [currentYear - 2,currentYear-1, currentYear ]
-    .filter(year => progressData[year]); // Only render years with data
+  const yearsToRender = [currentYear - 2, currentYear - 1, currentYear]
+    .filter(year => progressData[year]);
+
+  // Welcome overlay
+  const WelcomeOverlay = () => (
+    <Animated.View 
+      style={[
+        styles.welcomeOverlay,
+        {
+          opacity: welcomeOpacity,
+        }
+      ]}
+    >
+      <TouchableWithoutFeedback onPress={handleWelcomeDismiss}>
+        <Animated.View 
+          style={[
+            styles.welcomeContent,
+            {
+              transform: [{ scale: welcomeScale }],
+            }
+          ]}
+        >
+          <Text style={styles.welcomeTitle}>Welcome to Your Academic Journey!</Text>
+          <Text style={styles.welcomeSubtitle}>Tap anywhere to explore your progress</Text>
+        </Animated.View>
+      </TouchableWithoutFeedback>
+    </Animated.View>
+  );
+
+  // Header
+  const Header = () => (
+    <Animated.View 
+      style={[
+        styles.header,
+        {
+          transform: [{ translateY: headerAnim }],
+          opacity: headerOpacity,
+        }
+      ]}
+    >
+      <Text style={styles.headerTitle}>Student Timeline</Text>
+      <Text style={styles.headerSubtitle}>View your progress by month</Text>
+    </Animated.View>
+  );
+
+  // Year container
+  const YearContainer = ({ year, children, index }) => {
+    useEffect(() => {
+      const delay = index * 200;
+      Animated.sequence([
+        Animated.delay(delay),
+        Animated.parallel([
+          Animated.spring(yearScale, {
+            toValue: 1,
+            useNativeDriver: true,
+            damping: 15,
+          }),
+          Animated.spring(yearOpacity, {
+            toValue: 1,
+            useNativeDriver: true,
+            damping: 15,
+          }),
+        ]),
+      ]).start();
+    }, []);
+
+    return (
+      <Animated.View 
+        style={[
+          styles.yearContainer,
+          {
+            transform: [{ scale: yearScale }],
+            opacity: yearOpacity,
+          }
+        ]}
+      >
+        <Text style={styles.yearTitle}>{year} Academic Year</Text>
+        {children}
+      </Animated.View>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -215,21 +346,8 @@ const TimelineScreen = () => {
           style={StyleSheet.absoluteFillObject}
         />
         
-        {welcomeVisible && (
-          <TouchableWithoutFeedback onPress={handleWelcomeDismiss}>
-            <View style={styles.welcomeOverlay}>
-              <View style={styles.welcomeContent}>
-                <Text style={styles.welcomeTitle}>Welcome to Your Academic Journey!</Text>
-                <Text style={styles.welcomeSubtitle}>Tap anywhere to explore your progress</Text>
-              </View>
-            </View>
-          </TouchableWithoutFeedback>
-        )}
-
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Student Timeline</Text>
-          <Text style={styles.headerSubtitle}>View your progress by month</Text>
-        </View>
+        {welcomeVisible && <WelcomeOverlay />}
+        <Header />
         
         <View style={styles.timelineContainer}>
           <ScrollView 
@@ -237,14 +355,12 @@ const TimelineScreen = () => {
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
             decelerationRate="fast"
-            snapToInterval={160} // Approximated button height + margin
+            snapToInterval={160}
             snapToAlignment="center"
           >
-            {yearsToRender.map(year => (
-              <View key={year} style={styles.yearContainer}>
-                <Text style={styles.yearTitle}>{year} Academic Year</Text>
+            {yearsToRender.map((year, yearIndex) => (
+              <YearContainer key={year} year={year} index={yearIndex}>
                 {months.map((month, index) => {
-                  // Modify horizontal offset to create wave-like pattern
                   let horizontalOffset = 0;
                   const quarterSize = Math.ceil(months.length / 4);
                   
@@ -261,11 +377,13 @@ const TimelineScreen = () => {
                   return (
                     <View 
                       key={month}
-                      style={{
-                        alignSelf: 'center',
-                        marginLeft: horizontalOffset,
-                        opacity: activeMonths[year][month].active ? 1 : 0.3
-                      }}
+                      style={[
+                        styles.monthButtonContainer,
+                        {
+                          marginLeft: horizontalOffset,
+                          opacity: activeMonths[year][month].active ? 1 : 0.3
+                        }
+                      ]}
                     >
                       <MonthButton 
                         month={month} 
@@ -276,7 +394,7 @@ const TimelineScreen = () => {
                     </View>
                   );
                 })}
-              </View>
+              </YearContainer>
             ))}
           </ScrollView>
         </View>
@@ -291,7 +409,6 @@ const TimelineScreen = () => {
     </SafeAreaView>
   );
 };
-
 
 const styles = StyleSheet.create({
   container: {
@@ -313,33 +430,64 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.7)',
     zIndex: 10,
   },
+  welcomeContent: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 20,
+    padding: 30,
+    width: '80%',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
   welcomeTitle: {
     fontSize: 28,
     fontWeight: 'bold',
     color: 'white',
     textAlign: 'center',
     marginBottom: 15,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
   },
   welcomeSubtitle: {
     fontSize: 18,
     color: 'rgba(255,255,255,0.8)',
     textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 5,
   },
   header: {
     paddingTop: 20,
     paddingBottom: 10,
     paddingHorizontal: 20,
-    backgroundColor: 'rgba(187, 222, 251, 0.8)', // Light blue with some transparency
+    backgroundColor: 'rgba(187, 222, 251, 0.8)',
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1565C0', // Darker blue
+    color: '#1565C0',
     marginBottom: 5,
+    textShadowColor: 'rgba(0, 0, 0, 0.1)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 2,
   },
   headerSubtitle: {
     fontSize: 16,
-    color: '#1976D2', // Blue
+    color: '#1976D2',
+    textShadowColor: 'rgba(0, 0, 0, 0.1)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 1,
   },
   timelineContainer: {
     flex: 1,
@@ -351,6 +499,14 @@ const styles = StyleSheet.create({
   },
   yearContainer: {
     marginBottom: 30,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 15,
+    padding: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   yearTitle: {
     fontSize: 22,
@@ -358,36 +514,13 @@ const styles = StyleSheet.create({
     color: '#1565C0',
     textAlign: 'center',
     marginBottom: 20,
+    textShadowColor: 'rgba(0, 0, 0, 0.1)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 2,
   },
-  welcomeOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    zIndex: 10,
-  },
-  welcomeContent: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 20,
-    padding: 30,
-    width: '80%',
-    alignItems: 'center',
-  },
-  welcomeTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: 'white',
-    textAlign: 'center',
-    marginBottom: 15,
-  },
-  welcomeSubtitle: {
-    fontSize: 18,
-    color: 'rgba(255,255,255,0.8)',
-    textAlign: 'center',
+  monthButtonContainer: {
+    alignSelf: 'center',
+    marginVertical: 5,
   },
 });
 
