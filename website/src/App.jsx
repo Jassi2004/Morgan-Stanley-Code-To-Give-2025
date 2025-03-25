@@ -22,18 +22,19 @@ import AdminProfile from "../pages/AdminProfile"
 import ViewReport from "../pages/ViewReport"
 import EditStudent from "../components/student/EditStudent";
 
-
 function App() {
   return (
     <Router>
       <Routes>
+        {/* Auth Routes - No Layout */}
         <Route path="/student/register" element={<StudentRegister/>}/>
         <Route path="/student/login" element={<StudentLogin/>}/>
         <Route path="/employee/register" element={<EmployeeRegister />} />
         <Route path="/employee/login" element={<EmployeeLogin />} />
-        {/* <Route path="/chatbot" element={<ChatBot />} /> */}
+        <Route path="/login/admin" element={<AdminLogin />} />
         <Route path="/landing" element={<LandingPage2/>}/> 
         
+        {/* Dashboard Routes - With Layout */}
         <Route path="/" element={<Layout />}>
           <Route index element={<Dashboard />} />
           <Route path="/dashboard" element={<Dashboard />} />
@@ -46,19 +47,12 @@ function App() {
           <Route path="/teachers" element={<Teachers />} />
           <Route path="/teachers/add" element={<AddEducatorForm />} />
           <Route path="/aboutTeam" element={<Team />} />
-          <Route path="/login/admin" element={<AdminLogin />} />
           <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
-
-
-
-          {/* <Route path="/employee/profile" element={<EmployeeProfile />} /> */}
-          {/* <Route path="/admin/profile" element={<AdminProfile />} /> */}
           <Route path="/employee/profile" element={<EmployeeProfile />} />
           <Route path="/admin/profile" element={<AdminProfile />} />
         </Route>
       </Routes>
     </Router>
-    
   );
 }
 
