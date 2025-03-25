@@ -58,11 +58,11 @@ const studentReportSchema = new Schema(
         feedback: {
             suggestions: {
                 type: String,
-                required: [true, "Suggestions are required"],
+                //required: [true, "Suggestions are required"],
             },
             teacherComments: {
                 type: String,
-                required: [true, "Teacher comments are required"],
+                //required: [true, "Teacher comments are required"],
             },
         },
         assessmentReport: [
