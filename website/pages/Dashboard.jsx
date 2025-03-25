@@ -9,6 +9,9 @@ import PerformanceGraph from '../components/dashboardComponents/PerformanceGraph
 import { useNavigate } from 'react-router-dom';
 import { AppContext } from "../context/AppContext";
 import { motion, AnimatePresence } from 'framer-motion';
+import Orb from '../src/Backgrounds/Orb/Orb';
+// import ChatBot from '../components/chatbotComponents/Chatbot';
+import ChatBot from '../components/chatbotComponents/Chatbot';
 
 function DashBoard() {
   const navigate = useNavigate();
@@ -17,6 +20,8 @@ function DashBoard() {
   const [noticeText, setNoticeText] = useState('');
   const [publishLoading, setPublishLoading] = useState(false);
   const [notificationError, setNotificationError] = useState(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+
   
   const stats = [
     {
@@ -128,6 +133,9 @@ function DashBoard() {
 
   return (
     <div className="min-h-screen bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] transition-colors duration-300">
+      <div>
+
+      </div>
       {/* Welcome Banner */}
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
@@ -173,7 +181,7 @@ function DashBoard() {
         {/* Stats Grid */}
         <motion.div 
           variants={containerVariants}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-5"
         >
           {stats.map((stat, index) => (
             <motion.div
@@ -222,40 +230,19 @@ function DashBoard() {
           variants={containerVariants}
           className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8"
         >
-          {/* Quick Stats */}
+          {/* Chat Bot */}
           <motion.div 
-            variants={itemVariants}
-            className="bg-[var(--color-bg-secondary)] p-6 rounded-xl border border-[var(--color-border-primary)] shadow-lg"
-          >
-            <motion.h2 
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.6 }}
-              className="text-xl font-bold text-[var(--color-text-primary)] mb-6 flex items-center gap-2"
-            >
-              <span className="bg-[var(--color-brand)] p-2 rounded-lg">
-                <TrendingUp className="w-5 h-5 text-white" />
-              </span>
-              Quick Stats
-            </motion.h2>
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm text-[var(--color-text-secondary)]">Student-Teacher Ratio</p>
-                <p className="text-lg font-medium text-[var(--color-text-primary)]">
-                  {counts.totalTeachers ? (counts.activeStudents / counts.activeTeachers).toFixed(1) : 0} : 1
-                </p>
-                <p className="text-sm text-[var(--color-text-secondary)]">(Active students to active teachers)</p>
-              </div>
-              <div>
-                <p className="text-sm text-[var(--color-text-secondary)]">Activity Rate</p>
-                <p className="text-lg font-medium text-[var(--color-text-primary)]">
-                  Students: {counts.totalStudents ? ((counts.activeStudents / counts.totalStudents) * 100).toFixed(1) : 0}%
-                  <br />
-                  Teachers: {counts.totalTeachers ? ((counts.activeTeachers / counts.totalTeachers) * 100).toFixed(1) : 0}%
-                </p>
-              </div>
-            </div>
-          </motion.div>
+        onClick={() => setIsChatOpen(true)} 
+        variants={itemVariants}
+        className="bg-[var(--color-bg-secondary)] p-6 rounded-xl border border-[var(--color-border-primary)] shadow-lg"
+      >
+        <Orb/>
+      </motion.div>
+
+      <ChatBot 
+        isOpen={isChatOpen} 
+        onClose={() => setIsChatOpen(false)} 
+      />
 
           {/* Notice Board */}
           <motion.div 
@@ -323,3 +310,4 @@ function DashBoard() {
 }
 
 export default DashBoard;
+ 
