@@ -1,8 +1,8 @@
-import CircularGallery from './CircularGallery'
+import CircularGallery from './CirclularGallery'
 function Awards() {
   return (
-<div style={{ height: '600px', position: 'relative' }}>
-  <CircularGallery bend={3} textColor="#ffffff" borderRadius={0.05} />
+<div style={{ backgroundColor:'#f3e9dc' ,height: '600px', position: 'relative' }}>
+  <CircularGallery bend={4} textColor="#black" borderRadius={0.05} />
 </div>
   );
 }
