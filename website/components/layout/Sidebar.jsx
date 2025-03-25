@@ -48,15 +48,15 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     { title: "Teachers", icon: <Users size={20} />, path: "/teachers" },
     { title: "Students", icon: <GraduationCap size={20} />, path: "/students" },
     
-    { title: "Analytics", icon: <BarChart size={20} />, path: "/analytics", separator: true },
-    { title: "Reports", icon: <FileText size={20} />, path: "/reports" },
-    { title: "Assessments", icon: <FileCheck size={20} />, path: "/assessments" },
+    // { title: "Analytics", icon: <BarChart size={20} />, path: "/analytics", separator: true },
+    // // { title: "Reports", icon: <FileText size={20} />, path: "/reports" },
+    // // { title: "Assessments", icon: <FileCheck size={20} />, path: "/assessments" },
     
-    { title: "Schedule", icon: <Calendar size={20} />, path: "/schedule", separator: true },
-    { title: "Messages", icon: <Mail size={20} />, path: "/messages", badge: 5 },
-    { title: "Notifications", icon: <Bell size={20} />, path: "/notifications" },
+    // { title: "Schedule", icon: <Calendar size={20} />, path: "/schedule", separator: true },
+    // { title: "Messages", icon: <Mail size={20} />, path: "/messages", badge: 5 },
+    // { title: "Notifications", icon: <Bell size={20} />, path: "/notifications" },
     
-    { title: "Settings", icon: <Settings size={20} />, path: "/settings", separator: true },
+    // { title: "Settings", icon: <Settings size={20} />, path: "/settings", separator: true },
     { title: "Meet The Developers", icon: <HelpCircle size={20} />, path: "/aboutTeam" },
   ];
 
