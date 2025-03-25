@@ -10,6 +10,10 @@ import { useNavigate } from 'react-router-dom';
 import { AppContext } from "../context/AppContext";
 import { motion, AnimatePresence } from 'framer-motion';
 import Orb from '../src/Backgrounds/Orb/Orb';
+import { FaUserGraduate, FaUserTie } from "react-icons/fa";
+import UploadStudentData from '../components/dashboardComponents/UploadStudentData';
+import UploadEmployeeData from '../components/dashboardComponents/UploadEmployeeData';
+
 
 function DashBoard() {
   const navigate = useNavigate();
@@ -18,6 +22,8 @@ function DashBoard() {
   const [noticeText, setNoticeText] = useState('');
   const [publishLoading, setPublishLoading] = useState(false);
   const [notificationError, setNotificationError] = useState(null);
+  const [studentDataUpload, setStudentDataUpload] = useState(false);
+  const [employeeDataUpload, setEmployeeDataUpload] = useState(false);
   
   const stats = [
     {
@@ -49,15 +55,6 @@ function DashBoard() {
       trendColor: "text-green-500",
       bgImage: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
     },
-    {
-      title: "Activity Rate",
-      value: `${counts.totalStudents ? ((counts.activeStudents / counts.totalStudents) * 100).toFixed(1) : 0}%`,
-      icon: Target,
-      color: "bg-orange-500",
-      trend: "+5%",
-      trendColor: "text-green-500",
-      bgImage: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
-    }
   ];
 
   const containerVariants = {
@@ -221,6 +218,46 @@ function DashBoard() {
               </div>
             </motion.div>
           ))}
+          <motion.div
+            whileHover="hover"
+            className="relative bg-[var(--color-bg-secondary)] p-6 rounded-xl border border-[var(--color-border-primary)] shadow-lg overflow-hidden group hover:shadow-xl transition-all duration-300"
+          >
+            {/* Background Image */}
+            <div className="absolute inset-0 opacity-5 group-hover:opacity-10 transition-opacity duration-300">
+              <img
+                src={
+                  "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
+                }
+                alt=""
+                className="w-full h-full object-cover"
+              />
+            </div>
+
+            <div className="relative">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 rounded-lg shadow-lg"></div>
+                <span className="text-sm font-medium">{""}</span>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-sm text-[var(--color-text-secondary)]">{""}</p>
+                <p className="text-2xl font-bold text-[var(--color-text-primary)]">{""}</p>
+              </div>
+
+              {/* Buttons */}
+              <div className="mt-4 flex flex-col gap-8">
+                <button className="flex items-center gap-2 cursor-pointer" variant="default" onClick={() => setStudentDataUpload(true)}>
+                  <FaUserGraduate className="text-2xl" />
+                  Upload Student Data
+                </button>
+
+                <button className="flex items-center gap-2 cursor-pointer" variant="outline" onClick={() => setEmployeeDataUpload(true)}>
+                  <FaUserTie className="text-2xl" />
+                  Upload Employees Data
+                </button>
+              </div>
+            </div>
+          </motion.div>
         </motion.div>
 
         {/* Main Content Grid */}
@@ -325,6 +362,16 @@ function DashBoard() {
         </motion.div>
       </motion.main>
       <ToastContainer position="top-right" autoClose={3000} theme="colored" />
+      {
+        studentDataUpload && (
+          <UploadStudentData onClose={() => setStudentDataUpload(false)} />
+        )
+      }
+      {
+        employeeDataUpload && (
+          <UploadEmployeeData onClose={() => setEmployeeDataUpload(false)}/> 
+        )
+      }
     </div>
   );
 }
