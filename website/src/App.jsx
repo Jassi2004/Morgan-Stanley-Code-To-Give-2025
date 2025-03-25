@@ -17,11 +17,16 @@ import EmployeeRegister from "../pages/EmplooyeeRegister";
 import EmployeeLogin from "../pages/EmployeeLogin";
 import LandingPage from "../pages/LandingPage"
 import ChatBot from "../components/chatbotComponents/chatbottemp";
+<<<<<<< HEAD
+import LandingPage2 from "../pages/LandingPage2";
+import LandingPage3 from "../pages/LandingPage3";
+=======
 import EmployeeProfile from "../pages/EmployeeProfile"
 import AdminProfile from "../pages/AdminProfile"
 // import GenerateReport from "../pages/GenerateReport"
 import ViewReport from "../pages/ViewReport"
 
+>>>>>>> bf55cb1ca7cd78a0304ca81de3f487454135e69a
 
 function App() {
   return (
@@ -33,7 +38,8 @@ function App() {
           <Route path="/employee/login" element={<EmployeeLogin />} />
           <Route path="/chatbot" element={<ChatBot />} />
           
-        <Route path="/landing" element={<LandingPage/>}/> 
+        {/* <Route path="/landing" element={<LandingPage2/>}/> */}
+        <Route path="/landing" element={<LandingPage2/>}/> 
 
         
         <Route path="/" element={<Layout />}>
@@ -51,10 +57,15 @@ function App() {
           <Route path="/aboutTeam" element={<Team />} />
           <Route path="/login/admin" element={<AdminLogin />} />
           <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
+<<<<<<< HEAD
+          {/* <Route path="/employee/profile" element={<EmployeeProfile />} /> */}
+          {/* <Route path="/admin/profile" element={<AdminProfile />} /> */}
+=======
           <Route path="/employee/profile" element={<EmployeeProfile />} />
           <Route path="/admin/profile" element={<AdminProfile />} />
           {/* <Route path="/generate-report" element={<GenerateReport/>} /> */}
           <Route path="/view-report" element={<ViewReport/>} />
+>>>>>>> bf55cb1ca7cd78a0304ca81de3f487454135e69a
         </Route>
       </Routes>
     </Router>

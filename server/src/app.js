@@ -8,7 +8,10 @@ const app = express();
 // CORS configuration
 app.use(cors({
     origin : "http://localhost:5173",
+<<<<<<< HEAD
+=======
     origin : [process.env.FRONTEND_URL],
+>>>>>>> bf55cb1ca7cd78a0304ca81de3f487454135e69a
     credentials: true,
 }))
 
