@@ -85,36 +85,44 @@ studentReportSchema.pre("save", async function (next) {
         let totalScore = 0;
         let count = 0;
 
-        // Compute program skill feedback average
+        console.log("🔹 Running Pre-Save Hook...");
+
+        // ✅ Step 1: Calculate Program Feedback Average
         if (this.programFeedback?.programSkillsFeedback?.length) {
+            console.log("✅ Program Skills Found:", this.programFeedback.programSkillsFeedback);
+
             const skillTotal = this.programFeedback.programSkillsFeedback.reduce(
-                (acc, skill) => acc + skill.skillScore,
+                (acc, skill) => acc + (skill.skillScore || 0),
                 0
             );
+
             totalScore += skillTotal;
             count += this.programFeedback.programSkillsFeedback.length;
         }
 
-        // Fetch assessment scores and compute their average
+        // ✅ Step 2: Calculate Assessment Report Average
         if (this.assessmentReport?.length) {
             const grades = await Grade.find({ _id: { $in: this.assessmentReport } }).select("marks");
+            console.log("✅ Fetched Grades:", grades);
+
             if (grades.length > 0) {
-                const gradeTotal = grades.reduce((acc, grade) => acc + grade.marks, 0);
+                const gradeTotal = grades.reduce((acc, grade) => acc + (grade.marks || 0), 0);
                 totalScore += gradeTotal;
                 count += grades.length;
             }
         }
 
-        // Fetch monthly reports and calculate their average skill score
+        // ✅ Step 3: Calculate Monthly Reports Average
         if (this.monthlyReports?.length) {
             const reports = await monthlyReport.find({ _id: { $in: this.monthlyReports } }).select("monthlyScore");
+            console.log("✅ Fetched Monthly Reports:", reports);
 
             let monthlyTotal = 0;
             let monthlyCount = 0;
 
             reports.forEach((report) => {
                 if (report.monthlyScore?.length) {
-                    const reportScore = report.monthlyScore.reduce((acc, skill) => acc + skill.marks, 0);
+                    const reportScore = report.monthlyScore.reduce((acc, skill) => acc + (skill.marks || 0), 0);
                     monthlyTotal += reportScore;
                     monthlyCount += report.monthlyScore.length;
                 }
@@ -126,12 +134,17 @@ studentReportSchema.pre("save", async function (next) {
             }
         }
 
-        // Compute final overallScore
+        // ✅ Step 4: Compute Final Average
         this.overallScore = count > 0 ? totalScore / count : 0;
+
+        console.log("🔹 Total Score:", totalScore, "Count:", count);
+        console.log("✅ Calculated Overall Score:", this.overallScore);
 
         next();
     } catch (err) {
+        console.error("❌ Error in pre-save hook:", err);
         next(err);
     }
 });
+
 export const studentReport = mongoose.model("studentReport", studentReportSchema);
