@@ -1,40 +1,24 @@
-import React, { useEffect, useRef } from 'react';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-
-gsap.registerPlugin(ScrollTrigger);
-
-const ScrollVideoPlayer = () => {
-  const videoRef = useRef(null);
-
-  useEffect(() => {
-    const video = videoRef.current;
-
-    gsap.to(video, {
-      scrollTrigger: {
-        trigger: video,
-        start: 'top center', // Start when the video enters the center of the viewport
-        end: 'bottom center', // End when it leaves the center
-        scrub: 1, // Smooth scrubbing effect
-        onUpdate: (self) => {
-          if (video.duration) {
-            video.currentTime = self.progress * video.duration; // Set video time based on scroll progress
-          }
-        },
-      },
-    });
-
-    return () => ScrollTrigger.getAll().forEach(trigger => trigger.kill());
-  }, []);
+import React, { useRef } from 'react';
+import ScrollReveal from '../src/blocks/TextAnimations/ScrollReveal/ScrollReveal'; // Assuming the component you provided is in this file
+// D:\Morgan Stanley Code To Give 2025\website\src\blocks\TextAnimations\ScrollReveal\ScrollReveal.jsx
+const ScrollRevealWithGif = () => {
+  // const scrollContainerRef = useRef(null);
 
   return (
-    <div style={{ height: '200vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-      <video ref={videoRef} width="500" muted playsInline>
-        <source src="/assets/vids/vid.mp4" type="video/mp4" />
-        Your browser does not support the video tag.
-      </video>
-    </div>
+    <div className='bg-red-500 w-[200px]'>
+    {Array.from({ length: 10 }).map((_, index) => (
+      <ScrollReveal
+        key={index}
+        baseOpacity={0}
+        enableBlur={true}
+        baseRotation={5}
+        blurStrength={10}
+      >
+        ScrollReveal Component {index + 1}
+      </ScrollReveal>
+    ))}
+  </div>
   );
 };
 
-export default ScrollVideoPlayer;
+export default ScrollRevealWithGif;
