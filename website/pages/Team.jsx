@@ -51,7 +51,7 @@ const Team = () => {
       headImage: "/images/harneetHead.png",
       bodyImage: "/images/women-suit.png",
       role: 'Developer',
-      description: 'My name is Anshul Sharma, a pre-final year student at chitkara university. I am contributing as a backend developer to the project',
+      description: 'My name is Harneet Atwal, a pre-final year student at chitkara university. I am contributing as a backend developer and data analyst to the project',
     },
   ];
 
