@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, PanResponder, Animated, Linking, ActivityIndicator, Image } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, PanResponder, Animated, Linking, ActivityIndicator, Image, TextInput } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -16,6 +16,11 @@ export default function Home() {
     const { language, changeLanguage } = useLanguage();
     const [isTranslating, setIsTranslating] = useState(true);
     const [userData, setUserData] = useState(null);
+    const [isBirthdayWishExpanded, setIsBirthdayWishExpanded] = useState(false);
+    const [birthdayWish, setBirthdayWish] = useState('');
+    const [isWishSending, setIsWishSending] = useState(false);
+    const [wishSent, setWishSent] = useState(false);
+    const birthdayAnimation = useRef(new Animated.Value(0)).current;
 
     // Translation states
     const [translations, setTranslations] = useState({
@@ -35,7 +40,12 @@ export default function Home() {
         faculty: "Faculty",
         speechTherapy: "Speech Therapy",
         artEducation: "Art Education",
-        occupationalTherapy: "Occupational Therapy"
+        birthdayMessage: "Rahul's birthday is today!🎂",
+        birthdaySubtext: "Wish them a happy birthday!",
+        birthdayPlaceholder: "Write your birthday wish...",
+        sendWish: "Send Wish",
+        wishSent: "Wish sent! 🎈",
+        sendingWish: "Sending wish..."
     });
 
     // Fetch user data
@@ -103,6 +113,34 @@ export default function Home() {
     const handleLanguageChange = (newLang) => {
         changeLanguage(newLang);
         setLangSwitchVisible(false);
+    };
+
+    const toggleBirthdayWish = () => {
+        const toValue = isBirthdayWishExpanded ? 0 : 1;
+        Animated.spring(birthdayAnimation, {
+            toValue,
+            useNativeDriver: true,
+            bounciness: 0,
+        }).start();
+        setIsBirthdayWishExpanded(!isBirthdayWishExpanded);
+    };
+
+    const handleSendWish = async () => {
+        if (!birthdayWish.trim()) return;
+        
+        setIsWishSending(true);
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        setIsWishSending(false);
+        setWishSent(true);
+        setBirthdayWish('');
+        
+        // Reset after 2 seconds
+        setTimeout(() => {
+            setWishSent(false);
+            setIsBirthdayWishExpanded(false);
+            birthdayAnimation.setValue(0);
+        }, 2000);
     };
 
     if (isTranslating) {
@@ -203,8 +241,73 @@ export default function Home() {
                     </Text>
                 </View>
 
+                {/* Birthday Wish Section */}
+                <View style={styles.section}>
+                    <TouchableOpacity 
+                        style={styles.birthdayCard}
+                        onPress={toggleBirthdayWish}
+                        activeOpacity={0.7}
+                    >
+                        <View style={styles.birthdayHeader}>
+                            <FontAwesome name="birthday-cake" size={24} color="#FF6B6B" />
+                            <View style={styles.birthdayTextContainer}>
+                                <Text style={styles.birthdayTitle}>{translations.birthdayMessage}</Text>
+                                <Text style={styles.birthdaySubtext}>{translations.birthdaySubtext}</Text>
+                            </View>
+                            <FontAwesome 
+                                name={isBirthdayWishExpanded ? "chevron-up" : "chevron-down"} 
+                                size={20} 
+                                color="#666" 
+                            />
+                        </View>
+                        
+                        {isBirthdayWishExpanded && (
+                            <Animated.View style={[
+                                styles.birthdayContent,
+                                {
+                                    opacity: birthdayAnimation
+                                }
+                            ]}>
+                                {wishSent ? (
+                                    <View style={styles.wishSentContainer}>
+                                        <FontAwesome name="check-circle" size={24} color="#4CAF50" />
+                                        <Text style={styles.wishSentText}>{translations.wishSent}</Text>
+                                    </View>
+                                ) : (
+                                    <>
+                                        <TextInput
+                                            style={styles.wishInput}
+                                            placeholder={translations.birthdayPlaceholder}
+                                            value={birthdayWish}
+                                            onChangeText={setBirthdayWish}
+                                            multiline
+                                            maxLength={200}
+                                        />
+                                        <TouchableOpacity 
+                                            style={[
+                                                styles.sendWishButton,
+                                                !birthdayWish.trim() && styles.sendWishButtonDisabled
+                                            ]}
+                                            onPress={handleSendWish}
+                                            disabled={!birthdayWish.trim() || isWishSending}
+                                        >
+                                            {isWishSending ? (
+                                                <ActivityIndicator color="#FFF" size="small" />
+                                            ) : (
+                                                <Text style={styles.sendWishButtonText}>
+                                                    {translations.sendWish}
+                                                </Text>
+                                            )}
+                                        </TouchableOpacity>
+                                    </>
+                                )}
+                            </Animated.View>
+                        )}
+                    </TouchableOpacity>
+                </View>
+
                 {/* Articles Section - Moved to top */}
-            <View style={styles.section}>
+                <View style={styles.section}>
                     <Text style={[styles.sectionTitle, { fontSize: scaledFont(18) }]}>{translations.articles}</Text>
                     <Text style={[styles.sectionSubtitle, { fontSize: scaledFont(14) }]}>{translations.todayTopPicks}</Text>
                     <ScrollView 
@@ -290,215 +393,215 @@ export default function Home() {
                             </View>
                     </TouchableOpacity>
                     </ScrollView>
-            </View>
+                </View>
 
-            {/* Success Stories Section */}
-            <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { fontSize: scaledFont(18) }]}>Success Stories</Text>
-                <Text style={[styles.sectionSubtitle, { fontSize: scaledFont(14) }]}>Inspiring journeys of children with ADHD</Text>
-                <ScrollView 
-                    horizontal={true}
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.articlesContainer}
-                >
-                    <TouchableOpacity 
-                        style={styles.articleCard}
-                        onPress={() => Linking.openURL('https://medium.com/@adhdparenting/from-struggle-to-success-how-early-intervention-transformed-my-sons-life-8f2d3c4e5a1b')}
+                {/* Success Stories Section */}
+                <View style={styles.section}>
+                    <Text style={[styles.sectionTitle, { fontSize: scaledFont(18) }]}>Success Stories</Text>
+                    <Text style={[styles.sectionSubtitle, { fontSize: scaledFont(14) }]}>Inspiring journeys of children with ADHD</Text>
+                    <ScrollView 
+                        horizontal={true}
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.articlesContainer}
                     >
-                        <Image 
-                            source={{ uri: 'https://images.unsplash.com/photo-1491013516836-7db643ee125a?w=500&auto=format&fit=crop&q=80' }}
-                            style={styles.articleImage}
-                        />
-                        <View style={styles.articleContent}>
-                            <Text style={[styles.articleTitle, { fontSize: scaledFont(14) }]}>From Struggle to Success</Text>
-                            <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>How early intervention and personalized support helped my son thrive with ADHD...</Text>
-                            <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>5 min read • Parent Story</Text>
-                        </View>
-                    </TouchableOpacity>
+                        <TouchableOpacity 
+                            style={styles.articleCard}
+                            onPress={() => Linking.openURL('https://medium.com/@adhdparenting/from-struggle-to-success-how-early-intervention-transformed-my-sons-life-8f2d3c4e5a1b')}
+                        >
+                            <Image 
+                                source={{ uri: 'https://images.unsplash.com/photo-1491013516836-7db643ee125a?w=500&auto=format&fit=crop&q=80' }}
+                                style={styles.articleImage}
+                            />
+                            <View style={styles.articleContent}>
+                                <Text style={[styles.articleTitle, { fontSize: scaledFont(14) }]}>From Struggle to Success</Text>
+                                <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>How early intervention and personalized support helped my son thrive with ADHD...</Text>
+                                <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>5 min read • Parent Story</Text>
+                            </View>
+                        </TouchableOpacity>
 
-                    <TouchableOpacity 
-                        style={styles.articleCard}
-                        onPress={() => Linking.openURL('https://medium.com/education-innovation/breaking-barriers-how-inclusive-education-helped-my-adhd-child-excel-9c4e8d2b5f3a')}
-                    >
-                        <Image 
-                            source={{ uri: 'https://images.unsplash.com/photo-1577896851231-70ef18881754?w=500&auto=format&fit=crop&q=80' }}
-                            style={styles.articleImage}
-                        />
-                        <View style={styles.articleContent}>
-                            <Text style={[styles.articleTitle, { fontSize: scaledFont(14) }]}>Breaking Barriers</Text>
-                            <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>A teacher's perspective on creating an inclusive classroom for ADHD students...</Text>
-                            <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>6 min read • Teacher's Journey</Text>
-                        </View>
-                    </TouchableOpacity>
+                        <TouchableOpacity 
+                            style={styles.articleCard}
+                            onPress={() => Linking.openURL('https://medium.com/education-innovation/breaking-barriers-how-inclusive-education-helped-my-adhd-child-excel-9c4e8d2b5f3a')}
+                        >
+                            <Image 
+                                source={{ uri: 'https://images.unsplash.com/photo-1577896851231-70ef18881754?w=500&auto=format&fit=crop&q=80' }}
+                                style={styles.articleImage}
+                            />
+                            <View style={styles.articleContent}>
+                                <Text style={[styles.articleTitle, { fontSize: scaledFont(14) }]}>Breaking Barriers</Text>
+                                <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>A teacher's perspective on creating an inclusive classroom for ADHD students...</Text>
+                                <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>6 min read • Teacher's Journey</Text>
+                            </View>
+                        </TouchableOpacity>
 
-                    <TouchableOpacity 
-                        style={styles.articleCard}
-                        onPress={() => Linking.openURL('https://medium.com/mental-health/empowering-adhd-kids-through-art-and-music-therapy-7d842f5a1e9c')}
-                    >
-                        <Image 
-                            source={{ uri: 'https://images.unsplash.com/photo-1514119412350-e174d90d280e?w=500&auto=format&fit=crop&q=80' }}
-                            style={styles.articleImage}
-                        />
-                        <View style={styles.articleContent}>
-                            <Text style={[styles.articleTitle, { fontSize: scaledFont(14) }]}>Art & Music Therapy Success</Text>
-                            <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>How creative therapies helped my child develop focus and confidence...</Text>
-                            <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>4 min read • Therapy Journey</Text>
-                        </View>
-                    </TouchableOpacity>
+                        <TouchableOpacity 
+                            style={styles.articleCard}
+                            onPress={() => Linking.openURL('https://medium.com/mental-health/empowering-adhd-kids-through-art-and-music-therapy-7d842f5a1e9c')}
+                        >
+                            <Image 
+                                source={{ uri: 'https://images.unsplash.com/photo-1514119412350-e174d90d280e?w=500&auto=format&fit=crop&q=80' }}
+                                style={styles.articleImage}
+                            />
+                            <View style={styles.articleContent}>
+                                <Text style={[styles.articleTitle, { fontSize: scaledFont(14) }]}>Art & Music Therapy Success</Text>
+                                <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>How creative therapies helped my child develop focus and confidence...</Text>
+                                <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>4 min read • Therapy Journey</Text>
+                            </View>
+                        </TouchableOpacity>
 
-                    <TouchableOpacity 
-                        style={styles.articleCard}
-                        onPress={() => Linking.openURL('https://medium.com/parenting-matters/from-homework-battles-to-academic-achievement-adhd-success-story-3f9d2c8e4b5a')}
-                    >
-                        <Image 
-                            source={{ uri: 'https://images.unsplash.com/photo-1488998427799-e3362cec87c3?w=500&auto=format&fit=crop&q=80' }}
-                            style={styles.articleImage}
-                        />
-                        <View style={styles.articleContent}>
-                            <Text style={[styles.articleTitle, { fontSize: scaledFont(14) }]}>Academic Achievement</Text>
-                            <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>Transforming homework struggles into learning success with ADHD...</Text>
-                            <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>7 min read • Academic Journey</Text>
+                        <TouchableOpacity 
+                            style={styles.articleCard}
+                            onPress={() => Linking.openURL('https://medium.com/parenting-matters/from-homework-battles-to-academic-achievement-adhd-success-story-3f9d2c8e4b5a')}
+                        >
+                            <Image 
+                                source={{ uri: 'https://images.unsplash.com/photo-1488998427799-e3362cec87c3?w=500&auto=format&fit=crop&q=80' }}
+                                style={styles.articleImage}
+                            />
+                            <View style={styles.articleContent}>
+                                <Text style={[styles.articleTitle, { fontSize: scaledFont(14) }]}>Academic Achievement</Text>
+                                <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>Transforming homework struggles into learning success with ADHD...</Text>
+                                <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>7 min read • Academic Journey</Text>
+                            </View>
+                        </TouchableOpacity>
+                    </ScrollView>
+                </View>
+
+                {/* Schedule Section */}
+                <View style={styles.section}>
+                        <Text style={[styles.sectionTitle, { fontSize: scaledFont(18) }]}>{translations.todaySchedule}</Text>
+                        <View style={styles.timetableContainer}>
+                            <View style={styles.timeSlot}>
+                                <View style={styles.timeColumn}>
+                                    <Text style={[styles.timeText, { fontSize: scaledFont(14) }]}>10:00 - 11:30</Text>
+                                </View>
+                                <View style={[styles.classColumn, { backgroundColor: '#E3F2FD' }]}>
+                                    <FontAwesome name="comments" size={20} color="#1976D2" />
+                                    <Text style={[styles.classText, { fontSize: scaledFont(14) }]}>{translations.communicationClass}</Text>
+                                </View>
+                            </View>
+
+                            <View style={styles.timeSlot}>
+                                <View style={styles.timeColumn}>
+                                    <Text style={[styles.timeText, { fontSize: scaledFont(14) }]}>12:00 - 14:00</Text>
+                                </View>
+                                <View style={[styles.classColumn, { backgroundColor: '#F3E5F5' }]}>
+                                    <FontAwesome name="paint-brush" size={20} color="#7B1FA2" />
+                                    <Text style={[styles.classText, { fontSize: scaledFont(14) }]}>{translations.paintingClass}</Text>
+                                </View>
+                            </View>
+
+                            <View style={styles.timeSlot}>
+                                <View style={styles.timeColumn}>
+                                    <Text style={[styles.timeText, { fontSize: scaledFont(14) }]}>15:00 - 16:00</Text>
+                                </View>
+                                <View style={[styles.classColumn, { backgroundColor: '#E8F5E9' }]}>
+                                    <FontAwesome name="music" size={20} color="#388E3C" />
+                                    <Text style={[styles.classText, { fontSize: scaledFont(14) }]}>{translations.musicTherapy}</Text>
+                                </View>
+                            </View>
                         </View>
-                    </TouchableOpacity>
+
+                        <TouchableOpacity 
+                            style={[styles.attendanceButton, { marginTop: 15 }]}
+                            onPress={() => navigation.navigate('AttendanceReport')}
+                        >
+                            <FontAwesome name="calendar-check-o" size={20} color="#FFF" style={styles.attendanceIcon} />
+                            <Text style={[styles.buttonText, { fontSize: scaledFont(16) }]}>{translations.checkAttendance}</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Upcoming Appointments - Simplified */}
+                    <View style={styles.section}>
+                        <Text style={[styles.sectionTitle, { fontSize: scaledFont(18) }]}>{translations.upcomingAppointments}</Text>
+                        <View style={styles.appointmentsContainer}>
+                            <View style={styles.appointmentRow}>
+                                <Text style={[styles.appointmentDate, { fontSize: scaledFont(14) }]}>May 16</Text>
+                                <View style={styles.appointmentMiddle}>
+                                    <Text style={[styles.appointmentTime, { fontSize: scaledFont(14) }]}>10:30</Text>
+                                    <Text style={[styles.appointmentPerson, { fontSize: scaledFont(14) }]}>Dr. Sarah J.</Text>
+                                </View>
+                                <Text style={[styles.appointmentType, { color: '#1976D2' }]}>{translations.speechTherapy}</Text>
+                            </View>
+
+                            <View style={styles.appointmentRow}>
+                                <Text style={[styles.appointmentDate, { fontSize: scaledFont(14) }]}>May 17</Text>
+                                <View style={styles.appointmentMiddle}>
+                                    <Text style={[styles.appointmentTime, { fontSize: scaledFont(14) }]}>14:00</Text>
+                                    <Text style={[styles.appointmentPerson, { fontSize: scaledFont(14) }]}>Prof. Chen</Text>
+                                </View>
+                                <Text style={[styles.appointmentType, { color: '#7B1FA2' }]}>{translations.artEducation}</Text>
+                            </View>
+
+                            <View style={styles.appointmentRow}>
+                                <Text style={[styles.appointmentDate, { fontSize: scaledFont(14) }]}>May 19</Text>
+                                <View style={styles.appointmentMiddle}>
+                                    <Text style={[styles.appointmentTime, { fontSize: scaledFont(14) }]}>11:00</Text>
+                                    <Text style={[styles.appointmentPerson, { fontSize: scaledFont(14) }]}>Dr. Emily P.</Text>
+                                </View>
+                                <Text style={[styles.appointmentType, { color: '#388E3C' }]}>{translations.occupationalTherapy}</Text>
+                            </View>
+                        </View>
+                    </View>
+
+                    {/* Upcoming Events Timeline */}
+                    <View style={styles.section}>
+                        <Text style={[styles.sectionTitle, { fontSize: scaledFont(18) }]}>{translations.upcomingEvents}</Text>
+                        <View style={styles.timeline}>
+                            <View style={styles.timelineEvent}>
+                                <View style={[styles.timelineDot, { backgroundColor: '#4CAF50' }]} />
+                                <View style={styles.timelineLine} />
+                                <View style={styles.timelineContent}>
+                                    <Text style={[styles.timelineDate, { fontSize: scaledFont(14) }]}>May 15th</Text>
+                                    <Text style={[styles.timelineTitle, { fontSize: scaledFont(16) }]}>Sensory-Friendly Movie Screening</Text>
+                                    <Text style={[styles.timelineDescription, { fontSize: scaledFont(12) }]}>
+                                        Special screening with adjusted sound and lighting. Bring your comfort items!
+                                    </Text>
+                                </View>
+                            </View>
+
+                            <View style={styles.timelineEvent}>
+                                <View style={[styles.timelineDot, { backgroundColor: '#2196F3' }]} />
+                                <View style={styles.timelineLine} />
+                                <View style={styles.timelineContent}>
+                                    <Text style={[styles.timelineDate, { fontSize: scaledFont(14) }]}>May 18th</Text>
+                                    <Text style={[styles.timelineTitle, { fontSize: scaledFont(16) }]}>Social Skills Workshop</Text>
+                                    <Text style={[styles.timelineDescription, { fontSize: scaledFont(12) }]}>
+                                        Interactive group session focusing on friendship and communication.
+                                    </Text>
+                                </View>
+                            </View>
+
+                            <View style={styles.timelineEvent}>
+                                <View style={[styles.timelineDot, { backgroundColor: '#9C27B0' }]} />
+                                <View style={styles.timelineLine} />
+                                <View style={styles.timelineContent}>
+                                    <Text style={[styles.timelineDate, { fontSize: scaledFont(14) }]}>May 22nd</Text>
+                                    <Text style={[styles.timelineTitle, { fontSize: scaledFont(16) }]}>Art Therapy Exhibition</Text>
+                                    <Text style={[styles.timelineDescription, { fontSize: scaledFont(12) }]}>
+                                        Showcase your artwork and meet other young artists. Quiet room available.
+                                    </Text>
+                                </View>
+                            </View>
+
+                            <View style={styles.timelineEvent}>
+                                <View style={[styles.timelineDot, { backgroundColor: '#FF9800' }]} />
+                                <View style={styles.timelineContent}>
+                                    <Text style={[styles.timelineDate, { fontSize: scaledFont(14) }]}>May 25th</Text>
+                                    <Text style={[styles.timelineTitle, { fontSize: scaledFont(16) }]}>Music & Movement Day</Text>
+                                    <Text style={[styles.timelineDescription, { fontSize: scaledFont(12) }]}>
+                                        Fun rhythmic activities and music therapy. Noise-canceling headphones provided.
+                                    </Text>
+                                </View>
+                            </View>
+                        </View>
+                    </View>
+
+                    {/* Add padding at bottom to ensure content is visible above footer */}
+                    <View style={{ height: 80 }} />
                 </ScrollView>
-            </View>
 
-            {/* Schedule Section */}
-            <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { fontSize: scaledFont(18) }]}>{translations.todaySchedule}</Text>
-                    <View style={styles.timetableContainer}>
-                        <View style={styles.timeSlot}>
-                            <View style={styles.timeColumn}>
-                                <Text style={[styles.timeText, { fontSize: scaledFont(14) }]}>10:00 - 11:30</Text>
-                            </View>
-                            <View style={[styles.classColumn, { backgroundColor: '#E3F2FD' }]}>
-                                <FontAwesome name="comments" size={20} color="#1976D2" />
-                                <Text style={[styles.classText, { fontSize: scaledFont(14) }]}>{translations.communicationClass}</Text>
-                            </View>
-                        </View>
-
-                        <View style={styles.timeSlot}>
-                            <View style={styles.timeColumn}>
-                                <Text style={[styles.timeText, { fontSize: scaledFont(14) }]}>12:00 - 14:00</Text>
-                            </View>
-                            <View style={[styles.classColumn, { backgroundColor: '#F3E5F5' }]}>
-                                <FontAwesome name="paint-brush" size={20} color="#7B1FA2" />
-                                <Text style={[styles.classText, { fontSize: scaledFont(14) }]}>{translations.paintingClass}</Text>
-                            </View>
-                        </View>
-
-                        <View style={styles.timeSlot}>
-                            <View style={styles.timeColumn}>
-                                <Text style={[styles.timeText, { fontSize: scaledFont(14) }]}>15:00 - 16:00</Text>
-                            </View>
-                            <View style={[styles.classColumn, { backgroundColor: '#E8F5E9' }]}>
-                                <FontAwesome name="music" size={20} color="#388E3C" />
-                                <Text style={[styles.classText, { fontSize: scaledFont(14) }]}>{translations.musicTherapy}</Text>
-                            </View>
-                        </View>
-                    </View>
-
-                    <TouchableOpacity 
-                        style={[styles.attendanceButton, { marginTop: 15 }]}
-                        onPress={() => navigation.navigate('AttendanceReport')}
-                    >
-                        <FontAwesome name="calendar-check-o" size={20} color="#FFF" style={styles.attendanceIcon} />
-                        <Text style={[styles.buttonText, { fontSize: scaledFont(16) }]}>{translations.checkAttendance}</Text>
-                    </TouchableOpacity>
-                </View>
-
-                {/* Upcoming Appointments - Simplified */}
-                <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { fontSize: scaledFont(18) }]}>{translations.upcomingAppointments}</Text>
-                    <View style={styles.appointmentsContainer}>
-                        <View style={styles.appointmentRow}>
-                            <Text style={[styles.appointmentDate, { fontSize: scaledFont(14) }]}>May 16</Text>
-                            <View style={styles.appointmentMiddle}>
-                                <Text style={[styles.appointmentTime, { fontSize: scaledFont(14) }]}>10:30</Text>
-                                <Text style={[styles.appointmentPerson, { fontSize: scaledFont(14) }]}>Dr. Sarah J.</Text>
-                            </View>
-                            <Text style={[styles.appointmentType, { color: '#1976D2' }]}>{translations.speechTherapy}</Text>
-                        </View>
-
-                        <View style={styles.appointmentRow}>
-                            <Text style={[styles.appointmentDate, { fontSize: scaledFont(14) }]}>May 17</Text>
-                            <View style={styles.appointmentMiddle}>
-                                <Text style={[styles.appointmentTime, { fontSize: scaledFont(14) }]}>14:00</Text>
-                                <Text style={[styles.appointmentPerson, { fontSize: scaledFont(14) }]}>Prof. Chen</Text>
-                            </View>
-                            <Text style={[styles.appointmentType, { color: '#7B1FA2' }]}>{translations.artEducation}</Text>
-                        </View>
-
-                        <View style={styles.appointmentRow}>
-                            <Text style={[styles.appointmentDate, { fontSize: scaledFont(14) }]}>May 19</Text>
-                            <View style={styles.appointmentMiddle}>
-                                <Text style={[styles.appointmentTime, { fontSize: scaledFont(14) }]}>11:00</Text>
-                                <Text style={[styles.appointmentPerson, { fontSize: scaledFont(14) }]}>Dr. Emily P.</Text>
-                            </View>
-                            <Text style={[styles.appointmentType, { color: '#388E3C' }]}>{translations.occupationalTherapy}</Text>
-                        </View>
-                    </View>
-                </View>
-
-                {/* Upcoming Events Timeline */}
-                <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { fontSize: scaledFont(18) }]}>{translations.upcomingEvents}</Text>
-                    <View style={styles.timeline}>
-                        <View style={styles.timelineEvent}>
-                            <View style={[styles.timelineDot, { backgroundColor: '#4CAF50' }]} />
-                            <View style={styles.timelineLine} />
-                            <View style={styles.timelineContent}>
-                                <Text style={[styles.timelineDate, { fontSize: scaledFont(14) }]}>May 15th</Text>
-                                <Text style={[styles.timelineTitle, { fontSize: scaledFont(16) }]}>Sensory-Friendly Movie Screening</Text>
-                                <Text style={[styles.timelineDescription, { fontSize: scaledFont(12) }]}>
-                                    Special screening with adjusted sound and lighting. Bring your comfort items!
-                                </Text>
-                            </View>
-                        </View>
-
-                        <View style={styles.timelineEvent}>
-                            <View style={[styles.timelineDot, { backgroundColor: '#2196F3' }]} />
-                            <View style={styles.timelineLine} />
-                            <View style={styles.timelineContent}>
-                                <Text style={[styles.timelineDate, { fontSize: scaledFont(14) }]}>May 18th</Text>
-                                <Text style={[styles.timelineTitle, { fontSize: scaledFont(16) }]}>Social Skills Workshop</Text>
-                                <Text style={[styles.timelineDescription, { fontSize: scaledFont(12) }]}>
-                                    Interactive group session focusing on friendship and communication.
-                                </Text>
-                            </View>
-                        </View>
-
-                        <View style={styles.timelineEvent}>
-                            <View style={[styles.timelineDot, { backgroundColor: '#9C27B0' }]} />
-                            <View style={styles.timelineLine} />
-                            <View style={styles.timelineContent}>
-                                <Text style={[styles.timelineDate, { fontSize: scaledFont(14) }]}>May 22nd</Text>
-                                <Text style={[styles.timelineTitle, { fontSize: scaledFont(16) }]}>Art Therapy Exhibition</Text>
-                                <Text style={[styles.timelineDescription, { fontSize: scaledFont(12) }]}>
-                                    Showcase your artwork and meet other young artists. Quiet room available.
-                                </Text>
-                </View>
-            </View>
-
-                        <View style={styles.timelineEvent}>
-                            <View style={[styles.timelineDot, { backgroundColor: '#FF9800' }]} />
-                            <View style={styles.timelineContent}>
-                                <Text style={[styles.timelineDate, { fontSize: scaledFont(14) }]}>May 25th</Text>
-                                <Text style={[styles.timelineTitle, { fontSize: scaledFont(16) }]}>Music & Movement Day</Text>
-                                <Text style={[styles.timelineDescription, { fontSize: scaledFont(12) }]}>
-                                    Fun rhythmic activities and music therapy. Noise-canceling headphones provided.
-                                </Text>
-                            </View>
-                        </View>
-                    </View>
-                </View>
-
-                {/* Add padding at bottom to ensure content is visible above footer */}
-                <View style={{ height: 80 }} />
-            </ScrollView>
-
-            {/* Footer Navigation */}
-            <Navbar />
+                {/* Footer Navigation */}
+                <Navbar />
         </View>
     );
 }
@@ -811,5 +914,74 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '500',
         color: '#001F3F',
+    },
+    birthdayCard: {
+        backgroundColor: '#FFF',
+        borderRadius: 12,
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: '#FFE5E5',
+    },
+    birthdayHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 15,
+        backgroundColor: '#FFF9F9',
+    },
+    birthdayTextContainer: {
+        flex: 1,
+        marginLeft: 12,
+        marginRight: 8,
+    },
+    birthdayTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#333',
+        marginBottom: 2,
+    },
+    birthdaySubtext: {
+        fontSize: 14,
+        color: '#666',
+    },
+    birthdayContent: {
+        padding: 15,
+        borderTopWidth: 1,
+        borderTopColor: '#FFE5E5',
+    },
+    wishInput: {
+        backgroundColor: '#F8F9FA',
+        borderRadius: 8,
+        padding: 12,
+        fontSize: 14,
+        color: '#333',
+        minHeight: 80,
+        textAlignVertical: 'top',
+        marginBottom: 12,
+    },
+    sendWishButton: {
+        backgroundColor: '#FF6B6B',
+        paddingVertical: 12,
+        borderRadius: 8,
+        alignItems: 'center',
+    },
+    sendWishButtonDisabled: {
+        backgroundColor: '#FFB3B3',
+    },
+    sendWishButtonText: {
+        color: '#FFF',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    wishSentContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 10,
+    },
+    wishSentText: {
+        marginLeft: 8,
+        fontSize: 16,
+        color: '#4CAF50',
+        fontWeight: '600',
     },
 });

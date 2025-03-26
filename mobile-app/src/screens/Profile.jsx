@@ -6,41 +6,23 @@ import { getUserData, handleLogout } from '../utils/api';
 import Navbar from '../components/Navbar';
 import { fetchTranslation } from '../utils/translate';
 import { useLanguage } from '../context/LanguageContext';
+import { staticTranslations } from '../utils/translations';
 import Menu from './Menu';
 
 const DEFAULT_PROFILE_IMAGE = "https://res.cloudinary.com/dh2gwea4g/image/upload/t_Banner 9:16/v1742526651/ishanya5_xkgnk4.webp";
 
 export default function Profile() {
     const navigation = useNavigation();
-    const { language } = useLanguage();
+    const { language, changeLanguage } = useLanguage();
     const [userData, setUserData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isTranslating, setIsTranslating] = useState(true);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [langSwitchVisible, setLangSwitchVisible] = useState(false);
     const menuAnimation = useRef(new Animated.Value(-300)).current;
 
-    // Translation states
-    const [translations, setTranslations] = useState({
-        profile: "Profile",
-        studentDetails: "Student Details",
-        name: "Name",
-        email: "Email",
-        gender: "Gender",
-        primaryDiagnosis: "Primary Diagnosis",
-        myEducators: "My Educators",
-        primaryEducator: "Primary Educator",
-        secondaryEducator: "Secondary Educator",
-        notAssigned: "Not Assigned",
-        specialty: "Specialty",
-        accountSettings: "Account Settings",
-        changePassword: "Change Password",
-        editProfile: "Edit Profile",
-        logout: "Logout",
-        loading: "Loading...",
-        error: "Error loading profile",
-        specialEducationSpecialist: "Special Education Specialist",
-        behavioralTherapist: "Behavioral Therapist"
-    });
+    // Get static translations based on current language
+    const translations = staticTranslations[language];
 
     const toggleMenu = () => {
         const toValue = isMenuOpen ? -300 : 0;
@@ -52,7 +34,12 @@ export default function Profile() {
         setIsMenuOpen(!isMenuOpen);
     };
 
-    // Translate user data
+    const handleLanguageChange = (newLang) => {
+        changeLanguage(newLang);
+        setLangSwitchVisible(false);
+    };
+
+    // Translate only dynamic user data
     const translateUserData = async (data) => {
         if (!data) return null;
         
@@ -88,19 +75,12 @@ export default function Profile() {
         }
     };
 
-    // Fetch translations when language changes
+    // Only translate user data when language changes
     useEffect(() => {
         const translateContent = async () => {
             setIsTranslating(true);
             try {
-                // Translate UI elements
-                const translatedContent = {};
-                for (const [key, value] of Object.entries(translations)) {
-                    translatedContent[key] = await fetchTranslation(value, language);
-                }
-                setTranslations(translatedContent);
-
-                // Translate existing user data if available
+                // Only translate existing user data if available
                 if (userData) {
                     const translatedUserData = await translateUserData(userData);
                     setUserData(translatedUserData);
@@ -181,12 +161,46 @@ export default function Profile() {
                     <FontAwesome name="bars" size={24} color="#001F3F" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>{translations.profile}</Text>
-                <TouchableOpacity 
-                    style={styles.notificationButton}
-                    onPress={() => navigation.navigate('Notifications')}
-                >
-                    <FontAwesome name="bell" size={24} color="#001F3F" />
-                </TouchableOpacity>
+                <View style={styles.headerRight}>
+                    {/* Language Switch Button */}
+                    <TouchableOpacity
+                        style={[styles.headerButton, styles.languageButton]}
+                        onPress={() => {
+                            setLangSwitchVisible(!langSwitchVisible);
+                            setIsMenuOpen(false);
+                        }}
+                    >
+                        <FontAwesome name="language" size={20} color="#001F3F" />
+                        <Text style={styles.languageButtonText}>
+                            {language === 'en' ? 'English' : 'हिंदी'}
+                        </Text>
+                    </TouchableOpacity>
+
+                    {/* Language Switch Popup */}
+                    {langSwitchVisible && (
+                        <View style={[styles.popup, styles.langSwitchPopup]}>
+                            <TouchableOpacity
+                                style={[styles.langButton, language === 'en' && styles.langButtonActive]}
+                                onPress={() => handleLanguageChange('en')}
+                            >
+                                <Text style={[styles.langButtonText, language === 'en' && styles.langButtonTextActive]}>English</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.langButton, language === 'hi' && styles.langButtonActive]}
+                                onPress={() => handleLanguageChange('hi')}
+                            >
+                                <Text style={[styles.langButtonText, language === 'hi' && styles.langButtonTextActive]}>हिंदी</Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
+
+                    <TouchableOpacity 
+                        style={styles.notificationButton}
+                        onPress={() => navigation.navigate('Notifications')}
+                    >
+                        <FontAwesome name="bell" size={24} color="#001F3F" />
+                    </TouchableOpacity>
+                </View>
             </View>
 
             {/* Menu Drawer */}
@@ -496,5 +510,62 @@ const styles = StyleSheet.create({
         color: "#001F3F",
         fontSize: 16,
         fontWeight: "bold",
+    },
+    headerRight: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    headerButton: {
+        padding: 5,
+        marginRight: 10,
+    },
+    languageButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#F0F0F0',
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 15,
+    },
+    languageButtonText: {
+        marginLeft: 5,
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#001F3F',
+    },
+    popup: {
+        position: 'absolute',
+        top: 45,
+        right: 10,
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        borderRadius: 12,
+        padding: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 3,
+        elevation: 5,
+        zIndex: 1000,
+    },
+    langSwitchPopup: {
+        right: 45,
+    },
+    langButton: {
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+        marginVertical: 4,
+        backgroundColor: '#F5F5F5',
+    },
+    langButtonActive: {
+        backgroundColor: '#4CAF50',
+    },
+    langButtonText: {
+        fontSize: 16,
+        color: '#333',
+        fontWeight: '500',
+    },
+    langButtonTextActive: {
+        color: '#FFF',
     },
 });

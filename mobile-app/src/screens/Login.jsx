@@ -24,7 +24,6 @@ export default function Login({ navigation }) {
     forgotPassword: "Forgot Password?",
     noAccount: "Don't have an account?",
     signUp: "Sign Up",
-    or: "OR",
     fillFields: "Please fill in all fields",
     invalidEmail: "Please enter a valid email address",
     connectionError: "Unable to connect. Please check your internet connection and try again.",
@@ -188,27 +187,6 @@ export default function Login({ navigation }) {
             </TouchableOpacity>
           </View>
         </View>
-
-        {/* Social Login Section */}
-        <View style={styles.socialLoginContainer}>
-          <View style={styles.dividerContainer}>
-            <View style={styles.divider} />
-            <Text style={styles.dividerText}>{translations.or}</Text>
-            <View style={styles.divider} />
-          </View>
-
-          <View style={styles.socialButtons}>
-            <TouchableOpacity style={styles.socialButton}>
-              <FontAwesome name="google" size={20} color="#DB4437" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.socialButton}>
-              <FontAwesome name="facebook" size={20} color="#4267B2" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.socialButton}>
-              <FontAwesome name="apple" size={20} color="#000" />
-            </TouchableOpacity>
-          </View>
-        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -342,42 +320,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#4CAF50",
     fontWeight: "600",
-  },
-  socialLoginContainer: {
-    marginTop: 40,
-  },
-  dividerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  divider: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "#E0E0E0",
-  },
-  dividerText: {
-    color: "#666",
-    paddingHorizontal: 10,
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  socialButtons: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 20,
-  },
-  socialButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: "#FFF",
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
 });
