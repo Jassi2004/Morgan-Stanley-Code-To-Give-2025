@@ -22,7 +22,7 @@ function StudentLogin() {
       // console.log("Email + password", email, password);
       
       
-      if(response.statusCode === 200){
+      if(response.status === 200){
         localStorage.setItem("studentId", data.data.student._id);
         localStorage.setItem("studentData", JSON.stringify(data.data));
         navigate("/student/profile");

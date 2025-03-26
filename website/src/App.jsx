@@ -37,14 +37,13 @@ function App() {
         <Route path="/employee/register" element={<EmployeeRegister />} />
         <Route path="/employee/login" element={<EmployeeLogin />} />
         <Route path="/login/admin" element={<AdminLogin />} />
-<<<<<<< HEAD
+
         <Route path="/landing" element={<LandingPage2/>}/> 
         <Route path="/landing3d" element={<LandingPage3/>}/> 
-=======
+
         <Route path="/" element={<LandingPage2/>}/> 
         {/* <Route path="/landing3d" element={<LandingPage3/>}/>  */}
->>>>>>> 5c542d18011978061745525f1df056daf0eea1f1
-        
+
         {/* Dashboard Routes - With Layout */}
         <Route path="/" element={<Layout />}>
           {/* <Route index element={<Dashboard />} /> */}

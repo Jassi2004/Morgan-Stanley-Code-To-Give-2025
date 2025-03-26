@@ -58,7 +58,6 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
       ] :
       [
         { title: "My Profile", icon: <LayoutDashboard size={20} />, path: "/student/profile" },
-        { title: "My Attendance", icon: <Users size={20} />, path: `/student/my-attendance/${studentId}` },
         { title: "My Progress Report", icon: <TbReportAnalytics size={20} />, path: "/student/progress-report/:studentId" },
       ];
 

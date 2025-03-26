@@ -118,11 +118,6 @@ const [studentDataUpload, setStudentDataUpload] = useState(false);
                 </option>
               ))}
             </select>
-            <div className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center">
-              <Plus size={18} />
-              <Users className="mr-2" size={16} />
-              Add Teacher
-            </div>
             <div
               onClick={() => setEmployeeDataUpload(true)}
               className="px-4 py-2 rounded-lg flex items-center relative group"
@@ -175,12 +170,6 @@ const [studentDataUpload, setStudentDataUpload] = useState(false);
                 className="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-secondary)] uppercase tracking-wider"
               >
                 Status
-              </th>
-              <th
-                scope="col"
-                className="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-secondary)] uppercase tracking-wider"
-              >
-                Actions
               </th>
             </tr>
           </thead>
@@ -235,19 +224,7 @@ const [studentDataUpload, setStudentDataUpload] = useState(false);
                       {teacher.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--color-text-primary)]">
-                    <div className="flex space-x-2">
-                      <button className="p-1 rounded-md text-[var(--color-text-secondary)] hover:text-[var(--color-brand)] hover:bg-[var(--color-bg-secondary)]">
-                        <Eye size={18} />
-                      </button>
-                      <button className="p-1 rounded-md text-[var(--color-text-secondary)] hover:text-[var(--color-brand)] hover:bg-[var(--color-bg-secondary)]">
-                        <Edit size={18} />
-                      </button>
-                      <button className="p-1 rounded-md text-[var(--color-text-secondary)] hover:text-red-500 hover:bg-[var(--color-bg-secondary)]">
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  </td>
+                
                 </tr>
               ))
             ) : (

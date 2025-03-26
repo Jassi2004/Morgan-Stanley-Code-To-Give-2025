@@ -16,28 +16,40 @@ const fetchMonthlyStudentAttendanceReports = asyncHandler(async (req, res) => {
             throw new ApiError(400, "Student ID is required");
         }
 
-        // Find all attendance records for the given student
-        const attendanceRecords = await attendance.find({ studentId });
+        // Find the student first to get their _id
+        const student = await Student.findOne({ StudentId: studentId });
+        if (!student) {
+            throw new ApiError(404, "Student not found");
+        }
 
-        if (!attendanceRecords.length) {
+        // Fetch attendance records using the student's _id
+        const attendanceRecords = await attendance.findOne({ studentId: student._id });
+        console.log("AttendanceRecords : ", attendanceRecords);
+
+        if (!attendanceRecords) {
             return res.status(404).json(
                 new ApiResponse(404, [], "No attendance records found for this student")
             );
         }
 
-        // Extract the monthly attendance reports
-        const monthlyReports = attendanceRecords.map(record => ({
-            month: record.report[0]?.month, // Get the month
-            status: record.report[0]?.status || [], // Get attendance status array
-            attendancePercentage: record.attendancePercentage, // Attendance percentage
-        }));
+        // Check if any of the records have reports
+        const hasReports = attendanceRecords.some(record => record.report && record.report.length > 0);
+        
+        if (!hasReports) {
+            return res.status(404).json(
+                new ApiResponse(404, [], "No monthly reports found for this student")
+            );
+        }
+
+        // Extract all reports from all attendance records
+        const allReports = attendanceRecords.flatMap(record => record.report);
 
         return res.status(200).json(
-            new ApiResponse(200, monthlyReports, "Successfully fetched monthly attendance reports")
+            new ApiResponse(200, allReports, "Successfully fetched monthly attendance reports")
         );
 
     } catch (err) {
-        console.error(`Error occurred while fetching monthly student attendance reports: ${err}`);
+        console.error(`Error while fetching attendance reports: ${err}`);
         throw new ApiError(400, "Error occurred while fetching monthly student reports");
     }
 });
@@ -73,6 +85,7 @@ const getAttendanceByStudentId = asyncHandler(async (req, res) => {
 
         // Fetch attendance records for the student
         const attendanceRecords = await attendance.find({ studentId : student?._id });
+        console.log("Attendance records : ", attendanceRecords);
 
         // Check if attendance records exist
         if (!attendanceRecords || attendanceRecords.length === 0) {
@@ -95,53 +108,70 @@ const getAttendanceByStudentId = asyncHandler(async (req, res) => {
 const uploadAttendanceFromExcel = asyncHandler(async (req, res) => {
     try {
         if (!req.file) {
-            throw new ApiError(400, "Please upload an excel file");
+            throw new ApiError(400, "Please upload an Excel file");
         }
 
         const filePath = req.file.path;
         const workbook = xlsx.readFile(filePath);
         const sheetName = workbook.SheetNames[0];
         const sheetData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
-        console.log("Parsed Sheet Data:", sheetData); // Debugging
 
         if (sheetData.length === 0) {
-            return res.status(400).json(
-                new ApiResponse(400, [], "Excel file is empty or invalid format")
-            );
+            return res.status(400).json(new ApiResponse(400, [], "Excel file is empty or invalid format"));
         }
 
-        let attendanceRecords = sheetData.map((row) => {
-            let { StudentId, EducatorId, Month, ...days } = row;
-            
+        for (const row of sheetData) {
+            const { StudentId, EducatorId, Month, ...days } = row;
+
             const statusArray = Object.values(days).map(value => {
-                const val = String(value).trim(); // Ensure it's a string
-                return ["P", "A", "$"].includes(val) ? val : "$"; // Default to "$" if invalid
+                const val = String(value).trim();
+                return ["P", "A", "$"].includes(val) ? val : "$";
             });
 
-            return {
-                studentId: new mongoose.Types.ObjectId(StudentId), // Convert to ObjectId
-                educatorId: new mongoose.Types.ObjectId(EducatorId), // Convert to ObjectId
-                report: [{ month: Month, status: statusArray }],
-                attendancePercentage: calculateAttendancePercentage([{ month: Month, status: statusArray }]), // ✅ Calculate before saving
-            };
-        });
+            // Find the student's existing attendance record
+            let attendanceRecord = await attendance.findOne({ studentId: StudentId });
+
+            if (attendanceRecord) {
+                // Check if the month already exists
+                const existingMonthIndex = attendanceRecord.report.findIndex(r => r.month === Month);
+
+                if (existingMonthIndex !== -1) {
+                    // Update the existing month's status
+                    attendanceRecord.report[existingMonthIndex].status = statusArray;
+                } else {
+                    // Add a new month entry
+                    attendanceRecord.report.push({ month: Month, status: statusArray });
+                }
+            } else {
+                // If no record exists, create a new one
+                attendanceRecord = new attendance({
+                    studentId: StudentId,
+                    educatorId: EducatorId,
+                    report: [{ month: Month, status: statusArray }],
+                });
+            }
+
+            // Recalculate and update attendance percentage
+            attendanceRecord.attendancePercentage = calculateAttendancePercentage(attendanceRecord.report);
+            await attendanceRecord.save();
+        }
 
         if (fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
-            console.log(`File ${filePath} successfully deleted..`);
         }
 
-        await attendance.insertMany(attendanceRecords);
-
-        return res.status(201).json(
-            new ApiResponse(201, attendanceRecords, "Successfully uploaded attendance records")
-        );
+        return res.status(201).json(new ApiResponse(201, [], "Successfully uploaded attendance records"));
 
     } catch (err) {
-        console.error(`Error occurred while uploading attendance from excel: ${err}`);
-        throw new ApiError(400, "Error occurred while uploading the data from excel");
+        console.error(`Error while uploading attendance from Excel: ${err}`);
+        throw new ApiError(400, "Error occurred while uploading the data from Excel");
     }
 });
+
+
+
+
+
 
 
 

@@ -1,68 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 
 export default function StudentDashboard() {
     const [activeTab, setActiveTab] = useState('overview');
-
     const student = JSON.parse(localStorage.getItem("studentData"))?.student;
-
-    const student1 = {
-        StudentId: "STU12345",
-        approval: {
-            status: "approved",
-            reason: "All criteria met."
-        },
-        firstName: "John",
-        lastName: "Doe",
-        studentEmail: "john.doe@example.com",
-        password: "securepassword123",
-        avatar: {
-            public_id: "avatar123",
-            secure_url: "https://randomuser.me/api/portraits/men/32.jpg"
-        },
-        gender: "Male",
-        UDID: {
-            isAvailable: true,
-            public_id: "udid123",
-            secure_url: "https://via.placeholder.com/150"
-        },
-        dateOfBirth: new Date("2000-01-15"),
-        primaryDiagnosis: "Autism",
-        comorbidity: false,
-        enrollmentYear: new Date("2022-09-01"),
-        program: "Job Readiness",
-        program2: "Vocation",
-        numberOfSessions: 20,
-        timings: "09:00 - 11:00",
-        daysOfWeek: ["Monday", "Wednesday", "Friday"],
-        educators: {
-            primary: "EDU001",
-            secondary: "EDU002"
-        },
-        sessionType: "Online",
-        allergies: ["Peanuts", "Dairy"],
-        transport: true,
-        address: "123 Main St, Anytown, USA",
-        strengths: ["Good at math", "Excellent communication skills"],
-        weaknesses: ["Struggles with reading", "Needs assistance with fine motor skills"],
-        comments: "John is a bright student? with a lot of potential.",
-        status: "Active",
-        fathersName: "James Doe",
-        mothersName: "Jane Doe",
-        parentEmail: "parents@example.com",
-        contactNumber: 1234567890,
-        altContactNumber: 1987654321,
-        certifications: [
-            "Graphic designer from Lorem ipsum in 2018",
-            "Product designer from Lorem ipsum in 2019",
-            "Logo designer from Lorem ipsum in 2020"
-        ],
-        roles: [
-            "Student Representative",
-            "Peer Mentor"
-        ],
-        refreshToken: "dummyRefreshToken123"
-    };
 
     const formatDate = (date) => {
         return new Date(date).toLocaleDateString('en-US', {
@@ -72,8 +13,11 @@ export default function StudentDashboard() {
         });
     };
 
+
+
     return (
         <>
+            {/* Root container with explicit light/dark bg and transition */}
             <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-300">
                 <Helmet>
                     <title>{student?.firstName} {student?.lastName} | Student Dashboard</title>
@@ -83,7 +27,9 @@ export default function StudentDashboard() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     {/* Header */}
                     <header className="flex justify-between items-center mb-8">
-                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Student Dashboard</h1>
+                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white transition-colors duration-300">
+                            Student Dashboard
+                        </h1>
                     </header>
 
                     {/* Profile Card */}
@@ -91,33 +37,39 @@ export default function StudentDashboard() {
                         <div className="relative h-48 bg-gradient-to-r from-blue-500 to-purple-600">
                             <div className="absolute -bottom-16 left-6">
                                 <img
-                                    className="w-32 h-32 rounded-full border-4 border-white shadow-md"
+                                    className="w-32 h-32 rounded-full border-4 border-white shadow-md transition-colors duration-300"
                                     src={student?.avatar?.secure_url || "https://cdn-icons-png.flaticon.com/512/1154/1154987.png"}
                                     alt={`${student?.firstName} ${student?.lastName}`}
                                 />
                             </div>
                         </div>
 
-                        <div className="pt-20 pb-6 px-6">
+                        <div className="pt-20 pb-6 px-6 transition-colors duration-300">
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{student?.firstName} {student?.lastName}</h2>
-                                    <p className="text-gray-600 dark:text-gray-400">ID: {student?.StudentId}</p>
+                                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white transition-colors duration-300">
+                                        {student?.firstName} {student?.lastName}
+                                    </h2>
+                                    <p className="text-gray-600 dark:text-gray-400 transition-colors duration-300">
+                                        ID: {student?.StudentId}
+                                    </p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">Program</p>
-                                    <p className="font-medium text-gray-900 dark:text-white">{student?.program}</p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 transition-colors duration-300">Program</p>
+                                    <p className="font-medium text-gray-900 dark:text-white transition-colors duration-300">
+                                        {student?.program}
+                                    </p>
                                 </div>
                             </div>
 
                             {/* Tabs */}
-                            <div className="mt-6 border-b border-gray-200 dark:border-gray-700">
+                            <div className="mt-6 border-b border-gray-200 dark:border-gray-700 transition-colors duration-300">
                                 <nav className="-mb-px flex space-x-8">
                                     {['overview', 'academic', 'medical', 'family'].map((tab) => (
                                         <button
                                             key={tab}
                                             onClick={() => setActiveTab(tab)}
-                                            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm capitalize ${
+                                            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm capitalize transition-colors duration-300 ${
                                                 activeTab === tab
                                                     ? 'border-blue-500 text-blue-600 dark:border-purple-500 dark:text-purple-400'
                                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:border-gray-300'
@@ -139,65 +91,63 @@ export default function StudentDashboard() {
                             {activeTab === 'overview' && (
                                 <div className="space-y-6">
                                     <div className="rounded-xl shadow-md overflow-hidden bg-white dark:bg-gray-800 transition-colors duration-300">
-                                        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                                            <h3 className="text-lg font-medium text-gray-900 dark:text-white">Personal Information</h3>
+                                        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 transition-colors duration-300">
+                                            <h3 className="text-lg font-medium text-gray-900 dark:text-white transition-colors duration-300">
+                                                Personal Information
+                                            </h3>
                                         </div>
-                                        <div className="px-6 py-4">
+                                        <div className="px-6 py-4 transition-colors duration-300">
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">Date of Birth</p>
-                                                    <p className="text-gray-900 dark:text-white">{formatDate(student?.dateOfBirth)}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">Gender</p>
-                                                    <p className="text-gray-900 dark:text-white">{student?.gender}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">Email</p>
-                                                    <p className="text-gray-900 dark:text-white">{student?.studentEmail}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">Contact</p>
-                                                    <p className="text-gray-900 dark:text-white">{student?.contactNumber}</p>
-                                                </div>
+                                                {[
+                                                    { label: 'Date of Birth', value: formatDate(student?.dateOfBirth) },
+                                                    { label: 'Gender', value: student?.gender },
+                                                    { label: 'Email', value: student?.studentEmail },
+                                                    { label: 'Contact', value: student?.contactNumber },
+                                                ].map((item, index) => (
+                                                    <div key={index}>
+                                                        <p className="text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300">
+                                                            {item.label}
+                                                        </p>
+                                                        <p className="text-gray-900 dark:text-white transition-colors duration-300">
+                                                            {item.value}
+                                                        </p>
+                                                    </div>
+                                                ))}
                                                 <div className="md:col-span-2">
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">Address</p>
-                                                    <p className="text-gray-900 dark:text-white">{student?.address}</p>
+                                                    <p className="text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300">Address</p>
+                                                    <p className="text-gray-900 dark:text-white transition-colors duration-300">
+                                                        {student?.address}
+                                                    </p>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
 
                                     <div className="rounded-xl shadow-md overflow-hidden bg-white dark:bg-gray-800 transition-colors duration-300">
-                                        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                                            <h3 className="text-lg font-medium text-gray-900 dark:text-white">Academic Information</h3>
+                                        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 transition-colors duration-300">
+                                            <h3 className="text-lg font-medium text-gray-900 dark:text-white transition-colors duration-300">
+                                                Academic Information
+                                            </h3>
                                         </div>
-                                        <div className="px-6 py-4">
+                                        <div className="px-6 py-4 transition-colors duration-300">
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">Enrollment Year</p>
-                                                    <p className="text-gray-900 dark:text-white">{new Date(student?.enrollmentYear).getFullYear()}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">Primary Program</p>
-                                                    <p className="text-gray-900 dark:text-white">{student?.program}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">Secondary Program</p>
-                                                    <p className="text-gray-900 dark:text-white">{student?.program2}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">Session Type</p>
-                                                    <p className="text-gray-900 dark:text-white">{student?.sessionType}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">Timings</p>
-                                                    <p className="text-gray-900 dark:text-white">{student?.timings}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">Days</p>
-                                                    <p className="text-gray-900 dark:text-white">{student?.daysOfWeek.join(", ")}</p>
-                                                </div>
+                                                {[
+                                                    { label: 'Enrollment Year', value: new Date(student?.enrollmentYear).getFullYear() },
+                                                    { label: 'Primary Program', value: student?.program },
+                                                    { label: 'Secondary Program', value: student?.program2 },
+                                                    { label: 'Session Type', value: student?.sessionType },
+                                                    { label: 'Timings', value: student?.timings },
+                                                    { label: 'Days', value: student?.daysOfWeek?.join(", ") },
+                                                ].map((item, index) => (
+                                                    <div key={index}>
+                                                        <p className="text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300">
+                                                            {item.label}
+                                                        </p>
+                                                        <p className="text-gray-900 dark:text-white transition-colors duration-300">
+                                                            {item.value}
+                                                        </p>
+                                                    </div>
+                                                ))}
                                             </div>
                                         </div>
                                     </div>
@@ -207,71 +157,58 @@ export default function StudentDashboard() {
                             {/* Academic Tab */}
                             {activeTab === 'academic' && (
                                 <div className="rounded-xl shadow-md overflow-hidden bg-white dark:bg-gray-800 transition-colors duration-300">
-                                    <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                                        <h3 className="text-lg font-medium text-gray-900 dark:text-white">Academic Details</h3>
+                                    <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 transition-colors duration-300">
+                                        <h3 className="text-lg font-medium text-gray-900 dark:text-white transition-colors duration-300">
+                                            Academic Details
+                                        </h3>
                                     </div>
-                                    <div className="px-6 py-4 space-y-6">
-                                        <div>
-                                            <h4 className="font-medium text-gray-900 dark:text-white mb-2">Program Information</h4>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">Primary Program</p>
-                                                    <p className="text-gray-900 dark:text-white">{student?.program}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">Secondary Program</p>
-                                                    <p className="text-gray-900 dark:text-white">{student?.program2}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">Enrollment Date</p>
-                                                    <p className="text-gray-900 dark:text-white">{formatDate(student?.enrollmentYear)}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">Number of Sessions</p>
-                                                    <p className="text-gray-900 dark:text-white">{student?.numberOfSessions}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div>
-                                            <h4 className="font-medium text-gray-900 dark:text-white mb-2">Schedule</h4>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">Session Type</p>
-                                                    <p className="text-gray-900 dark:text-white">{student?.sessionType}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">Timings</p>
-                                                    <p className="text-gray-900 dark:text-white">{student?.timings}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">Days</p>
-                                                    <p className="text-gray-900 dark:text-white">{student?.daysOfWeek.join(", ")}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">Transport</p>
-                                                    <p className="text-gray-900 dark:text-white">{student?.transport ? "Available" : "Not Available"}</p>
+                                    <div className="px-6 py-4 space-y-6 transition-colors duration-300">
+                                        {/* Sections with consistent light/dark text */}
+                                        {[
+                                            {
+                                                title: "Program Information",
+                                                items: [
+                                                    { label: 'Primary Program', value: student?.program },
+                                                    { label: 'Secondary Program', value: student?.program2 },
+                                                    { label: 'Enrollment Date', value: formatDate(student?.enrollmentYear) },
+                                                    { label: 'Number of Sessions', value: student?.numberOfSessions },
+                                                ]
+                                            },
+                                            {
+                                                title: "Schedule",
+                                                items: [
+                                                    { label: 'Session Type', value: student?.sessionType },
+                                                    { label: 'Timings', value: student?.timings },
+                                                    { label: 'Days', value: student?.daysOfWeek?.join(", ") },
+                                                    { label: 'Transport', value: student?.transport ? "Available" : "Not Available" },
+                                                ]
+                                            }
+                                        ].map((section, sectionIndex) => (
+                                            <div key={sectionIndex}>
+                                                <h4 className="font-medium text-gray-900 dark:text-white mb-2 transition-colors duration-300">
+                                                    {section.title}
+                                                </h4>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    {section.items.map((item, itemIndex) => (
+                                                        <div key={itemIndex}>
+                                                            <p className="text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300">
+                                                                {item.label}
+                                                            </p>
+                                                            <p className="text-gray-900 dark:text-white transition-colors duration-300">
+                                                                {item.value}
+                                                            </p>
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             </div>
-                                        </div>
+                                        ))}
 
+                                        {/* Certifications */}
                                         <div>
-                                            <h4 className="font-medium text-gray-900 dark:text-white mb-2">Educators</h4>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">Primary Educator</p>
-                                                    <p className="text-gray-900 dark:text-white">Educator #{student?.educators?.primary}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">Secondary Educator</p>
-                                                    <p className="text-gray-900 dark:text-white">Educator #{student?.educators?.secondary}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div>
-                                            <h4 className="font-medium text-gray-900 dark:text-white mb-2">Certifications</h4>
-                                            <ul className="list-disc pl-5 space-y-1 text-gray-900 dark:text-white">
+                                            <h4 className="font-medium text-gray-900 dark:text-white mb-2 transition-colors duration-300">
+                                                Certifications
+                                            </h4>
+                                            <ul className="list-disc pl-5 space-y-1 text-gray-900 dark:text-white transition-colors duration-300">
                                                 {student?.certifications?.map((cert, index) => (
                                                     <li key={index}>{cert}</li>
                                                 ))}
@@ -284,47 +221,73 @@ export default function StudentDashboard() {
                             {/* Medical Tab */}
                             {activeTab === 'medical' && (
                                 <div className="rounded-xl shadow-md overflow-hidden bg-white dark:bg-gray-800 transition-colors duration-300">
-                                    <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                                        <h3 className="text-lg font-medium text-gray-900 dark:text-white">Medical Information</h3>
+                                    <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 transition-colors duration-300">
+                                        <h3 className="text-lg font-medium text-gray-900 dark:text-white transition-colors duration-300">
+                                            Medical Information
+                                        </h3>
                                     </div>
-                                    <div className="px-6 py-4 space-y-6">
+                                    <div className="px-6 py-4 space-y-6 transition-colors duration-300">
+                                        {/* Diagnosis */}
                                         <div>
-                                            <h4 className="font-medium text-gray-900 dark:text-white mb-2">Diagnosis</h4>
+                                            <h4 className="font-medium text-gray-900 dark:text-white mb-2 transition-colors duration-300">
+                                                Diagnosis
+                                            </h4>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">Primary Diagnosis</p>
-                                                    <p className="text-gray-900 dark:text-white">{student?.primaryDiagnosis}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">Comorbidity</p>
-                                                    <p className="text-gray-900 dark:text-white">{student?.comorbidity ? "Yes" : "No"}</p>
-                                                </div>
+                                                {[
+                                                    { label: 'Primary Diagnosis', value: student?.primaryDiagnosis },
+                                                    { label: 'Comorbidity', value: student?.comorbidity ? "Yes" : "No" },
+                                                ].map((item, index) => (
+                                                    <div key={index}>
+                                                        <p className="text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300">
+                                                            {item.label}
+                                                        </p>
+                                                        <p className="text-gray-900 dark:text-white transition-colors duration-300">
+                                                            {item.value}
+                                                        </p>
+                                                    </div>
+                                                ))}
                                             </div>
                                         </div>
 
+                                        {/* Allergies */}
                                         <div>
-                                            <h4 className="font-medium text-gray-900 dark:text-white mb-2">Allergies</h4>
+                                            <h4 className="font-medium text-gray-900 dark:text-white mb-2 transition-colors duration-300">
+                                                Allergies
+                                            </h4>
                                             <div className="flex flex-wrap gap-2">
-                                                {student?.allergies.length > 0 ? (
-                                                    student?.allergies?.map((allergy, index) => (
-                                                        <span key={index} className="px-3 py-1 rounded-full text-sm bg-red-100 text-red-800 dark:bg-red-900 dark:bg-opacity-50 dark:text-red-200">
+                                                {student?.allergies?.length > 0 ? (
+                                                    student.allergies.map((allergy, index) => (
+                                                        <span 
+                                                            key={index}
+                                                            className="px-3 py-1 rounded-full text-sm bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 transition-colors duration-300"
+                                                        >
                                                             {allergy}
                                                         </span>
                                                     ))
                                                 ) : (
-                                                    <p className="text-gray-500 dark:text-gray-400">No known allergies</p>
+                                                    <p className="text-gray-500 dark:text-gray-400 transition-colors duration-300">
+                                                        No known allergies
+                                                    </p>
                                                 )}
                                             </div>
                                         </div>
 
+                                        {/* Strengths & Weaknesses */}
                                         <div>
-                                            <h4 className="font-medium text-gray-900 dark:text-white mb-2">Strengths & Weaknesses</h4>
+                                            <h4 className="font-medium text-gray-900 dark:text-white mb-2 transition-colors duration-300">
+                                                Strengths & Weaknesses
+                                            </h4>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                 <div>
-                                                    <h5 className="text-sm font-medium mb-2 text-green-600 dark:text-green-400">Strengths</h5>
+                                                    <h5 className="text-sm font-medium mb-2 text-green-600 dark:text-green-400 transition-colors duration-300">
+                                                        Strengths
+                                                    </h5>
                                                     <ul className="space-y-2">
                                                         {student?.strengths?.map((strength, index) => (
-                                                            <li key={index} className="flex items-start text-gray-900 dark:text-white">
+                                                            <li 
+                                                                key={index} 
+                                                                className="flex items-start text-gray-900 dark:text-white transition-colors duration-300"
+                                                            >
                                                                 <span className="mr-2 text-green-600 dark:text-green-400">✓</span>
                                                                 <span>{strength}</span>
                                                             </li>
@@ -332,10 +295,15 @@ export default function StudentDashboard() {
                                                     </ul>
                                                 </div>
                                                 <div>
-                                                    <h5 className="text-sm font-medium mb-2 text-yellow-600 dark:text-yellow-400">Areas for Improvement</h5>
+                                                    <h5 className="text-sm font-medium mb-2 text-yellow-600 dark:text-yellow-400 transition-colors duration-300">
+                                                        Areas for Improvement
+                                                    </h5>
                                                     <ul className="space-y-2">
                                                         {student?.weaknesses?.map((weakness, index) => (
-                                                            <li key={index} className="flex items-start text-gray-900 dark:text-white">
+                                                            <li 
+                                                                key={index} 
+                                                                className="flex items-start text-gray-900 dark:text-white transition-colors duration-300"
+                                                            >
                                                                 <span className="mr-2 text-yellow-600 dark:text-yellow-400">⚠</span>
                                                                 <span>{weakness}</span>
                                                             </li>
@@ -345,9 +313,12 @@ export default function StudentDashboard() {
                                             </div>
                                         </div>
 
+                                        {/* Additional Notes */}
                                         <div>
-                                            <h4 className="font-medium text-gray-900 dark:text-white mb-2">Additional Notes</h4>
-                                            <p className="p-4 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white">
+                                            <h4 className="font-medium text-gray-900 dark:text-white mb-2 transition-colors duration-300">
+                                                Additional Notes
+                                            </h4>
+                                            <p className="p-4 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white transition-colors duration-300">
                                                 {student?.comments || "No additional comments."}
                                             </p>
                                         </div>
@@ -358,50 +329,65 @@ export default function StudentDashboard() {
                             {/* Family Tab */}
                             {activeTab === 'family' && (
                                 <div className="rounded-xl shadow-md overflow-hidden bg-white dark:bg-gray-800 transition-colors duration-300">
-                                    <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                                        <h3 className="text-lg font-medium text-gray-900 dark:text-white">Family Information</h3>
+                                    <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 transition-colors duration-300">
+                                        <h3 className="text-lg font-medium text-gray-900 dark:text-white transition-colors duration-300">
+                                            Family Information
+                                        </h3>
                                     </div>
-                                    <div className="px-6 py-4 space-y-6">
+                                    <div className="px-6 py-4 space-y-6 transition-colors duration-300">
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div>
-                                                <h4 className="font-medium text-gray-900 dark:text-white mb-2">Father's Information</h4>
-                                                <div className="space-y-2">
-                                                    <p className="text-gray-900 dark:text-white">
-                                                        <span className="block text-sm text-gray-500 dark:text-gray-400">Name</span>
-                                                        {student?.fathersName}
-                                                    </p>
-                                                    <p className="text-gray-900 dark:text-white">
-                                                        <span className="block text-sm text-gray-500 dark:text-gray-400">Contact</span>
-                                                        {student?.contactNumber}
-                                                    </p>
+                                            {[
+                                                {
+                                                    title: "Father's Information",
+                                                    items: [
+                                                        { label: 'Name', value: student?.fathersName },
+                                                        { label: 'Contact', value: student?.contactNumber }
+                                                    ]
+                                                },
+                                                {
+                                                    title: "Mother's Information",
+                                                    items: [
+                                                        { label: 'Name', value: student?.mothersName },
+                                                        { label: 'Contact', value: student?.altContactNumber }
+                                                    ]
+                                                }
+                                            ].map((parent, index) => (
+                                                <div key={index}>
+                                                    <h4 className="font-medium text-gray-900 dark:text-white mb-2 transition-colors duration-300">
+                                                        {parent.title}
+                                                    </h4>
+                                                    <div className="space-y-2">
+                                                        {parent.items.map((item, itemIndex) => (
+                                                            <div key={itemIndex} className="text-gray-900 dark:text-white transition-colors duration-300">
+                                                                <span className="block text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300">
+                                                                    {item.label}
+                                                                </span>
+                                                                {item.value}
+                                                            </div>
+                                                        ))}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div>
-                                                <h4 className="font-medium text-gray-900 dark:text-white mb-2">Mother's Information</h4>
-                                                <div className="space-y-2">
-                                                    <p className="text-gray-900 dark:text-white">
-                                                        <span className="block text-sm text-gray-500 dark:text-gray-400">Name</span>
-                                                        {student?.mothersName}
-                                                    </p>
-                                                    <p className="text-gray-900 dark:text-white">
-                                                        <span className="block text-sm text-gray-500 dark:text-gray-400">Contact</span>
-                                                        {student?.altContactNumber}
-                                                    </p>
-                                                </div>
-                                            </div>
+                                            ))}
                                         </div>
 
                                         <div>
-                                            <h4 className="font-medium text-gray-900 dark:text-white mb-2">Contact Information</h4>
+                                            <h4 className="font-medium text-gray-900 dark:text-white mb-2 transition-colors duration-300">
+                                                Contact Information
+                                            </h4>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">Primary Email</p>
-                                                    <p className="text-gray-900 dark:text-white">{student?.parentEmail}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">Emergency Contact</p>
-                                                    <p className="text-gray-900 dark:text-white">{student?.altContactNumber}</p>
-                                                </div>
+                                                {[
+                                                    { label: 'Primary Email', value: student?.parentEmail },
+                                                    { label: 'Emergency Contact', value: student?.altContactNumber }
+                                                ].map((item, index) => (
+                                                    <div key={index}>
+                                                        <p className="text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300">
+                                                            {item.label}
+                                                        </p>
+                                                        <p className="text-gray-900 dark:text-white transition-colors duration-300">
+                                                            {item.value}
+                                                        </p>
+                                                    </div>
+                                                ))}
                                             </div>
                                         </div>
                                     </div>
@@ -413,68 +399,96 @@ export default function StudentDashboard() {
                         <div className="space-y-6">
                             {/* Quick Stats */}
                             <div className="rounded-xl shadow-md overflow-hidden bg-white dark:bg-gray-800 transition-colors duration-300">
-                                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">Quick Stats</h3>
+                                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 transition-colors duration-300">
+                                    <h3 className="text-lg font-medium text-gray-900 dark:text-white transition-colors duration-300">
+                                        Quick Stats
+                                    </h3>
                                 </div>
-                                <div className="px-6 py-4">
+                                <div className="px-6 py-4 transition-colors duration-300">
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="p-3 rounded-lg text-center bg-blue-50 dark:bg-blue-900 dark:bg-opacity-50">
-                                            <p className="text-sm text-blue-600 dark:text-blue-300">Sessions</p>
-                                            <p className="text-2xl font-bold text-gray-900 dark:text-white">{student?.numberOfSessions}</p>
-                                        </div>
-                                        <div className="p-3 rounded-lg text-center bg-green-50 dark:bg-green-900 dark:bg-opacity-50">
-                                            <p className="text-sm text-green-600 dark:text-green-300">Status</p>
-                                            <p className="text-2xl font-bold text-gray-900 dark:text-white">{student?.status}</p>
-                                        </div>
-                                        <div className="p-3 rounded-lg text-center bg-purple-50 dark:bg-purple-900 dark:bg-opacity-50">
-                                            <p className="text-sm text-purple-600 dark:text-purple-300">Program</p>
-                                            <p className="text-xl font-bold truncate text-gray-900 dark:text-white">{student?.program}</p>
-                                        </div>
-                                        <div className="p-3 rounded-lg text-center bg-yellow-50 dark:bg-yellow-900 dark:bg-opacity-50">
-                                            <p className="text-sm text-yellow-600 dark:text-yellow-300">Years</p>
-                                            <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                                                {new Date().getFullYear() - new Date(student?.enrollmentYear).getFullYear()}
-                                            </p>
-                                        </div>
+                                        {[
+                                            { 
+                                                label: 'Sessions', 
+                                                value: student?.numberOfSessions,
+                                                color: 'blue'
+                                            },
+                                            { 
+                                                label: 'Status', 
+                                                value: student?.status,
+                                                color: 'green'
+                                            },
+                                            { 
+                                                label: 'Program', 
+                                                value: student?.program,
+                                                color: 'purple'
+                                            },
+                                            { 
+                                                label: 'Years', 
+                                                value: new Date().getFullYear() - new Date(student?.enrollmentYear).getFullYear(),
+                                                color: 'yellow'
+                                            }
+                                        ].map((stat, index) => (
+                                            <div 
+                                                key={index}
+                                                className={`p-3 rounded-lg text-center bg-${stat.color}-50 dark:bg-${stat.color}-900 dark:bg-opacity-50 transition-colors duration-300`}
+                                            >
+                                                <p className={`text-sm text-${stat.color}-600 dark:text-${stat.color}-300 transition-colors duration-300`}>
+                                                    {stat.label}
+                                                </p>
+                                                <p className="text-2xl font-bold text-gray-900 dark:text-white transition-colors duration-300">
+                                                    {stat.value}
+                                                </p>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
                             </div>
 
                             {/* Roles & Responsibilities */}
                             <div className="rounded-xl shadow-md overflow-hidden bg-white dark:bg-gray-800 transition-colors duration-300">
-                                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">Roles</h3>
+                                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 transition-colors duration-300">
+                                    <h3 className="text-lg font-medium text-gray-900 dark:text-white transition-colors duration-300">
+                                        Roles
+                                    </h3>
                                 </div>
-                                <div className="px-6 py-4">
-                                    <div className="space-y-3">
-                                        <p className="text-gray-900 dark:text-white">Student</p>
+                                <div className="px-6 py-4 transition-colors duration-300">
+                                    <div className="space-y-3 text-gray-900 dark:text-white transition-colors duration-300">
+                                        <p>Student</p>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Upcoming Schedule */}
                             <div className="rounded-xl shadow-md overflow-hidden bg-white dark:bg-gray-800 transition-colors duration-300">
-                                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">Upcoming Schedule</h3>
+                                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 transition-colors duration-300">
+                                    <h3 className="text-lg font-medium text-gray-900 dark:text-white transition-colors duration-300">
+                                        Upcoming Schedule
+                                    </h3>
                                 </div>
-                                <div className="px-6 py-4">
+                                <div className="px-6 py-4 transition-colors duration-300">
                                     <div className="space-y-4">
                                         {student?.daysOfWeek?.map((day, index) => (
                                             <div key={index} className="flex items-center">
-                                                <div className="flex-shrink-0 w-12 h-12 rounded-lg flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-700">
-                                                    <span className="text-xs font-medium text-gray-900 dark:text-white">{day.substring(0, 3)}</span>
-                                                    <span className="text-lg font-bold text-gray-900 dark:text-white">{index + 10}</span>
+                                                <div className="flex-shrink-0 w-12 h-12 rounded-lg flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-700 transition-colors duration-300">
+                                                    <span className="text-xs font-medium text-gray-900 dark:text-white transition-colors duration-300">
+                                                        {day.substring(0, 3)}
+                                                    </span>
+                                                    <span className="text-lg font-bold text-gray-900 dark:text-white transition-colors duration-300">
+                                                        {index + 10}
+                                                    </span>
                                                 </div>
                                                 <div className="ml-4">
-                                                    <p className="font-medium text-gray-900 dark:text-white">{student?.program} Session</p>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                    <p className="font-medium text-gray-900 dark:text-white transition-colors duration-300">
+                                                        {student?.program} Session
+                                                    </p>
+                                                    <p className="text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300">
                                                         {student?.timings} • {student?.sessionType}
                                                     </p>
                                                 </div>
                                             </div>
                                         ))}
                                     </div>
-                                    <button className="mt-4 w-full py-2 rounded-md font-medium bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white">
+                                    <button className="mt-4 w-full py-2 rounded-md font-medium bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white transition-colors duration-300">
                                         View Full Calendar
                                     </button>
                                 </div>
