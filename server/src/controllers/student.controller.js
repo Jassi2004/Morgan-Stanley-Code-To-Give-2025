@@ -139,6 +139,10 @@ const registerStudent = asyncHandler(async (req, res) => {
       secure_url: "",
       public_id: "",
     },
+    educators: {
+      primary: null,
+      secondary: null,
+    },
   });
 
   // Create admin notification for new student registration
@@ -451,6 +455,8 @@ const approveStudent = asyncHandler(async (req, res) => {
 
 const updateProfile = asyncHandler(async (req, res) => {
   const { studentId } = req.body;
+  console.log("Received update request for student:", studentId);
+  console.log("Raw request body:", JSON.stringify(req.body, null, 2));
 
   // Validate that StudentId is provided
   if (!studentId) {
@@ -459,21 +465,52 @@ const updateProfile = asyncHandler(async (req, res) => {
 
   const updates = req.body;
 
+  // Parse all stringified JSON objects
+  const basicInfo = JSON.parse(updates.basicInfo || '{}');
+  const enrollmentStatus = JSON.parse(updates.enrollmentStatus || '{}');
+  const medicalInfo = JSON.parse(updates.medicalInfo || '{}');
+  const programDetails = JSON.parse(updates.programDetails || '{}');
+  const educatorInfo = JSON.parse(updates.educatorInfo || '{}');
+  const guardianDetails = JSON.parse(updates.guardianDetails || '{}');
+  const preferences = JSON.parse(updates.preferences || '{}');
+  const strengths = JSON.parse(updates.strengths || '[]');
+  const weaknesses = JSON.parse(updates.weaknesses || '[]');
+
+  console.log("Parsed data:", {
+    basicInfo,
+    enrollmentStatus,
+    medicalInfo,
+    programDetails,
+    educatorInfo,
+    guardianDetails,
+    preferences,
+    strengths,
+    weaknesses
+  });
+
   const student = await Student.findOne({ StudentId: studentId });
   if (!student) {
     throw new ApiError(404, "Student not found");
   }
 
+  console.log("Current student data:", {
+    id: student._id,
+    name: `${student.firstName} ${student.lastName}`,
+    educators: student.educators
+  });
+
   // Handle file uploads if present
   if (req.files) {
+    console.log("Processing file uploads:", req.files);
     // Handle avatar upload
     if (req.files.avatar?.[0]?.path) {
       const avatar = await uploadOnCloudinary(req.files.avatar[0].path);
       if (avatar?.secure_url) {
-        updates.avatar = {
+        basicInfo.avatar = {
           public_id: avatar.public_id,
           secure_url: avatar.secure_url,
         };
+        console.log("Avatar uploaded successfully:", basicInfo.avatar);
       }
     }
 
@@ -481,53 +518,83 @@ const updateProfile = asyncHandler(async (req, res) => {
     if (req.files.UDID?.[0]?.path) {
       const UDID = await uploadOnCloudinary(req.files.UDID[0].path);
       if (UDID?.secure_url) {
-        updates.UDID = {
+        basicInfo.UDID = {
           isAvailable: true,
           public_id: UDID.public_id,
           secure_url: UDID.secure_url,
         };
+        console.log("UDID uploaded successfully:", basicInfo.UDID);
       }
     }
   }
 
-  updates.basicInfo = JSON.parse(updates.basicInfo);
-
-  console.log("Updates:", updates);
-
   try {
+    // Create update object with all fields
+    const updateObject = {
+      firstName: basicInfo.firstName || student.firstName,
+      lastName: basicInfo.lastName || student.lastName,
+      studentEmail: basicInfo.studentEmail || student.studentEmail,
+      gender: basicInfo.gender || student.gender,
+      dateOfBirth: basicInfo.dateOfBirth ? new Date(basicInfo.dateOfBirth) : student.dateOfBirth,
+      contactNumber: basicInfo.contactNumber || student.contactNumber,
+      altContactNumber: basicInfo.altContactNumber || student.altContactNumber,
+      address: updates.address || student.address,
+      avatar: basicInfo.avatar || student.avatar,
+      UDID: basicInfo.UDID || student.UDID,
+      comments: updates.comments || student.comments,
+      program: programDetails.program || student.program,
+      program2: programDetails.program2 || student.program2,
+      numberOfSessions: programDetails.numberOfSessions || student.numberOfSessions,
+      sessionType: programDetails.sessionType || student.sessionType,
+      daysOfWeek: programDetails.daysOfWeek || student.daysOfWeek,
+      status: enrollmentStatus.status || student.status,
+      primaryDiagnosis: medicalInfo.primaryDiagnosis || student.primaryDiagnosis,
+      comorbidity: medicalInfo.comorbidity || student.comorbidity,
+      allergies: medicalInfo.allergies || student.allergies,
+      strengths: strengths || student.strengths,
+      weaknesses: weaknesses || student.weaknesses,
+      fathersName: guardianDetails.fathersName || student.fathersName,
+      mothersName: guardianDetails.mothersName || student.mothersName,
+      parentEmail: guardianDetails.parentEmail || student.parentEmail,
+      transport: preferences.transport || student.transport,
+    };
+
+    // Handle educator updates
+    if (updates.educators) {
+      updateObject.educators = {
+        primary: updates.educators.primary || student.educators?.primary,
+        secondary: updates.educators.secondary || student.educators?.secondary,
+      };
+      console.log("Updating educators:", updateObject.educators);
+    }
+
+    console.log("Final update object:", JSON.stringify(updateObject, null, 2));
+
     const updatedStudent = await Student.findOneAndUpdate(
       { StudentId: studentId },
-      { 
-        $set: {
-          firstName: updates?.basicInfo?.firstName || student.firstName,
-          lastName: updates?.basicInfo?.lastName || student.lastName,
-          email: updates?.basicInfo?.studentEmail || student.email,
-          gender: updates?.basicInfo?.gender || student.gender,
-          dateOfBirth: updates?.basicInfo?.dateOfBirth || student.dateOfBirth, 
-          contactNumber: updates?.basicInfo?.contactNumber || student.contactNumber,
-          altContactNumber: updates?.basicInfo?.altContactNumber || student.altContactNumber,
-
-          educators: {
-            primary: updates?.educators?.primary || student.educators.primary,
-            secondary: updates?.educators?.secondary || student.educators.secondary,
-          },
-
-          address: updates?.address || student.address,
-          avatar: updates?.avatar || student.avatar,
-          UDID: updates?.UDID || student.UDID,
-          comments: updates?.comments || student.comments,
-        }
-      },
+      { $set: updateObject },
       {
-        new: true, // Return the updated document
-        runValidators: true, // Validate updates
-        select: "-password -refreshToken", // Exclude sensitive fields
+        new: true,
+        runValidators: true,
+        select: "-password -refreshToken",
       }
-    );
+    ).populate({
+      path: "educators.primary",
+      select: "name designation email program",
+    }).populate({
+      path: "educators.secondary",
+      select: "name designation email program",
+    });
 
     if (!updatedStudent) {
       throw new ApiError(500, "Failed to update student information");
     }
+
+    console.log("Student updated successfully:", {
+      id: updatedStudent._id,
+      name: `${updatedStudent.firstName} ${updatedStudent.lastName}`,
+      educators: updatedStudent.educators
+    });
 
     return res
       .status(200)
@@ -535,6 +602,7 @@ const updateProfile = asyncHandler(async (req, res) => {
         new ApiResponse(200, updatedStudent, "Profile updated successfully")
       );
   } catch (error) {
+    console.error("Error updating student:", error);
     if (error.name === "ValidationError") {
       throw new ApiError(400, error.message);
     }

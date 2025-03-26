@@ -22,7 +22,12 @@ import EmployeeProfile from "../pages/EmployeeProfile"
 import AdminProfile from "../pages/AdminProfile"
 import ViewReport from "../pages/ViewReport"
 import EditStudent from "../components/student/EditStudent";
+
+import StudentDashboard from "../pages/StudentDashboard";
+import AttendanceChart from "../pages/AttendanceCharts";
+
 import LandingPage from "../pages/LandingPage";
+
 // import LandingPage3 from "../pages/LandingPage3";
 // import LandingPages from "../pages/LandingPage2"
 
@@ -36,18 +41,26 @@ function App() {
         <Route path="/employee/register" element={<EmployeeRegister />} />
         <Route path="/employee/login" element={<EmployeeLogin />} />
         <Route path="/login/admin" element={<AdminLogin />} />
-        <Route path="/" element={<LandingPage/>}/> 
+
+        <Route path="/landing" element={<LandingPage2/>}/> 
+        <Route path="/landing3d" element={<LandingPage3/>}/> 
+
+        <Route path="/" element={<LandingPage2/>}/> 
+
         {/* <Route path="/landing3d" element={<LandingPage3/>}/>  */}
         
         {/* Dashboard Routes - With Layout */}
         <Route path="/" element={<Layout />}>
           {/* <Route index element={<Dashboard />} /> */}
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/student/profile" element={<StudentDashboard/>}></Route>
           <Route path="/students" element={<Students />} />
           <Route path="/students/add" element={<AddStudentForm />} />
           <Route path="/students/:studentId" element={<StudentProfileView />} />
           <Route path="/students/:studentId/edit" element={<EditStudent />} />
+          <Route path="/student/progress-report/:studentId" element={<ViewReport/>}></Route>
           <Route path="/reports/:studentId" element={<ViewReport />} />
+          <Route path="/student/my-attendance/:studentId" element={<AttendanceChart/>}></Route>
 
           <Route path="/teachers" element={<Teachers />} />
           <Route path="/teachers/add" element={<AddEducatorForm />} />

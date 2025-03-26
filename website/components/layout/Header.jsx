@@ -24,6 +24,10 @@ const Header = ({ sidebarOpen, setSidebarOpen }) => {
   const [notificationLimit, setNotificationLimit] = useState(3);
    const [isEducator, setIsEducator] = useState(false);
 
+   const studentExists = localStorage.getItem("studentId") ? true : false;
+   console.log("StudentExists : ", studentExists);
+
+
   useEffect(() => {
     const educatorStatus = localStorage.getItem("educatorId") ? true : false;
     // console.log( localStorage.getItem("educatorId"))
@@ -49,7 +53,11 @@ const Header = ({ sidebarOpen, setSidebarOpen }) => {
     if (location.pathname.includes('/employee')) {
       navigate('/employee/profile');
     } else {
-      navigate('/admin/profile');
+      if(studentExists){
+        navigate('/student/profile');
+      }else{
+        navigate('/admin/profile');
+      }
     }
   };
 
@@ -165,7 +173,7 @@ const Header = ({ sidebarOpen, setSidebarOpen }) => {
         </div>
     </div>
   </header>
-) : (
+) : !studentExists ?  (
   <header className="bg-[var(--color-bg-primary)] border-b border-[var(--color-border-primary)] py-4 px-6">
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-4">
@@ -234,7 +242,26 @@ const Header = ({ sidebarOpen, setSidebarOpen }) => {
       </div>
     </div>
   </header>
-  );
+  ) : (
+    <header className="bg-[var(--color-bg-primary)] border-b border-[var(--color-border-primary)] py-4 px-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-[var(--color-text-primary)] text-lg font-bold">
+          Student Dashboard
+        </h1>
+        <div className="gap-10 flex flex-row justify-center items-center ">
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-full hover:bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)]"
+          >
+            {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+          </button>
+          <button onClick={handleLogOut} className="text-[var(--color-danger)]">
+            Logout
+          </button>
+          </div>
+      </div>
+    </header>
+  )
 };
 
 export default Header;

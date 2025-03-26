@@ -156,7 +156,10 @@ const fetchStudentReportById = asyncHandler(async(req, res) => {
             .json(
                 new ApiResponse(
                     200,
-                    null,
+                    {
+                        data : null,
+                        reportGenerated : false
+                    },
                     "No reports found for this student"
                 )
             );
@@ -166,7 +169,10 @@ const fetchStudentReportById = asyncHandler(async(req, res) => {
         .json(
             new ApiResponse(
                 200,
-                userReport,
+                {
+                    userReport,
+                    reportGenerated : true
+                },
                 "Student Report fetched successfully"
             )
         );

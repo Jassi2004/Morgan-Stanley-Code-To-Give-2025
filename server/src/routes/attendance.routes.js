@@ -1,4 +1,4 @@
-import { fetchMonthlyStudentAttendanceReports, uploadAttendanceFromExcel } from "../controllers/attendance.controller.js";
+import { fetchMonthlyStudentAttendanceReports, getAttendanceByStudentId, uploadAttendanceFromExcel } from "../controllers/attendance.controller.js";
 import { upload } from "../middlewares/multer.middleware.js"
 import { Router } from "express";
 
@@ -11,6 +11,9 @@ router.route("/upload-excel")
 
 router.route("/fetch-monthly")
 .post(fetchMonthlyStudentAttendanceReports);
+
+router.route("/get/:studentId")
+.get(getAttendanceByStudentId);
 
 export default router;
 

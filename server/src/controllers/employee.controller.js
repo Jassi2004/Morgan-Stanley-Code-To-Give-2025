@@ -386,7 +386,7 @@ const uploadEmployeesDataFromExcel = asyncHandler(async(req, res) => {
 
         const filePath = req.file.path;
         const workbook = xlsx.readFile(filePath);
-        const sheetName = workbook.SheetNames[4];
+        const sheetName = workbook.SheetNames[0];
         const sheetData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
 
         if(!sheetData.length){

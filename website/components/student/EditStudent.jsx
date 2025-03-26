@@ -3,12 +3,17 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { updateStudent, getStudentProfile } from '../../services/studentServices';
 import { Upload, X, ArrowLeft } from 'lucide-react';
+import axios from 'axios';
 
 const EditStudent = () => {
   const navigate = useNavigate();
   const { studentId } = useParams();
 
   const [loading, setLoading] = useState(false);
+  const [educators, setEducators] = useState({
+    primary: [],
+    secondary: []
+  });
   const [studentData, setStudentData] = useState({
     basicInfo: {
       firstName: '',
@@ -40,11 +45,12 @@ const EditStudent = () => {
     },
     programDetails: {
       program: '',
+      program2: '',
       numberOfSessions: 0,
       sessionType: '',
       daysOfWeek: []
     },
-    educatorInfo: {
+    educators: {
       primary: '',
       secondary: ''
     },
@@ -64,6 +70,19 @@ const EditStudent = () => {
     documents: null
   });
 
+  // Remove the programs useEffect and add hardcoded programs
+  const programs = [
+    { _id: '1', name: 'Multi' },
+    { _id: '2', name: 'Job Readiness' },
+    { _id: '3', name: 'Vocation' },
+    { _id: '4', name: 'Spruha' },
+    { _id: '5', name: 'Suyog' },
+    { _id: '6', name: 'Sameti' },
+    { _id: '7', name: 'Shaale' },
+    { _id: '8', name: 'Siddhi' },
+    { _id: '9', name: 'Sattva' }
+  ];
+
   useEffect(() => {
     const fetchStudentData = async () => {
       try {
@@ -72,7 +91,51 @@ const EditStudent = () => {
         console.log('Fetched student data:', response.data);
         if (response.success) {
           const data = response.data;
-          setStudentData(data);
+          setStudentData({
+            basicInfo: {
+              firstName: data.firstName || '',
+              lastName: data.lastName || '',
+              studentEmail: data.studentEmail || '',
+              gender: data.gender || '',
+              dateOfBirth: data.dateOfBirth || '',
+              contactNumber: data.contactNumber || '',
+              altContactNumber: data.altContactNumber || '',
+              avatar: data.avatar || { secure_url: '', public_id: '' },
+              UDID: data.UDID || { isAvailable: false, secure_url: '', public_id: '' }
+            },
+            guardianDetails: {
+              fathersName: data.fathersName || '',
+              mothersName: data.mothersName || '',
+              parentEmail: data.parentEmail || '',
+              contactNumber: data.contactNumber || ''
+            },
+            enrollmentStatus: {
+              status: data.status || 'Active',
+              approvalStatus: data.approval?.status || 'pending'
+            },
+            programDetails: {
+              program: data.program || '',
+              program2: data.program2 || '',
+              numberOfSessions: data.numberOfSessions || 0,
+              sessionType: data.sessionType || 'Offline',
+              daysOfWeek: data.daysOfWeek || []
+            },
+            educators: {
+              primary: data.educators?.primary?._id || '',
+              secondary: data.educators?.secondary?._id || ''
+            },
+            medicalInfo: {
+              primaryDiagnosis: data.primaryDiagnosis || '',
+              comorbidity: data.comorbidity || false,
+              allergies: data.allergies || []
+            },
+            address: data.address || '',
+            strengths: data.strengths || [],
+            weaknesses: data.weaknesses || [],
+            comments: data.comments || ''
+          });
+          // Fetch educators for both primary and secondary programs
+          await fetchEducators(data.program, data.program2);
         }
       } catch (error) {
         toast.error('Failed to fetch student details');
@@ -85,6 +148,29 @@ const EditStudent = () => {
 
     fetchStudentData();
   }, [studentId, navigate]);
+
+  const fetchEducators = async (primaryProgram, secondaryProgram) => {
+    try {
+      const response = await axios.get('http://localhost:8000/api/v1/employee/fetch-all-employees');
+      if (response.data?.data) {
+        // Filter educators by program and active status
+        const primaryEducators = response.data.data.filter(
+          emp => emp.program === primaryProgram && emp.status === 'Active' && emp.employmentType === 'Educator'
+        );
+        const secondaryEducators = response.data.data.filter(
+          emp => emp.program === secondaryProgram && emp.status === 'Active' && emp.employmentType === 'Educator'
+        );
+        console.log('Fetched educators:', { primaryProgram, secondaryProgram, primaryEducators, secondaryEducators });
+        setEducators({
+          primary: primaryEducators,
+          secondary: secondaryEducators
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching educators:', error);
+      toast.error('Failed to fetch educators list');
+    }
+  };
 
   const handleInputChange = (e, nestedPath = null) => {
     const { name, value, type, checked } = e.target;
@@ -105,8 +191,84 @@ const EditStudent = () => {
         return { ...prev, [name]: checked };
       }
 
+      // Handle program changes
+      if (name === 'program' && nestedPath === 'programDetails.program') {
+        // Clear primary educator when program changes
+        const updatedData = {
+          ...prev,
+          programDetails: {
+            ...prev.programDetails,
+            program: value
+          },
+          educators: {
+            ...prev.educators,
+            primary: '' // Clear primary educator
+          }
+        };
+        // Fetch new educators for the updated program
+        fetchEducators(value, prev.programDetails.program2);
+        return updatedData;
+      }
+
+      if (name === 'program2' && nestedPath === 'programDetails.program2') {
+        // Clear secondary educator when program changes
+        const updatedData = {
+          ...prev,
+          programDetails: {
+            ...prev.programDetails,
+            program2: value
+          },
+          educators: {
+            ...prev.educators,
+            secondary: '' // Clear secondary educator
+          }
+        };
+        // Fetch new educators for the updated program
+        fetchEducators(prev.programDetails.program, value);
+        return updatedData;
+      }
+
+      // Handle educator selection
+      if (name === 'primary' || name === 'secondary') {
+        return {
+          ...prev,
+          educators: {
+            ...prev.educators,
+            [name]: value
+          }
+        };
+      }
+
       return { ...prev, [name]: value };
     });
+  };
+
+  const handleFileChange = (e, field) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFiles(prev => ({
+        ...prev,
+        [field]: file
+      }));
+      
+      // Create a preview URL for images
+      if (field === 'avatar') {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setStudentData(prev => ({
+            ...prev,
+            basicInfo: {
+              ...prev.basicInfo,
+              avatar: {
+                ...prev.basicInfo.avatar,
+                secure_url: reader.result
+              }
+            }
+          }));
+        };
+        reader.readAsDataURL(file);
+      }
+    }
   };
 
   const handleMultiSelectChange = (e, field) => {
@@ -126,7 +288,38 @@ const EditStudent = () => {
     setLoading(true);
 
     try {
-      const response = await updateStudent(studentId, studentData, files);
+      const formDataToSend = new FormData();
+      
+      // Add studentId
+      formDataToSend.append('studentId', studentId);
+
+      // Add all form fields
+      Object.entries(studentData).forEach(([key, value]) => {
+        if (key === 'basicInfo' || key === 'guardianDetails' || key === 'programDetails' || key === 'medicalInfo') {
+          Object.entries(value).forEach(([subKey, subValue]) => {
+            if (subKey !== 'avatar' && subKey !== 'UDID') {
+              formDataToSend.append(`${key}[${subKey}]`, subValue);
+            }
+          });
+        } else if (key === 'educators') {
+          formDataToSend.append('educators[primary]', value.primary);
+          formDataToSend.append('educators[secondary]', value.secondary);
+        } else if (Array.isArray(value)) {
+          formDataToSend.append(key, JSON.stringify(value));
+        } else {
+          formDataToSend.append(key, value);
+        }
+      });
+
+      // Add files if they exist
+      if (files.avatar) {
+        formDataToSend.append('avatar', files.avatar);
+      }
+      if (files.UDID) {
+        formDataToSend.append('UDID', files.UDID);
+      }
+
+      const response = await updateStudent(studentId, formDataToSend);
       
       if (response.success) {
         toast.success('Student details updated successfully');
@@ -280,14 +473,36 @@ const EditStudent = () => {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Program</label>
-              <input
-                type="text"
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Primary Program</label>
+              <select
                 name="program"
                 value={studentData.programDetails.program}
                 onChange={(e) => handleInputChange(e, 'programDetails.program')}
                 className="mt-1 block w-full rounded-md border border-[var(--color-border-primary)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] px-3 py-2"
-              />
+              >
+                <option value="">Select Primary Program</option>
+                {programs.map((program) => (
+                  <option key={program._id} value={program.name}>
+                    {program.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Secondary Program</label>
+              <select
+                name="program2"
+                value={studentData.programDetails.program2}
+                onChange={(e) => handleInputChange(e, 'programDetails.program2')}
+                className="mt-1 block w-full rounded-md border border-[var(--color-border-primary)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] px-3 py-2"
+              >
+                <option value="">Select Secondary Program</option>
+                {programs.map((program) => (
+                  <option key={program._id} value={program.name}>
+                    {program.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Number of Sessions</label>
@@ -343,175 +558,240 @@ const EditStudent = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Primary Educator</label>
-              <input
-                type="text"
+              <select
                 name="primary"
-                value={studentData.educatorInfo.primary}
-                onChange={(e) => handleInputChange(e, 'educatorInfo.primary')}
+                value={studentData.educators.primary || ''}
+                onChange={handleInputChange}
                 className="mt-1 block w-full rounded-md border border-[var(--color-border-primary)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] px-3 py-2"
-              />
+              >
+                <option value="">Select Primary Educator</option>
+                {educators.primary.map((educator) => (
+                  <option key={educator._id} value={educator._id}>
+                    {educator.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Secondary Educator</label>
-              <input
-                type="text"
+              <select
                 name="secondary"
-                value={studentData.educatorInfo.secondary}
-                onChange={(e) => handleInputChange(e, 'educatorInfo.secondary')}
+                value={studentData.educators.secondary || ''}
+                onChange={handleInputChange}
                 className="mt-1 block w-full rounded-md border border-[var(--color-border-primary)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] px-3 py-2"
-              />
+              >
+                <option value="">Select Secondary Educator</option>
+                {educators.secondary.map((educator) => (
+                  <option key={educator._id} value={educator._id}>
+                    {educator.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </section>
 
-          {/* Guardian Details */}
-          <div className="space-y-4">
+        {/* Guardian Details */}
+        <div className="space-y-4">
           <h2 className="text-lg font-semibold mb-4 text-[var(--color-brand)]">
             Guardian Details
           </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Father Name</label>
-                <input
-                  type="text"
-                  name="guardianDetails.name"
-                  value={studentData.guardianDetails.fathersName}
-                  onChange={handleInputChange}
-                  className="mt-1 block w-full rounded-md border border-[var(--color-border-primary)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] px-3 py-2"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Mother Name</label>
-                <input
-                  type="text"
-                  name="guardianDetails.relation"
-                  value={studentData.guardianDetails.mothersName}
-                  onChange={handleInputChange}
-                  className="mt-1 block w-full rounded-md border border-[var(--color-border-primary)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] px-3 py-2"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Parents Email</label>
-                <input
-                  type="email"
-                  name="guardianDetails.parentEmail"
-                  value={studentData.guardianDetails.parentEmail}
-                  onChange={handleInputChange}
-                  className="mt-1 block w-full rounded-md border border-[var(--color-border-primary)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] px-3 py-2"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* File Uploads */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Profile Picture</label>
-              <div className="mt-1 flex items-center space-x-4">
-                {studentData?.basicInfo?.avatar?.secure_url?.toString()?.trim()?.length > 0 && (
-                  <img src={studentData?.basicInfo?.avatar?.secure_url?.toString()?.trim()} alt="Preview" className="w-16 h-16 rounded-full object-cover" />
-                )}
-                <label className="cursor-pointer flex items-center space-x-2 px-4 py-2 border border-[var(--color-border-primary)] rounded-md hover:bg-[var(--color-bg-hover)]">
-                  <Upload size={20} />
-                  <span>Upload</span>
-                  <input
-                    type="file"
-                    onChange={(e) => handleFileChange(e, 'avatar')}
-                    accept="image/*"
-                    className="hidden"
-                  />
-                </label>
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[var(--color-text-secondary)]">UDID Document</label>
-              <div className="mt-1 flex items-center space-x-4">
-                <span className="text-sm">
-                  {studentData?.basicInfo?.UDID?.isAvailable ? 
-                  <img src={studentData?.basicInfo?.UDID?.secure_url?.toString()?.trim()} alt="Preview" className="w-16 h-16 rounded-full object-cover" /> : "No File Uploaded"}
-                </span>
-                <label className="cursor-pointer flex items-center space-x-2 px-4 py-2 border border-[var(--color-border-primary)] rounded-md hover:bg-[var(--color-bg-hover)]">
-                  <Upload size={20} />
-                  <span>Upload</span>
-                  <input
-                    type="file"
-                    onChange={(e) => handleFileChange(e, 'UDID')}
-                    accept=".pdf,.doc,.docx"
-                    className="hidden"
-                  />
-                </label>
-              </div>
-            </div>
-          </div>
-
-          {/* Additional Information */}
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Address</label>
-              <textarea
-                name="address"
-                value={studentData.address}
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Father Name</label>
+              <input
+                type="text"
+                name="guardianDetails.name"
+                value={studentData.guardianDetails.fathersName}
                 onChange={handleInputChange}
-                rows={3}
                 className="mt-1 block w-full rounded-md border border-[var(--color-border-primary)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] px-3 py-2"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Comments</label>
-              <textarea
-                name="comments"
-                value={studentData.comments}
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Mother Name</label>
+              <input
+                type="text"
+                name="guardianDetails.relation"
+                value={studentData.guardianDetails.mothersName}
                 onChange={handleInputChange}
-                rows={3}
+                className="mt-1 block w-full rounded-md border border-[var(--color-border-primary)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] px-3 py-2"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Parents Email</label>
+              <input
+                type="email"
+                name="guardianDetails.parentEmail"
+                value={studentData.guardianDetails.parentEmail}
+                onChange={handleInputChange}
                 className="mt-1 block w-full rounded-md border border-[var(--color-border-primary)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] px-3 py-2"
               />
             </div>
           </div>
+        </div>
 
-          {/* Checkboxes */}
-          <div className="flex space-x-4">
-            <label className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                name="comorbidity"
-                checked={studentData.comorbidity}
-                onChange={handleInputChange}
-                className="rounded border-[var(--color-border-primary)]"
-              />
-              <span className="text-sm text-[var(--color-text-secondary)]">Has Comorbidity</span>
-            </label>
-            <label className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                name="transport"
-                checked={studentData.transport}
-                onChange={handleInputChange}
-                className="rounded border-[var(--color-border-primary)]"
-              />
-              <span className="text-sm text-[var(--color-text-secondary)]">Needs Transport</span>
-            </label>
+        {/* File Uploads */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Profile Picture</label>
+            <div className="mt-1 flex items-center space-x-4">
+              {studentData?.basicInfo?.avatar?.secure_url && (
+                <div className="relative">
+                  <img 
+                    src={studentData.basicInfo.avatar.secure_url} 
+                    alt="Profile Preview" 
+                    className="w-16 h-16 rounded-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStudentData(prev => ({
+                        ...prev,
+                        basicInfo: {
+                          ...prev.basicInfo,
+                          avatar: null
+                        }
+                      }));
+                      setFiles(prev => ({ ...prev, avatar: null }));
+                    }}
+                    className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              )}
+              <label className="cursor-pointer flex items-center space-x-2 px-4 py-2 border border-[var(--color-border-primary)] rounded-md hover:bg-[var(--color-bg-hover)]">
+                <Upload size={20} />
+                <span>Upload</span>
+                <input
+                  type="file"
+                  onChange={(e) => handleFileChange(e, 'avatar')}
+                  accept="image/*"
+                  className="hidden"
+                />
+              </label>
+            </div>
           </div>
 
-          {/* Submit Button */}
-          <div className="flex justify-end space-x-4">
-            <button
-              type="button"
-              onClick={handleCancel}
-              className="px-4 py-2 border border-[var(--color-border-primary)] rounded-md hover:bg-[var(--color-bg-hover)] text-[var(--color-text-primary)]"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className={`px-4 py-2 bg-[var(--color-brand)] text-white rounded-md hover:bg-[var(--color-brand-dark)] ${
-                loading ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
-            >
-              {loading ? 'Saving...' : 'Save Changes'}
-            </button>
+          <div>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)]">UDID Document</label>
+            <div className="mt-1 flex items-center space-x-4">
+              {studentData?.basicInfo?.UDID?.secure_url && (
+                <div className="flex items-center space-x-2">
+                  <a 
+                    href={studentData.basicInfo.UDID.secure_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[var(--color-brand)] hover:underline flex items-center space-x-1"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span>View Current UDID</span>
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStudentData(prev => ({
+                        ...prev,
+                        basicInfo: {
+                          ...prev.basicInfo,
+                          UDID: null
+                        }
+                      }));
+                      setFiles(prev => ({ ...prev, UDID: null }));
+                    }}
+                    className="text-red-500 hover:text-red-600"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              )}
+              <label className="cursor-pointer flex items-center space-x-2 px-4 py-2 border border-[var(--color-border-primary)] rounded-md hover:bg-[var(--color-bg-hover)]">
+                <Upload size={20} />
+                <span>Upload</span>
+                <input
+                  type="file"
+                  onChange={(e) => handleFileChange(e, 'UDID')}
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  className="hidden"
+                />
+              </label>
+            </div>
+            <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+              Accepted formats: PDF, JPG, PNG (max 5MB)
+            </p>
           </div>
-        </form>
+        </div>
+
+        {/* Additional Information */}
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Address</label>
+            <textarea
+              name="address"
+              value={studentData.address}
+              onChange={handleInputChange}
+              rows={3}
+              className="mt-1 block w-full rounded-md border border-[var(--color-border-primary)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] px-3 py-2"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Comments</label>
+            <textarea
+              name="comments"
+              value={studentData.comments}
+              onChange={handleInputChange}
+              rows={3}
+              className="mt-1 block w-full rounded-md border border-[var(--color-border-primary)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] px-3 py-2"
+            />
+          </div>
+        </div>
+
+        {/* Checkboxes */}
+        <div className="flex space-x-4">
+          <label className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              name="comorbidity"
+              checked={studentData.comorbidity}
+              onChange={handleInputChange}
+              className="rounded border-[var(--color-border-primary)]"
+            />
+            <span className="text-sm text-[var(--color-text-secondary)]">Has Comorbidity</span>
+          </label>
+          <label className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              name="transport"
+              checked={studentData.transport}
+              onChange={handleInputChange}
+              className="rounded border-[var(--color-border-primary)]"
+            />
+            <span className="text-sm text-[var(--color-text-secondary)]">Needs Transport</span>
+          </label>
+        </div>
+
+        {/* Submit Button */}
+        <div className="flex justify-end space-x-4">
+          <button
+            type="button"
+            onClick={handleCancel}
+            className="px-4 py-2 border border-[var(--color-border-primary)] rounded-md hover:bg-[var(--color-bg-hover)] text-[var(--color-text-primary)]"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={loading}
+            className={`px-4 py-2 bg-[var(--color-brand)] text-white rounded-md hover:bg-[var(--color-brand-dark)] ${
+              loading ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+          >
+            {loading ? 'Saving...' : 'Save Changes'}
+          </button>
+        </div>
+      </form>
     </div>
   );
 };

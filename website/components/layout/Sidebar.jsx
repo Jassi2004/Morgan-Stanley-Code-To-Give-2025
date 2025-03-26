@@ -8,6 +8,7 @@ import {
   HelpCircle,
   ChevronLeft
 } from "lucide-react";
+import { TbReportAnalytics } from "react-icons/tb";
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
   const { darkMode } = useContext(AppContext);
@@ -15,6 +16,11 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isEducator, setIsEducator] = useState(false);
   const [transitionStage, setTransitionStage] = useState('idle');
+
+  const studentExists = localStorage.getItem("studentId") ? true : false;
+  const studentId = JSON.parse(localStorage.getItem("studentData"))?.student?.StudentId;
+  // console.log("StudentId : ", studentId);
+  
 
   useEffect(() => {
     const educatorStatus = localStorage.getItem("educatorId") ? true : false;
@@ -43,11 +49,16 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         { title: "Dashboard", icon: <LayoutDashboard size={20} />, path: "/employee/dashboard" },
         { title: "Students", icon: <GraduationCap size={20} />, path: "/students" },
       ]
-      : [
+      : !studentExists ? 
+      [
         { title: "Dashboard", icon: <LayoutDashboard size={20} />, path: "/dashboard" },
         { title: "Teachers", icon: <Users size={20} />, path: "/teachers" },
         { title: "Students", icon: <GraduationCap size={20} />, path: "/students" },
         { title: "Meet The Developers", icon: <HelpCircle size={20} />, path: "/aboutTeam" },
+      ] :
+      [
+        { title: "My Profile", icon: <LayoutDashboard size={20} />, path: "/student/profile" },
+        { title: "My Progress Report", icon: <TbReportAnalytics size={20} />, path: "/student/progress-report/:studentId" },
       ];
 
   return (
@@ -84,7 +95,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
               const isActive = location.pathname === item.path || (item.path === "/dashboard" && location.pathname === "/");
               return (
                 <li key={index}>
-                  <Link to={item.path} className={`flex items-center px-3 py-2 rounded-lg text-sm transition-all duration-300 ${isActive ? "bg-[var(--color-brand)] text-white" : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-secondary)]"} ${isOpen ? "justify-start" : "justify-center"}`}>
+                  <Link to={item.path === "/student/progress-report/:studentId" ? `/student/progress-report/${studentId}` : item.path} className={`flex items-center px-3 py-2 rounded-lg text-sm transition-all duration-300 ${isActive ? "bg-[var(--color-brand)] text-white" : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-secondary)]"} ${isOpen ? "justify-start" : "justify-center"}`}>
                     <span>{item.icon}</span>
                     <span className={`ml-3 whitespace-nowrap transition-all duration-500 ${isOpen ? "opacity-100" : "opacity-0 absolute"}`}>{item.title}</span>
                   </Link>
