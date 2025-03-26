@@ -124,9 +124,19 @@ function StudentLogin() {
             >
               Sign in
             </motion.button>
+       <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="button"
+                    onClick={() => navigate("/student/register")}
+                    className="w-full flex justify-center py-4 px-4 mt-4 border border-[var(--color-brand)] rounded-lg shadow-sm text-base font-medium text-[var(--color-brand)] bg-transparent hover:bg-[var(--color-brand-light)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-brand)] transition-colors duration-200"
+                  >
+                    Register as a New Student
+                  </motion.button>
           </form>
         </div>
       </motion.div>
+
     </div>
   );
 }

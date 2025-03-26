@@ -18,7 +18,7 @@ export default function AdminLogin() {
       });
       
       if(response.status === 200){
-        navigate("/");
+        navigate("/dashboard");
       } else {
         window.alert("Wrong credentials");
       }

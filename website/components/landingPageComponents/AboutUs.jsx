@@ -2,7 +2,8 @@ import React from 'react';
 
 const AboutUs = () => {
   return (
-    <div className="w-full bg-[#f3e9dc] mt-[-980px] py-16 px-4 md:px-8 lg:px-16 overflow-hidden">
+
+    <div className="w-full bg-[#f3e9dc] mt-14  py-16 px-4 md:px-8 lg:px-16 overflow-hidden">
       <div className="max-w-6xl mx-auto animate-fade-in">
         <h2 className="text-5xl font-bold text-gray-700 mb-12 text-center animate-fade-down">
           About Us
@@ -42,16 +43,11 @@ const AboutUs = () => {
                 This isn't just our mission – it's a journey we take together. We invite you to walk with us, to be part of the change, and to help us build a brighter, more inclusive tomorrow.
               </p>
               
-              <div className="mt-8 flex justify-center">
-                <button className="bg-[#ffc34f] hover:bg-[#e6ae42] text-gray-800 font-bold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105 shadow-md">
-                  Join Our Journey
-                </button>
-              </div>
             </div>
           </div>
         </div>
         
-        <div className="mt-16 bg-[#236638] text-white p-8 rounded-lg shadow-lg animate-fade-up" style={{animationDelay: "0.5s"}}>
+        <div className="mt-36 bg-[#236638] text-white p-8 rounded-lg shadow-lg animate-fade-up" style={{animationDelay: "0.5s"}}>
           <h3 className="text-2xl font-semibold mb-4">Our Impact Since 2015</h3>
           <p className="mb-6">
             In the past few years, IIF has established itself as a renowned name in the disability sector by providing a wide range of services catering to individuals with different diagnoses and varied age groups.

@@ -1,7 +1,7 @@
 // Team.js
 import React, { useState, useRef } from 'react';
-import PersonBobblehead from '../components/ui/PersonBobblehead';
-import './Team.css';
+import PersonBobblehead from '../ui/PersonBobblehead';
+import './Developer.css';
 
 const Team = () => {
   const [hoveredPerson, setHoveredPerson] = useState(null);
@@ -144,9 +144,9 @@ const Team = () => {
         <div className={`floating-modal ${showModal ? 'floating-modal-visible' : ''}`}>
           {hoveredPerson && (
             <>
-              <h3>{hoveredPerson.name}</h3>
-              <p><strong>Role:</strong> {hoveredPerson.role}</p>
-              <p><strong>Description:</strong> {hoveredPerson.description}</p>
+              <h3 className='text-black'>{hoveredPerson.name}</h3>
+              <p className='text-black'><strong>Role:</strong> {hoveredPerson.role}</p>
+              <p className='text-black'><strong>Description:</strong> {hoveredPerson.description}</p>
             </>
           )}
         </div>
