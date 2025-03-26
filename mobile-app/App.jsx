@@ -16,7 +16,10 @@ import Chatbot from "./src/screens/Chatbot";
 import PrimaryEducator from "./src/screens/PrimaryEducator";
 import SecondaryEducator from "./src/screens/SecondaryEducator";
 import Notifications from "./src/screens/Notifications";
+import Report from "./src/screens/Report";
+import TimelineScreen from "./src/screens/TimelineScreen";
 const Stack = createStackNavigator();
+
 
 export default function App() {
   return (
@@ -35,6 +38,7 @@ export default function App() {
             <Stack.Screen name="SecondaryEducator" component={SecondaryEducator} />
             <Stack.Screen name="Notifications" component={Notifications} />
             <Stack.Screen name="SignUp" component={SignUp} />
+            <Stack.Screen name="Report" component={TimelineScreen} />
           </Stack.Navigator>
         </NavigationContainer>
         </LanguageProvider>

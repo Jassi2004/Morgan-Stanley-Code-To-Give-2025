@@ -9,13 +9,22 @@ import {
     changePassword,
     fetchAllStudents,
     updateProfile,
-    uploadProfilePicture
+    uploadProfilePicture,
+    uploadStudentDataFromExcel
 } from '../controllers/student.controller.js';
 
 const router = Router();
 
 // Public routes (no auth required)
-router.route("/register").post(registerStudent);
+router.route("/register").post(upload.fields([
+  {
+    name: "avatar",
+    maxCount: 1
+  }, {
+    name: "UDIDDocument",
+    maxCount: 1
+  }
+]), registerStudent);
 router.route("/login").post(loginStudent);
 
 // Protected routes (require student authentication)
@@ -31,6 +40,9 @@ router.route("/upload-avatar").post(
     upload.single("avatar"),
     uploadProfilePicture
 );
+
+router.route("/upload-excel")
+.post(upload.single("file"), uploadStudentDataFromExcel);
 
 router.route("/update-profile").put(
     upload.fields([

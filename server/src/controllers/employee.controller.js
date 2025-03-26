@@ -5,7 +5,8 @@ import { Employee } from "../models/employee.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { Student } from "../models/students.model.js";
 import mongoose from "mongoose";
-
+import xlsx from "xlsx";
+import fs from "fs";
 
 
 const cookieOptions = {
@@ -118,10 +119,16 @@ const loginEmployeeAccount = asyncHandler(async (req, res) => {
                             _id: user._id,
                             name: user.name,
                             email: user.email,
+                            gender : user.gender,
+                            phone: user.phone,
+                            DOB: user.DOB,
                             employeeId: user.employeeId,
                             avatar: user.avatar,
                             designation: user.designation,
-                            department: user.department
+                            department: user.department,
+                            status : user.status,
+                            workLocation : user.workLocation,
+                            dateOfJoining : user.dateOfJoining,
                         },
                         accessToken,
                         refreshToken
@@ -286,11 +293,11 @@ const approveStudentAccount = asyncHandler(async(req, res) => {
         if(!student){
             throw new ApiError(404, "No student exists with that id");
         }
-        if(student.isApproved){
+        if(student.approval.status === "Approved"){
             throw new ApiError(400, "Student already approved");
         }
 
-        student.isApproved = true;
+        student.approval.status = "Approved";
         await student.save();
 
         return res.status(200)
@@ -371,6 +378,62 @@ const fetchStudentsAssignedToEducator = asyncHandler(async (req, res) => {
     }
 });
 
+const uploadEmployeesDataFromExcel = asyncHandler(async(req, res) => {
+    try{
+        if(!req.file){
+            throw new ApiError(400, "Please upload an excel file"); 
+        }
+
+        const filePath = req.file.path;
+        const workbook = xlsx.readFile(filePath);
+        const sheetName = workbook.SheetNames[4];
+        const sheetData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+        if(!sheetData.length){
+            throw new ApiError(400, "Excel file is empty or invalid format");
+        }
+
+        const employees = sheetData.map((row) => ({
+            employeeId: row["Employee ID"],
+            name: row["Name"],
+            gender: row["Gender"],
+            email: row["Email"],
+            password: row["Password"],
+            designation: row["Designation"],
+            department: row["Department"],
+            employmentType: row["Employment Type"],
+            program: row["Program"],
+            phone: row["Phone"],
+            DOB: row["Date of Birth"],
+            dateOfJoining: row["Date of Joining"],
+            status: row["Status"],
+            workLocation: row["Work Location"],
+            bloodGroup: row["Blood Group"]
+        }));
+        
+
+        console.log("Employees : ", employees);
+
+        await Employee.insertMany(employees);
+
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath); 
+            console.log(`File ${filePath} successfully deleted..`);
+        }
+        return res.status(201)
+        .json(
+            new ApiResponse(
+                201,
+                employees,
+                "Employees upoaded successfully"
+            )
+        )
+
+    }catch(err){
+        console.error(`Error occurred while uploading employees data from excel : ${err}`);
+        throw new ApiError(400, "Error occurred while uploading employees data from excel");
+    }
+})
 
 
 const deleteEmployeeAccount = asyncHandler(async(req, res) => {
@@ -411,5 +474,6 @@ export {
     approveStudentAccount,
     uploadProfilePicture,
     deleteEmployeeAccount,
-    fetchStudentsAssignedToEducator
+    fetchStudentsAssignedToEducator,
+    uploadEmployeesDataFromExcel
 }

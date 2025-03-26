@@ -1,6 +1,10 @@
 import nodemailer from "nodemailer";
 
 const sendEmail = async function(email, subject, message) {
+    if(!process.env.SMTP_USERNAME || !process.env.SMTP_PASSWORD) {
+        console.warn("Email Service Disabled");
+        return;
+    }
     try {
         // Create transporter
         const transporter = nodemailer.createTransport({

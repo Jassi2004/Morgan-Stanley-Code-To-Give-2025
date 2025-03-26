@@ -23,6 +23,7 @@
     "multer": "^1.4.5-lts.2",
     "node-cron": "^3.0.3",
     "nodemailer": "^6.10.0",
-    "nodemon": "^3.1.9"
+    "nodemon": "^3.1.9",
+    "xlsx": "^0.18.5"
   }
 }

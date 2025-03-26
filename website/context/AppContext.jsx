@@ -3,12 +3,14 @@ import { getAllStudents } from "../services/studentServices";
 import { getAllEmployees } from "../services/employeeServices";
 import { getAllNotifications, publishNotification } from "../services/notificationServices";
 import { getEntityDetails, rejectRegistration } from "../services/adminNotificationServices";
+import { getAllReports } from "../services/reportServices";
 
 export const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
     const [students, setStudents] = useState([]);
     const [employees, setEmployees] = useState([]);
+    const [reports, setReports] = useState([]);
     const [notifications, setNotifications] = useState([]);
     const [entityDetails, setEntityDetails] = useState(null); // New: Store fetched entity details
     const [loading, setLoading] = useState(true);
@@ -54,23 +56,30 @@ export const AppProvider = ({ children }) => {
         setLoading(true);
         setError(null);
         try {
-            const [studentsResponse, employeesResponse, notificationsResponse] = await Promise.all([
+            const [studentsResponse, employeesResponse, notificationsResponse, reportResponse] = await Promise.all([
                 getAllStudents(),
                 getAllEmployees(),
                 getAllNotifications(),
+                getAllReports(),
             ]);
 
-            if (studentsResponse.success) {
-                setStudents(studentsResponse.data);
-            } else {
-                throw new Error(studentsResponse.message);
-            }
+            
 
+            // if (studentsResponse.success) {
+            //     setStudents(studentsResponse.data);
+            // } else {
+            //     throw new Error(studentsResponse.message);
+            // }
+            
+            const studentsData = studentsResponse.data || [];
             const employeesData = employeesResponse.data || [];
             const notificationsData = notificationsResponse.data || [];
+            const reportData = reportResponse.data || [];
 
+            setStudents(studentsData);
             setEmployees(employeesData);
             setNotifications(notificationsData);
+            setReports(reportData);
             updateCounts(studentsResponse.data, employeesData);
         } catch (err) {
             setError(err.message || "Failed to fetch data");
@@ -128,6 +137,7 @@ export const AppProvider = ({ children }) => {
 
     const contextValue = {
         darkMode,
+        reports,
         setDarkMode,
         students,
         employees,

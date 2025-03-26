@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { Users, GraduationCap, Star, FileText, TrendingUp, UserCheck, School, Bell, Trash2 } from 'lucide-react';
+import { Users, GraduationCap, Star, FileText, TrendingUp, UserCheck, School, Bell, Trash2, Calendar, Clock, Target, Award } from 'lucide-react';
 import { toast, ToastContainer } from 'react-toastify';
 import AttendanceChart from '../components/dashboardComponents/AttendanceChart';
 import SessionSchedule from '../components/dashboardComponents/SessionSchedule';
@@ -7,6 +7,7 @@ import AdminNotificationPanel from '../components/dashboardComponents/AdminNotif
 import PerformanceGraph from '../components/dashboardComponents/PerformanceGraph';
 import { useNavigate } from 'react-router-dom';
 import { AppContext } from "../context/AppContext";
+import { motion, AnimatePresence } from 'framer-motion';
 
 function EmployeeDashboard() {
   const navigate = useNavigate();
@@ -31,15 +32,68 @@ function EmployeeDashboard() {
       total: counts.totalStudents,
       icon: GraduationCap,
       color: "bg-blue-500",
+      trend: "+12%",
+      trendColor: "text-green-500",
+      bgImage: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1471&q=80"
     },
     {
       title: "Program Enrolled",
       value: "SPUHA",
       icon: School,
       color: "bg-purple-500",
-      isText: true
+      isText: true,
+      trend: "Current",
+      trendColor: "text-purple-500",
+      bgImage: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
+    },
+    {
+      title: "Average Attendance",
+      value: "92%",
+      icon: UserCheck,
+      color: "bg-green-500",
+      trend: "+5%",
+      trendColor: "text-green-500",
+      bgImage: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
+    },
+    {
+      title: "Performance Score",
+      value: "4.8/5",
+      icon: Target,
+      color: "bg-orange-500",
+      trend: "+0.2",
+      trendColor: "text-green-500",
+      bgImage: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
     }
   ];
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        duration: 0.5,
+        ease: "easeOut"
+      }
+    },
+    hover: {
+      scale: 1.02,
+      transition: {
+        duration: 0.2,
+        ease: "easeInOut"
+      }
+    }
+  };
 
   const handlePublishNotice = async () => {
     if (!noticeText.trim()) {
@@ -70,6 +124,7 @@ function EmployeeDashboard() {
     }
 
     try {
+      const educatorId = localStorage.getItem("educatorId");
       const response = await fetch('http://localhost:8000/api/v1/grades/give-student', {
         method: 'POST',
         headers: {
@@ -77,9 +132,10 @@ function EmployeeDashboard() {
         },
         body: JSON.stringify({
           studentId: assignmentForm.id,
-          assignmentName: assignmentForm.name,
-          rating: assignmentForm.rating,
-          remarks: assignmentForm.remarks
+          educatorId: educatorId,
+          assessmentName: assignmentForm.name,
+          marks: assignmentForm.rating,
+          feedback: assignmentForm.remarks
         }),
         credentials: 'include' // This will send cookies if they exist
       });
@@ -137,157 +193,135 @@ function EmployeeDashboard() {
 
   return (
     <div className="min-h-screen bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] transition-colors duration-300">
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          {stats.map((stat, index) => (
-            <div
-              key={index}
-              className="bg-[var(--color-bg-secondary)] p-6 rounded-lg border border-[var(--color-border-primary)] shadow-sm"
+      {/* Welcome Banner */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="relative h-64 bg-gradient-to-r from-[var(--color-brand)] to-[var(--color-brand-dark)] overflow-hidden rounded-b-3xl"
+      >
+        <div className="absolute inset-0">
+          <img 
+            src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
+            alt="Banner"
+            className="w-full h-full object-cover opacity-20"
+          />
+        </div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-8 lg:px-8 h-full flex items-start">
+          <div className="pt-22">
+            <motion.h1 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+              className="text-4xl font-bold text-white"
             >
-              <div className="flex items-center justify-between">
+              Welcome back, Educator!
+            </motion.h1>
+            <motion.p 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.4, duration: 0.5 }}
+              className="text-white/80 mt-3 text-lg"
+            >
+              Here's what's happening with your students today.
+            </motion.p>
+          </div>
+        </div>
+      </motion.div>
+
+      <motion.main 
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-20"
+      >
+        {/* Stats Grid */}
+        <motion.div 
+          variants={containerVariants}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+        >
+          {stats.map((stat, index) => (
+            <motion.div
+              key={index}
+              variants={itemVariants}
+              whileHover="hover"
+              className="relative bg-[var(--color-bg-secondary)] p-6 rounded-xl border border-[var(--color-border-primary)] shadow-lg overflow-hidden group hover:shadow-xl transition-all duration-300"
+            >
+              {/* Background Image */}
+              <div className="absolute inset-0 opacity-5 group-hover:opacity-10 transition-opacity duration-300">
+                <img 
+                  src={stat.bgImage}
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
+              </div>
+
+              <div className="relative">
+                <div className="flex items-center justify-between mb-4">
+                  <div className={`p-3 rounded-lg ${stat.color} shadow-lg`}>
+                    <stat.icon className="w-6 h-6 text-white" />
+                  </div>
+                  <span className={`text-sm font-medium ${stat.trendColor}`}>
+                    {stat.trend}
+                  </span>
+                </div>
+                
                 <div className="space-y-2">
                   <p className="text-sm text-[var(--color-text-secondary)]">{stat.title}</p>
                   {stat.isText ? (
-                    <p className="text-3xl font-semibold text-[var(--color-text-primary)]">
+                    <p className="text-2xl font-bold text-[var(--color-text-primary)]">
                       {stat.value}
                     </p>
                   ) : (
                     <>
-                      <p className="text-3xl font-semibold text-[var(--color-text-primary)]">
+                      <p className="text-2xl font-bold text-[var(--color-text-primary)]">
                         {stat.value}
                       </p>
-                      <p className="text-sm text-[var(--color-text-secondary)]">
-                        out of {stat.total} total
-                      </p>
-                      <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-                        <div 
-                          className={`h-2.5 rounded-full ${stat.color}`}
-                          style={{ 
-                            width: `${stat.total ? (stat.value / stat.total * 100) : 0}%` 
-                          }}
-                        ></div>
-                      </div>
+                      {stat.total && (
+                        <p className="text-sm text-[var(--color-text-secondary)]">
+                          out of {stat.total} total
+                        </p>
+                      )}
                     </>
                   )}
                 </div>
-                <div className={`p-4 rounded-full ${stat.color}`}>
-                  <stat.icon className="w-8 h-8 text-white" />
-                </div>
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
 
-        {/* Additional Stats */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Attendance Ratio */}
-          <div className="bg-[var(--color-bg-secondary)] p-6 rounded-lg border border-[var(--color-border-primary)]">
-            <h2 className="text-xl font-bold text-[var(--color-text-primary)] mb-6 flex items-center gap-2">
-              <span className="bg-[var(--color-brand)] p-2 rounded-lg">
-                <UserCheck className="w-5 h-5 text-white" />
-              </span>
-              Attendance Statistics
-            </h2>
-            
-            {/* Daily Average */}
-            <div className="mb-6">
-              <div className="flex justify-between items-end mb-2">
-                <div>
-                  <p className="text-sm text-[var(--color-text-secondary)]">Daily Average</p>
-                  <p className="text-3xl font-medium text-[var(--color-text-primary)]">85%</p>
-                </div>
-                <span className="text-sm text-green-500 flex items-center">
-                  <TrendingUp size={16} className="mr-1" />
-                  +2.5% vs last week
-                </span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2.5">
-                <div className="h-2.5 rounded-full bg-green-500" style={{ width: '85%' }}></div>
-              </div>
-              <p className="text-xs text-[var(--color-text-secondary)] mt-2">Based on last 30 days</p>
-            </div>
-
-            {/* Monthly Breakdown */}
-            <div className="space-y-4 mb-6">
-              <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Monthly Breakdown</h3>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="bg-[var(--color-bg-primary)] p-3 rounded-lg">
-                  <p className="text-xs text-[var(--color-text-secondary)]">March</p>
-                  <p className="text-lg font-semibold text-[var(--color-text-primary)]">88%</p>
-                  <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
-                    <div className="h-1.5 rounded-full bg-blue-500" style={{ width: '88%' }}></div>
-                  </div>
-                </div>
-                <div className="bg-[var(--color-bg-primary)] p-3 rounded-lg">
-                  <p className="text-xs text-[var(--color-text-secondary)]">February</p>
-                  <p className="text-lg font-semibold text-[var(--color-text-primary)]">82%</p>
-                  <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
-                    <div className="h-1.5 rounded-full bg-blue-500" style={{ width: '82%' }}></div>
-                  </div>
-                </div>
-                <div className="bg-[var(--color-bg-primary)] p-3 rounded-lg">
-                  <p className="text-xs text-[var(--color-text-secondary)]">January</p>
-                  <p className="text-lg font-semibold text-[var(--color-text-primary)]">85%</p>
-                  <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
-                    <div className="h-1.5 rounded-full bg-blue-500" style={{ width: '85%' }}></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Quarterly Stats */}
-            <div>
-              <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">Quarterly Overview</h3>
-              <div className="space-y-3">
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-sm text-[var(--color-text-secondary)]">Q1 2024</span>
-                    <span className="text-sm font-medium text-[var(--color-text-primary)]">85%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="h-2 rounded-full bg-purple-500" style={{ width: '85%' }}></div>
-                  </div>
-                </div>
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-sm text-[var(--color-text-secondary)]">Q4 2023</span>
-                    <span className="text-sm font-medium text-[var(--color-text-primary)]">79%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="h-2 rounded-full bg-purple-500" style={{ width: '79%' }}></div>
-                  </div>
-                </div>
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-sm text-[var(--color-text-secondary)]">Q3 2023</span>
-                    <span className="text-sm font-medium text-[var(--color-text-primary)]">81%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="h-2 rounded-full bg-purple-500" style={{ width: '81%' }}></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
+        {/* Main Content Grid */}
+        <motion.div 
+          variants={containerVariants}
+          className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8"
+        >
           {/* Assign Marks Section */}
-          <div className="bg-[var(--color-bg-secondary)] p-6 rounded-xl border border-[var(--color-border-primary)] shadow-lg">
-            <h2 className="text-xl font-bold text-[var(--color-text-primary)] mb-6 flex items-center gap-2">
+          <motion.div 
+            variants={itemVariants}
+            className="bg-[var(--color-bg-secondary)] p-6 rounded-xl border border-[var(--color-border-primary)] shadow-lg"
+          >
+            <motion.h2 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.6 }}
+              className="text-xl font-bold text-[var(--color-text-primary)] mb-6 flex items-center gap-2"
+            >
               <span className="bg-[var(--color-brand)] p-2 rounded-lg">
                 <FileText className="w-5 h-5 text-white" />
               </span>
               Assign Marks
-            </h2>
-            <div className="space-y-4">
+            </motion.h2>
+            <motion.div 
+              variants={containerVariants}
+              className="space-y-4"
+            >
               <div>
                 <label className="text-sm text-[var(--color-text-secondary)]">Student ID</label>
                 <input
                   type="text"
                   value={assignmentForm.id}
                   onChange={(e) => setAssignmentForm({ ...assignmentForm, id: e.target.value })}
-                  className="w-full p-2 mt-1 rounded-lg bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)]"
+                  className="w-full p-3 mt-1 rounded-lg bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] focus:outline-none focus:border-[var(--color-brand)] transition-colors duration-200"
                   placeholder="Enter Student ID"
                 />
               </div>
@@ -297,7 +331,7 @@ function EmployeeDashboard() {
                   type="text"
                   value={assignmentForm.name}
                   onChange={(e) => setAssignmentForm({ ...assignmentForm, name: e.target.value })}
-                  className="w-full p-2 mt-1 rounded-lg bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)]"
+                  className="w-full p-3 mt-1 rounded-lg bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] focus:outline-none focus:border-[var(--color-brand)] transition-colors duration-200"
                   placeholder="Enter Assignment Name"
                 />
               </div>
@@ -310,32 +344,64 @@ function EmployeeDashboard() {
                 <textarea
                   value={assignmentForm.remarks}
                   onChange={(e) => setAssignmentForm({ ...assignmentForm, remarks: e.target.value })}
-                  className="w-full p-2 mt-1 rounded-lg bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)]"
+                  className="w-full p-3 mt-1 rounded-lg bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] focus:outline-none focus:border-[var(--color-brand)] transition-colors duration-200"
                   rows="3"
                   placeholder="Enter your remarks"
                 />
               </div>
-              <button
-                onClick={handleAssignmentSubmit}
-                className="w-full py-2 bg-[var(--color-brand)] text-white rounded-lg hover:bg-[var(--color-brand-dark)] transition-colors"
-              >
-                Publish Marks
-              </button>
-            </div>
-          </div>
-        </div>
+            </motion.div>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleAssignmentSubmit}
+              className="w-full py-3 mt-6 bg-[var(--color-brand)] text-white rounded-lg hover:bg-[var(--color-brand-dark)] transition-all duration-200"
+            >
+              Publish Marks
+            </motion.button>
+          </motion.div>
+
+          {/* Attendance Chart */}
+          <motion.div 
+            variants={itemVariants}
+            className="bg-[var(--color-bg-secondary)] p-6 rounded-xl border border-[var(--color-border-primary)] shadow-lg"
+          >
+            <motion.h2 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.6 }}
+              className="text-xl font-bold text-[var(--color-text-primary)] mb-6 flex items-center gap-2"
+            >
+              <span className="bg-[var(--color-brand)] p-2 rounded-lg">
+                <Calendar className="w-5 h-5 text-white" />
+              </span>
+              Attendance Analytics
+            </motion.h2>
+            <AttendanceChart />
+          </motion.div>
+        </motion.div>
 
         {/* Notice Board and Today's Sessions */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <motion.div 
+          variants={containerVariants}
+          className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8"
+        >
           {/* Notice Board */}
-          <div className="bg-[var(--color-bg-secondary)] p-6 rounded-xl border border-[var(--color-border-primary)] shadow-lg">
+          <motion.div 
+            variants={itemVariants}
+            className="bg-[var(--color-bg-secondary)] p-6 rounded-xl border border-[var(--color-border-primary)] shadow-lg"
+          >
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-[var(--color-text-primary)] flex items-center gap-2">
+              <motion.h2 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.6 }}
+                className="text-xl font-bold text-[var(--color-text-primary)] flex items-center gap-2"
+              >
                 <span className="bg-[var(--color-brand)] p-2 rounded-lg">
                   <Bell className="w-5 h-5 text-white" />
                 </span>
                 Publish Notice
-              </h2>
+              </motion.h2>
             </div>
             <div className="space-y-6">
               <div className="relative">
@@ -343,32 +409,44 @@ function EmployeeDashboard() {
                   rows={4}
                   value={noticeText}
                   onChange={(e) => setNoticeText(e.target.value)}
-                  className="w-full p-4 rounded-xl bg-[var(--color-bg-primary)] border-2 border-[var(--color-border-primary)] focus:outline-none focus:border-[var(--color-brand)]"
+                  className="w-full p-4 rounded-xl bg-[var(--color-bg-primary)] border-2 border-[var(--color-border-primary)] focus:outline-none focus:border-[var(--color-brand)] transition-colors duration-200"
                   placeholder="Type your important message here..."
                 />
               </div>
-              <button
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={handlePublishNotice}
                 disabled={publishLoading || !noticeText.trim()}
-                className={`w-full py-3 bg-[var(--color-brand)] text-white rounded-lg hover:bg-[var(--color-brand-dark)] transition-colors ${
+                className={`w-full py-3 bg-[var(--color-brand)] text-white rounded-lg hover:bg-[var(--color-brand-dark)] transition-all duration-200 ${
                   (publishLoading || !noticeText.trim()) ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
               >
                 {publishLoading ? 'Publishing...' : 'Publish Notice'}
-              </button>
+              </motion.button>
             </div>
-          </div>
+          </motion.div>
 
           {/* Today's Sessions */}
-          <SessionSchedule />
-        </div>
-
-        {/* Performance and Attendance Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <PerformanceGraph />
-          <AttendanceChart />
-        </div>
-      </main>
+          <motion.div 
+            variants={itemVariants}
+            className="bg-[var(--color-bg-secondary)] p-6 rounded-xl border border-[var(--color-border-primary)] shadow-lg"
+          >
+            <motion.h2 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.6 }}
+              className="text-xl font-bold text-[var(--color-text-primary)] mb-6 flex items-center gap-2"
+            >
+              <span className="bg-[var(--color-brand)] p-2 rounded-lg">
+                <Clock className="w-5 h-5 text-white" />
+              </span>
+              Today's Schedule
+            </motion.h2>
+            <SessionSchedule />
+          </motion.div>
+        </motion.div>
+      </motion.main>
       <ToastContainer position="top-right" autoClose={3000} theme="colored" />
     </div>
   );

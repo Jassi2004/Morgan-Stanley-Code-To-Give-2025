@@ -1,7 +1,6 @@
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
 import dotenv from "dotenv";
-import { response } from "express";
 dotenv.config({ path : "./.env" });
 
 
@@ -12,12 +11,11 @@ cloudinary.config({
 });
 
 const uploadOnCloudinary = async (localFilePath) => {
+    if (!localFilePath) {
+        throw new Error("No file path provided");
+    }
+
     try {
-        if (!localFilePath) {
-            throw new Error("No file path provided");
-        }
-
-
         const cloudinaryResponse = await cloudinary.uploader.upload(localFilePath, {
             resource_type: "auto",
             folder : "code-to-give"
@@ -25,21 +23,18 @@ const uploadOnCloudinary = async (localFilePath) => {
             console.log("Cloudinary error : ", err);
         })
 
-
-        if (fs.existsSync(localFilePath)) {
-            fs.unlinkSync(localFilePath); 
-            console.log(`File ${localFilePath} successfully deleted..`);
-        }
-
         return cloudinaryResponse; 
     } catch (err) {
         console.error(`Some error occurred at Cloudinary: ${err}`);
-
-        if (localFilePath && fs.existsSync(localFilePath)) {
-            fs.unlinkSync(localFilePath);
-            console.log(`File ${localFilePath} successfully deleted..`);
-        }
         throw new Error("Failed to upload file to Cloudinary");
+    } finally {
+        // if (fs.existsSync(localFilePath)) {
+            fs.unlinkSync(localFilePath, (err) => {
+                if (err) {
+                    console.error("Error deleting file: ", err);
+                }
+            });
+        // }
     }
 };
 
@@ -58,13 +53,7 @@ const deleteFromCloudinary = async(pathId) => {
     }
 }
 
-
-
-
 export { 
     uploadOnCloudinary,
     deleteFromCloudinary
 }
-
-
-

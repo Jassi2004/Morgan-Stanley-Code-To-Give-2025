@@ -1,13 +1,16 @@
-
-import multer from 'multer'
+import multer from 'multer';
+import path from 'path';
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, "./public/");
+        cb(null, './public/');
     },
-    filename: function (req, file, cb){
-        cb(null, file.originalname + "-" + Date.now())
+    filename: function (req, file, cb) {
+        cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
     }
-})
+});
 
-export const upload = multer({ storage })
+export const upload = multer({ 
+    storage, 
+    limits: { fileSize: 50 * 1024 * 1024 } // Optional: Set max file size (50MB here)
+});

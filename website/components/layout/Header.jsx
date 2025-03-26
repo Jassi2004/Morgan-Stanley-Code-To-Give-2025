@@ -1,5 +1,6 @@
 import { useContext, useState, useEffect, useRef } from "react";
 import { AppContext } from "../../context/AppContext";
+import { useNavigate, useLocation } from "react-router-dom";
 import { 
   Bell,
   Search,
@@ -14,6 +15,8 @@ import {
 } from "lucide-react";
 
 const Header = ({ sidebarOpen, setSidebarOpen }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { darkMode, setDarkMode } = useContext(AppContext);
   const [searchQuery, setSearchQuery] = useState("");
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -29,6 +32,15 @@ const Header = ({ sidebarOpen, setSidebarOpen }) => {
 
   const toggleTheme = () => {
     setDarkMode(!darkMode);
+  };
+
+  const handleProfileClick = () => {
+    setProfileOpen(false);
+    if (location.pathname.includes('/employee')) {
+      navigate('/employee/profile');
+    } else {
+      navigate('/admin/profile');
+    }
   };
 
   const { notifications } = useContext(AppContext);
@@ -85,7 +97,7 @@ const Header = ({ sidebarOpen, setSidebarOpen }) => {
             {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
 
-          <div className="relative hidden md:block">
+          {/* <div className="relative hidden md:block">
             <input
               type="text"
               placeholder="Search students, teachers..."
@@ -94,7 +106,7 @@ const Header = ({ sidebarOpen, setSidebarOpen }) => {
               className="w-64 py-2 pl-10 pr-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border-primary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]"
             />
             <Search className="absolute left-3 top-2.5 text-[var(--color-text-accent)]" size={18} />
-          </div>
+          </div> */}
         </div>
 
         <div className="flex items-center gap-4">
@@ -164,7 +176,10 @@ const Header = ({ sidebarOpen, setSidebarOpen }) => {
                   <p className="text-sm text-[var(--color-text-accent)]">admin@spectrumsupport.org</p>
                 </div>
                 <div className="py-2">
-                  <button className="flex items-center gap-2 w-full px-4 py-2 text-left text-[var(--color-text-primary)] hover:bg-[var(--color-bg-secondary)]">
+                  <button 
+                    onClick={handleProfileClick}
+                    className="flex items-center gap-2 w-full px-4 py-2 text-left text-[var(--color-text-primary)] hover:bg-[var(--color-bg-secondary)]"
+                  >
                     <User size={16} />
                     <span>Profile</span>
                   </button>
