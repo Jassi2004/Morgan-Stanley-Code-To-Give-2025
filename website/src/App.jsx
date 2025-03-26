@@ -16,14 +16,15 @@ import StudentProfile from "../components/student/StudentProfile";
 import AdminLogin from "../pages/AdminLogin";
 import EmployeeRegister from "../pages/EmplooyeeRegister";
 import EmployeeLogin from "../pages/EmployeeLogin";
-import LandingPage2 from "../pages/LandingPage";
+import LandingPage2 from "../pages/LandingPage2";
 import LandingPage3 from "../pages/LandingPage3";
 import EmployeeProfile from "../pages/EmployeeProfile"
 import AdminProfile from "../pages/AdminProfile"
 import ViewReport from "../pages/ViewReport"
 import EditStudent from "../components/student/EditStudent";
+import LandingPage from "../pages/LandingPage";
 // import LandingPage3 from "../pages/LandingPage3";
-import LandingPages from "../pages/LandingPages"
+// import LandingPages from "../pages/LandingPage2"
 
 function App() {
   return (
@@ -35,13 +36,8 @@ function App() {
         <Route path="/employee/register" element={<EmployeeRegister />} />
         <Route path="/employee/login" element={<EmployeeLogin />} />
         <Route path="/login/admin" element={<AdminLogin />} />
-<<<<<<< HEAD
-        <Route path="/landing" element={<LandingPage2/>}/> 
-        <Route path="/landing3d" element={<LandingPage3/>}/> 
-=======
-        <Route path="/" element={<LandingPage2/>}/> 
+        <Route path="/" element={<LandingPage/>}/> 
         {/* <Route path="/landing3d" element={<LandingPage3/>}/>  */}
->>>>>>> 5c542d18011978061745525f1df056daf0eea1f1
         
         {/* Dashboard Routes - With Layout */}
         <Route path="/" element={<Layout />}>
@@ -59,7 +55,7 @@ function App() {
           <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
           <Route path="/employee/profile" element={<EmployeeProfile />} />
           <Route path="/admin/profile" element={<AdminProfile />} />
-          <Route path="/landingPages" element={<LandingPages />} />
+          {/* <Route path="/landingPages" element={<LandingPages />} /> */}
         </Route>
       </Routes>
     </Router>

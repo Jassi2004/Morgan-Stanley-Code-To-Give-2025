@@ -273,7 +273,7 @@ function DashBoard() {
               {/* Buttons */}
 
               <div className="mt-4 flex flex-col justify-center gap-x-2">
-              <span className="text-center text-lg font-semibold mt-[-10px]">Upload</span>
+              {/* <span className="text-center text-lg font-semibold mt-[-10px]">Upload</span>
 
                 <div className="flex items-center">
                   <div className="flex flex-col items-center">
@@ -303,7 +303,7 @@ function DashBoard() {
                       <span className="mt-2 text-center">Employee Data</span>
                     </div>
                   </div>
-                </div>
+                </div> */}
               </div>
 
 
