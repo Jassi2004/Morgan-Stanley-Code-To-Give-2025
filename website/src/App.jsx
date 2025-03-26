@@ -21,6 +21,7 @@ import EmployeeProfile from "../pages/EmployeeProfile"
 import AdminProfile from "../pages/AdminProfile"
 import ViewReport from "../pages/ViewReport"
 import EditStudent from "../components/student/EditStudent";
+import LandingPage3 from "../pages/LandingPage3";
 
 function App() {
   return (
@@ -32,11 +33,12 @@ function App() {
         <Route path="/employee/register" element={<EmployeeRegister />} />
         <Route path="/employee/login" element={<EmployeeLogin />} />
         <Route path="/login/admin" element={<AdminLogin />} />
-        <Route path="/landing" element={<LandingPage2/>}/> 
+        <Route path="/" element={<LandingPage2/>}/> 
+        <Route path="/landing3d" element={<LandingPage3/>}/> 
         
         {/* Dashboard Routes - With Layout */}
         <Route path="/" element={<Layout />}>
-          <Route index element={<Dashboard />} />
+          {/* <Route index element={<Dashboard />} /> */}
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/students" element={<Students />} />
           <Route path="/students/add" element={<AddStudentForm />} />
