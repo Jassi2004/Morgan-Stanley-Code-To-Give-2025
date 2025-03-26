@@ -28,6 +28,7 @@ const StudentProfile = () => {
     parentEmail: '',
     contactNumber: '',
     program: '',
+    program2: '',
     numberOfSessions: 0,
     sessionType: 'Offline',
     daysOfWeek: ['All'],
@@ -37,7 +38,11 @@ const StudentProfile = () => {
     weaknesses: [],
     comments: '',
     avatar: null,
-    UDID: null
+    UDID: null,
+    educators: {
+      primary: '',
+      secondary: ''
+    }
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
@@ -52,29 +57,34 @@ const StudentProfile = () => {
           setStudent(response.data);
           
           setFormData({
-            firstName: studentData.firstName || '',
-            lastName: studentData.lastName || '',
-            studentEmail: studentData.studentEmail || '',
-            gender: studentData.gender || '',
-            dateOfBirth: studentData.dateOfBirth ? new Date(studentData.dateOfBirth).toISOString().split('T')[0] : '',
-            primaryDiagnosis: studentData.primaryDiagnosis || '',
-            comorbidity: Boolean(studentData.comorbidity),
-            address: studentData.address || '',
-            fathersName: studentData.fathersName || '',
-            mothersName: studentData.mothersName || '',
-            parentEmail: studentData.parentEmail || '',
-            contactNumber: studentData.contactNumber || '',
-            program: studentData.program || '',
-            numberOfSessions: Number(studentData.numberOfSessions) || 0,
-            sessionType: studentData.sessionType || 'Offline',
-            daysOfWeek: Array.isArray(studentData.daysOfWeek) ? studentData.daysOfWeek : ['All'],
-            status: studentData.status || 'Active',
-            allergies: Array.isArray(studentData.allergies) ? studentData.allergies : [],
-            strengths: Array.isArray(studentData.strengths) ? studentData.strengths : [],
-            weaknesses: Array.isArray(studentData.weaknesses) ? studentData.weaknesses : [],
-            comments: studentData.comments || '',
+            firstName: response.data.firstName || '',
+            lastName: response.data.lastName || '',
+            studentEmail: response.data.studentEmail || '',
+            gender: response.data.gender || '',
+            dateOfBirth: response.data.dateOfBirth ? new Date(response.data.dateOfBirth).toISOString().split('T')[0] : '',
+            primaryDiagnosis: response.data.primaryDiagnosis || '',
+            comorbidity: Boolean(response.data.comorbidity),
+            address: response.data.address || '',
+            fathersName: response.data.fathersName || '',
+            mothersName: response.data.mothersName || '',
+            parentEmail: response.data.parentEmail || '',
+            contactNumber: response.data.contactNumber || '',
+            program: response.data.program || '',
+            program2: response.data.program2 || '',
+            numberOfSessions: Number(response.data.numberOfSessions) || 0,
+            sessionType: response.data.sessionType || 'Offline',
+            daysOfWeek: Array.isArray(response.data.daysOfWeek) ? response.data.daysOfWeek : ['All'],
+            status: response.data.status || 'Active',
+            allergies: Array.isArray(response.data.allergies) ? response.data.allergies : [],
+            strengths: Array.isArray(response.data.strengths) ? response.data.strengths : [],
+            weaknesses: Array.isArray(response.data.weaknesses) ? response.data.weaknesses : [],
+            comments: response.data.comments || '',
             avatar: null,
-            UDID: null
+            UDID: null,
+            educators: {
+              primary: response.data.educators?.primary?._id || '',
+              secondary: response.data.educators?.secondary?._id || ''
+            }
           });
         } else {
           throw new Error(response.message || 'Failed to fetch student data');
@@ -92,16 +102,24 @@ const StudentProfile = () => {
     }
   }, [studentId]);
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e, nestedPath = null) => {
     const { name, value, type, checked } = e.target;
     
-    if (type === 'checkbox') {
+    if (nestedPath) {
+      const [parent, child] = nestedPath.split('.');
+      setFormData(prev => ({
+        ...prev,
+        [parent]: {
+          ...prev[parent],
+          [child]: value
+        }
+      }));
+    } else if (type === 'checkbox') {
       setFormData(prev => ({
         ...prev,
         [name]: checked
       }));
     } else if (name === 'contactNumber') {
-      // Ensure contactNumber is treated as a number
       const numberValue = value === '' ? '' : Number(value);
       setFormData(prev => ({
         ...prev,
@@ -152,13 +170,20 @@ const StudentProfile = () => {
       setIsSubmitting(true);
       setSubmitError(null);
 
-      // Create FormData object for file uploads
       const formDataToSend = new FormData();
 
       // Append all text fields
       Object.keys(formData).forEach(key => {
         if (key !== 'avatar' && key !== 'UDID') {
-          if (Array.isArray(formData[key])) {
+          if (key === 'educators') {
+            // Handle educator data separately
+            if (formData.educators.primary) {
+              formDataToSend.append('educators[primary]', formData.educators.primary);
+            }
+            if (formData.educators.secondary) {
+              formDataToSend.append('educators[secondary]', formData.educators.secondary);
+            }
+          } else if (Array.isArray(formData[key])) {
             formDataToSend.append(key, JSON.stringify(formData[key]));
           } else {
             formDataToSend.append(key, formData[key]);
@@ -173,6 +198,9 @@ const StudentProfile = () => {
       if (formData.UDID) {
         formDataToSend.append('UDID', formData.UDID);
       }
+
+      // Add studentId to the form data
+      formDataToSend.append('studentId', studentId);
 
       const response = await updateStudent(studentId, formDataToSend);
 
