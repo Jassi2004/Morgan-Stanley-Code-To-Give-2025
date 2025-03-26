@@ -44,7 +44,7 @@ const generateStudentQuarterlyReport = asyncHandler(async (req, res) => {
         await newReport.save();
 
 
-        const report = await studentReport.findById(newReport._id).populate("studentDetails", "StudentId firstName lastName program primaryDiagnosis guardianDetails.name guardianDetails.relation guardianDetails.contactNumber guardianDetails.parentEmail")
+        const report = await studentReport.findById(newReport._id).populate("studentDetails", "StudentId", "firstName", "lastName", "contactNumber", "altContactNumber", "program", "primaryDiagnosis", "motherName", "fatherName", "parentEmail")
         .populate({
             path : "assessmentReport",
             select : "program marks feedback date assessmentName"
@@ -178,19 +178,22 @@ const fetchStudentReportById = asyncHandler(async(req, res) => {
 });
 
 const fetchAllStudentReports = asyncHandler(async(req, res) => {
-    // console.log("Fetching all student reports");
     try{
-        const allReports = await studentReport.find({}).populate("studentDetails", "StudentId firstName lastName program primaryDiagnosis guardianDetails.name guardianDetails.relation guardianDetails.contactNumber guardianDetails.parentEmail")
-        .populate({
-            path : "assessmentReport",
-            select : "program marks feedback date assessmentName"
-        })
-        .populate({
-            path : "monthlyReports",
-            select : "monthlyScore remarks timeFrame"
-        });
-        // console.log(allReports);
-        if(allReports.length == 0){
+        const allReports = await studentReport.find()
+            .populate({
+                path: "studentDetails",
+                select: "StudentId firstName lastName contactNumber altContactNumber program primaryDiagnosis motherName fatherName parentEmail"
+            })
+            .populate({
+                path: "assessmentReport",
+                select: "program marks feedback date assessmentName"
+            })
+            .populate({
+                path: "monthlyReports",
+                select: "monthlyScore remarks timeFrame"
+            });
+
+        if(allReports.length === 0){
             return res.status(200)
             .json(
                 new ApiResponse(
@@ -200,6 +203,7 @@ const fetchAllStudentReports = asyncHandler(async(req, res) => {
                 )
             )
         };
+
         return res.status(200)
         .json(
             new ApiResponse(

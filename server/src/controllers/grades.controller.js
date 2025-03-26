@@ -9,8 +9,8 @@ import { Student } from "../models/students.model.js";
 const giveGradesToStudent = asyncHandler(async (req, res) => {
     try {
         const { studentId, educatorId, marks, feedback, assessmentName } = req.body;
-        console.log("Manual Student ID:", studentId);
-        console.log("Educator ID:", educatorId);
+        // console.log("Manual Student ID:", studentId);
+        // console.log("Educator ID:", educatorId);
 
         if (!isValidObjectId(educatorId)) {
             throw new ApiError(400, "Educator ID is not valid");

@@ -90,9 +90,17 @@ export const approveRegistration = asyncHandler(async (req, res) => {
         }
 
         if (notification.studentId) {
-            await Student.findByIdAndUpdate(notification.studentId, { isApproved: true }, { new: true });
+            await Student.findByIdAndUpdate(notification.studentId, { 
+                approval: {
+                    status: 'Approved',
+                }
+            }, { new: true });
         } else if (notification.employeId) {
-            await Employee.findByIdAndUpdate(notification.employeId, { isApproved: true }, { new: true });
+            await Employee.findByIdAndUpdate(notification.employeId, { 
+                approval: {
+                    status: 'Approved',
+                }
+            }, { new: true });
         } else {
             throw new ApiError(400, "Notification does not contain a valid student or employee reference.");
         }
@@ -108,7 +116,6 @@ export const approveRegistration = asyncHandler(async (req, res) => {
     }
 });
 
-// Reject registration
 export const rejectRegistration = asyncHandler(async (req, res) => {
     const { notificationId } = req.params;
     const { reason } = req.body;
@@ -122,7 +129,6 @@ export const rejectRegistration = asyncHandler(async (req, res) => {
             throw new ApiError(400, "Rejection reason is required");
         }
 
-        // Fetch notification with populated student/employee data
         const notification = await AdminNotification.findById(notificationId)
             .populate('studentId')
             .populate('employeId');
@@ -147,11 +153,11 @@ export const rejectRegistration = asyncHandler(async (req, res) => {
             
             // Update student status
             await Student.findByIdAndUpdate(
-                notification.studentId._id,
-                { 
-                    isApproved: false,
-                    status: 'Rejected',
-                    rejectionReason: reason
+                notification.studentId._id, { 
+                    approval: {
+                        status: 'Rejected',
+                        reason: reason,
+                    },
                 }
             );
         } else if (notification.employeId) {
@@ -163,9 +169,10 @@ export const rejectRegistration = asyncHandler(async (req, res) => {
             await Employee.findByIdAndUpdate(
                 notification.employeId._id,
                 { 
-                    isApproved: false,
-                    status: 'Rejected',
-                    rejectionReason: reason
+                    approval: {
+                        status: 'Rejected',
+                        reason: reason
+                    }
                 }
             );
         }

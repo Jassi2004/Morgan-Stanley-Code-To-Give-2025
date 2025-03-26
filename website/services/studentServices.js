@@ -100,6 +100,7 @@ const updateStudent = async (studentId, updateData, files = null) => {
         }
       });
 
+      config.headers = config.headers || {};
       config.headers['Content-Type'] = 'multipart/form-data';
     }
 
@@ -142,7 +143,7 @@ const getStudentProfile = async (studentId) => {
       // Student viewing their own profile
       response = await axios.get(`${BASE_URL}/profile`);
     }
-    
+
     return {
       success: true,
       message: 'Profile fetched successfully',
