@@ -1,10 +1,11 @@
 import { useContext, useState, useEffect } from "react";
-import { Search, Plus, Eye, Edit, Trash2, Calendar, FileText, ClipboardList } from "lucide-react";
+import { Search, Plus, Eye, Edit, Trash2, Calendar, FileText, ClipboardList, Folder } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
 import EditStudent from "../components/student/EditStudent";
 import GenerateReport from "./GenerateReport";
 import { toast } from 'react-toastify';
+import UploadAttendanceData from "../components/dashboardComponents/UploadAttendanceData";
 
 const ActionButton = ({ icon: Icon, label, onClick, colorClass = "text-[var(--color-brand)]" }) => (
   <div className="relative group">
@@ -32,6 +33,7 @@ const Students = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isGenerateReportModalOpen, setIsGenerateReportModalOpen] = useState(false);
   const [isViewReportsModalOpen, setIsViewReportsModalOpen] = useState(false);
+  const [AttendanceUploadModal, setAttendanceUploadModal ]  = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const studentsPerPage = 10;
 
@@ -125,6 +127,10 @@ const Students = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">Students</h1>
         <div className="flex flex-col md:flex-row gap-4">
+          <button onClick={() => setAttendanceUploadModal(true)} className="flex justify-center items-center gap-2 cursor-pointer">
+            <Folder/> 
+            <span>Upload Attendance</span>
+          </button>
           <div className="relative">
             <input
               type="text"
@@ -353,6 +359,11 @@ const Students = () => {
         // Implement view reports functionality
         <div>View Reports Modal</div>
       )}
+      {
+        AttendanceUploadModal && (
+          <UploadAttendanceData onClose={() => setAttendanceUploadModal(false)} />
+        )
+      }
     </div>
   );
 };
