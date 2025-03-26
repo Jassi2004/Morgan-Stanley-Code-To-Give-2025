@@ -210,10 +210,16 @@ const Header = ({ sidebarOpen, setSidebarOpen }) => {
         <h1 className="text-[var(--color-text-primary)] text-lg font-bold">
           Student Dashboard
         </h1>
-        <div className="gap-10">
-        <button onClick={handleLogOut} className="text-[var(--color-danger)]">
-          Logout
-        </button>
+        <div className="gap-10 flex flex-row justify-center items-center ">
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-full hover:bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)]"
+          >
+            {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+          </button>
+          <button onClick={handleLogOut} className="text-[var(--color-danger)]">
+            Logout
+          </button>
           </div>
       </div>
     </header>

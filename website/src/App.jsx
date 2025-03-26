@@ -22,6 +22,7 @@ import AdminProfile from "../pages/AdminProfile"
 import ViewReport from "../pages/ViewReport"
 import EditStudent from "../components/student/EditStudent";
 import StudentDashboard from "../pages/StudentDashboard";
+import AttendanceChart from "../pages/AttendanceCharts";
 // import LandingPage3 from "../pages/LandingPage3";
 
 function App() {
@@ -48,6 +49,7 @@ function App() {
           <Route path="/students/:studentId/edit" element={<EditStudent />} />
           <Route path="/student/progress-report/:studentId" element={<ViewReport/>}></Route>
           <Route path="/reports/:studentId" element={<ViewReport />} />
+          <Route path="/student/my-attendance/:studentId" element={<AttendanceChart/>}></Route>
 
           <Route path="/teachers" element={<Teachers />} />
           <Route path="/teachers/add" element={<AddEducatorForm />} />

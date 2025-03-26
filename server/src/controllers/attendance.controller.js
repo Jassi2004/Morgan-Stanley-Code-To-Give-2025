@@ -2,9 +2,10 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { attendance } from "../models/attendance.model.js";
-import mongoose from "mongoose";
+import mongoose, { isValidObjectId } from "mongoose";
 import fs from "fs";
 import xlsx from "xlsx";
+import { Student } from "../models/students.model.js";
 
 
 const fetchMonthlyStudentAttendanceReports = asyncHandler(async (req, res) => {
@@ -55,6 +56,40 @@ function calculateAttendancePercentage(report){
     return totalDays > 0 ? ( presentDays / totalDays ) * 100 : 0;
 }
 
+
+const getAttendanceByStudentId = asyncHandler(async (req, res) => {
+    try {
+        const { studentId } = req.params;
+
+        if (!studentId) {
+            throw new ApiError(400, "Please provide student ID");
+        }
+
+        // Fetch student by ID
+        const student = await Student.findOne({StudentId : studentId});
+        if (!student) {
+            throw new ApiError(404, "Student not found");
+        }
+
+        // Fetch attendance records for the student
+        const attendanceRecords = await attendance.find({ studentId : student?._id });
+
+        // Check if attendance records exist
+        if (!attendanceRecords || attendanceRecords.length === 0) {
+            return res.status(404).json(
+                new ApiResponse(404, [], "No attendance records found for this student")
+            );
+        }
+
+        return res.status(200).json(
+            new ApiResponse(200, attendanceRecords, "Successfully fetched attendance records")
+        );
+
+    } catch (err) {
+        console.error(`Error occurred while getting attendance by studentId: ${err}`);
+        return res.status(500).json(new ApiError(500, "Internal Server Error"));
+    }
+});
 
 
 const uploadAttendanceFromExcel = asyncHandler(async (req, res) => {
@@ -112,5 +147,6 @@ const uploadAttendanceFromExcel = asyncHandler(async (req, res) => {
 
 export { 
     fetchMonthlyStudentAttendanceReports,
-    uploadAttendanceFromExcel
+    uploadAttendanceFromExcel,
+    getAttendanceByStudentId
 }
