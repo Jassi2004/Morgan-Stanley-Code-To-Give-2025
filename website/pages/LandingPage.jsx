@@ -6,10 +6,13 @@ import ImageSlider from "../components/landingPageComponents/ImageSlider";
 import Navbar from "../components/layout/Navbar";
 import Awards from "../components/landingPageComponents/Awards";
 import { ChevronDown } from "lucide-react";
-import OurProduct from "../components/landingPageComponents/OurProduct";
+
+
+// import OurProduct from "../components/landingPageComponents/OurProduct";
 import Team from "./Team";
 import LandingPage3 from "./LandingPage3";
-//import OurProduct from "../components/ui/RollingGallery";
+
+import OurProduct from "../components/ui/RollingGallery";
 import Developers from "../components/landingPageComponents/Developers";
 import Footer from "../components/landingPageComponents/Footer";
 import Slider from 'react-slick';
@@ -144,12 +147,12 @@ const LandingPage = () => {
           <AboutUs />
           <ImageSlider />
           <FieldWorkGallery />
-          <OurProduct autoplay={true} pauseOnHover={true} />
+          {/* <OurProduct autoplay={true} pauseOnHover={true} /> */}
           <Developers />
           <Footer/>
         </div>
 
-          <Team />
+          {/* <Team /> */}
       </div>
     </>
   );

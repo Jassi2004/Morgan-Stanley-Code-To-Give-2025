@@ -92,6 +92,7 @@ const loginEmployeeAccount = asyncHandler(async (req, res) => {
 
         // Find employee by email
         const user = await Employee.findOne({ email }).select("+password"); 
+        console.log("user : ", user);
         if (!user) {
             throw new ApiError(401, "Invalid email or password");
         }
@@ -386,7 +387,7 @@ const uploadEmployeesDataFromExcel = asyncHandler(async(req, res) => {
 
         const filePath = req.file.path;
         const workbook = xlsx.readFile(filePath);
-        const sheetName = workbook.SheetNames[4];
+        const sheetName = workbook.SheetNames[0];
         const sheetData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
 
         if(!sheetData.length){

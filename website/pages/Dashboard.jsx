@@ -10,6 +10,7 @@ import {
   Trash2,
   Target,
   Award,
+  CalendarCheck,
 } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import DashboardCard from "../components/dashboardComponents/DashboardCard";
@@ -77,6 +78,16 @@ function DashBoard() {
       bgImage:
         "https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
     },
+    {
+      title: "Overall Attendance",
+      value: "89%",
+      icon: CalendarCheck, // You might need to import this icon
+      color: "bg-orange-500",
+      trend: "+5% increase by past week",
+      trendColor: 5 > 0 ? "text-green-500" : "text-red-500",
+      bgImage:
+        "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
+    }
   ];
 
   const containerVariants = {
@@ -240,76 +251,6 @@ function DashBoard() {
               </div>
             </motion.div>
           ))}
-          <motion.div
-            whileHover="hover"
-            className="relative bg-[var(--color-bg-secondary)] p-6 rounded-xl border border-[var(--color-border-primary)] shadow-lg overflow-hidden group hover:shadow-xl transition-all duration-300"
-          >
-            {/* Background Image */}
-            <div className="absolute inset-0 opacity-5 group-hover:opacity-10 transition-opacity duration-300">
-              <img
-                src={
-                  "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
-                }
-                alt=""
-                className="w-full h-full object-cover"
-              />
-            </div>
-
-            <div className="relative">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 rounded-lg shadow-lg"></div>
-                <span className="text-sm font-medium">{""}</span>
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-sm text-[var(--color-text-secondary)]">
-                  {""}
-                </p>
-                <p className="text-2xl font-bold text-[var(--color-text-primary)]">
-                  {""}
-                </p>
-              </div>
-
-              {/* Buttons */}
-
-              <div className="mt-4 flex flex-col justify-center gap-x-2">
-              <span className="text-center text-lg font-semibold mt-[-10px]">Upload</span>
-
-                <div className="flex items-center">
-                  <div className="flex flex-col items-center">
-                    <div
-                      className="flex flex-col items-center justify-center h-32 w-32 cursor-pointer"
-                      onClick={() => setStudentDataUpload(true)}
-                    >
-                      <Folder
-                        size={1}
-                        color="#00d8ff"
-                        className="custom-folder"
-                      />
-                      <span className="mt-2 text-center">Student Data</span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col items-center">
-                    <div
-                      className="flex flex-col items-center justify-center h-32 w-32 cursor-pointer"
-                      onClick={() => setEmployeeDataUpload(true)}
-                    >
-                      <Folder
-                        size={1}
-                        color="#00d8ff"
-                        className="custom-folder"
-                      />
-                      <span className="mt-2 text-center">Employee Data</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-
-
-            </div>
-          </motion.div>
         </motion.div>
 
         {/* Main Content Grid */}
