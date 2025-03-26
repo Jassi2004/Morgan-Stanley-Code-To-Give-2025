@@ -6,6 +6,9 @@ import ImageSlider from "../components/landingPageComponents/ImageSlider";
 import Navbar from "../components/layout/Navbar";
 import Awards from "../components/landingPageComponents/Awards";
 import { ChevronDown } from "lucide-react";
+import OurProduct from "../components/landingPageComponents/OurProduct";
+import Team from "./Team";
+import LandingPage3 from "./LandingPage3";
 
 const LandingPage = () => {
   const [showNavbar, setShowNavbar] = useState(false);
@@ -46,6 +49,7 @@ const [isScrolledButton, setIsScrolledButton] = useState(false);
   return (
     <>
       <div className="overflow-x-hidden relative">
+        <LandingPage3/>
         {/* Scroll Prompt */}
         {!isScrolled && (
           <div className="fixed top-10 left-0 w-full z-50 text-center transition-opacity duration-300">
@@ -84,10 +88,13 @@ const [isScrolledButton, setIsScrolledButton] = useState(false);
         <div className="bg-[#f3e9dc]">
           <ImageSlider/>
           <FieldWorkGallery/>
+
         </div>
+          <OurProduct autoplay={true} />
         <div className="bg-red-500 h-500px w-500px">
-          {/* <Awards/> */}
         </div>
+
+          <Team />
       </div>
     </>
   );

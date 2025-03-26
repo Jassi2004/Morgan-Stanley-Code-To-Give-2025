@@ -7,11 +7,11 @@ const Navbar = () => {
   const [isLoginDropdownOpen, setIsLoginDropdownOpen] = useState(false);
 
   const navItems = [
-    { label: 'Home', href: '#home' },
-    { label: 'About', href: '#about' },
-    { label: 'Our Work', href: '#work' },
-    { label: 'Gallery', href: '#gallery' },
-    { label: 'Contact', href: '#contact' }
+    { label: '', href: '#home' },
+    // { label: 'About', href: '#about' },
+    // { label: 'Our Work', href: '#work' },
+    // { label: 'Gallery', href: '#gallery' },
+    // { label: 'Contact', href: '#contact' }
   ];
 
   const loginOptions = [
@@ -73,7 +73,7 @@ const Navbar = () => {
               className="login-button flex items-center space-x-2 hover:text-[#ffc34f] transition-colors duration-300"
             >
               <User size={20} />
-              <span>Login</span>
+              <span>Join Us</span>
               <ChevronDown size={16} />
             </button>
             

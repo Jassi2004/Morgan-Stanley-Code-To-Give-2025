@@ -42,11 +42,11 @@ const AboutUs = () => {
                 This isn't just our mission – it's a journey we take together. We invite you to walk with us, to be part of the change, and to help us build a brighter, more inclusive tomorrow.
               </p>
               
-              <div className="mt-8 flex justify-center">
+              {/* <div className="mt-8 flex justify-center">
                 <button className="bg-[#ffc34f] hover:bg-[#e6ae42] text-gray-800 font-bold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105 shadow-md">
                   Join Our Journey
                 </button>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>

@@ -12,7 +12,7 @@ const Team = () => {
   
   const teamMembers = [
     {
-      name: "Piyush Sharma",
+      name: "Piyush Arora",
       headImage: "/images/piyushHead.png",
       bodyImage: "/images/suit.png",
       role: 'Developer',
