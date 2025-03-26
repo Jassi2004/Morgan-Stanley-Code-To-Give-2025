@@ -16,14 +16,14 @@ const Team = () => {
       headImage: "/images/piyushHead.png",
       bodyImage: "/images/suit.png",
       role: 'Developer',
-      description: 'Alice designs awesome stuff.',
+      description: 'My name is Piyush Arora, a pre-final year student at chitkara university. I am contributing as a backend developer for the project',
     },
     {
       name: "Kritica Jain",
       headImage: "/images/kriticaHead.png",
       bodyImage: "/images/women-suit.png",
       role: 'Developer',
-      description: 'Alice designs awesome stuff.',
+      description: 'My name is Kritica Jain,a third-year student at Chitkara University.  I am contributing as a backend developer and to the documentation work.',
     },
     {
       name: "Jaskirat Singh",
@@ -44,14 +44,14 @@ const Team = () => {
       headImage: "/images/anshulHead.png",
       bodyImage: "/images/suit.png",
       role: 'Developer',
-      description: 'My name is Anshul Sharma, a pre-final year student at chitkara University. I am contributing as a backend developer for website and will also be handling the deployment work.',
+      description: 'My name is Anshul Sharma, a pre-final year student at chitkara university. I am contributing as a backend developer to the project',
     },
     {
       name: "Harneet Atwal",
       headImage: "/images/harneetHead.png",
       bodyImage: "/images/women-suit.png",
       role: 'Developer',
-      description: 'Alice designs awesome stuff.',
+      description: 'My name is Anshul Sharma, a pre-final year student at chitkara university. I am contributing as a backend developer to the project',
     },
   ];
 
