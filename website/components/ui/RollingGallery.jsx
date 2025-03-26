@@ -27,7 +27,7 @@ const RollingGallery = ({
   images = images.length > 0 ? images : IMGS;
 
   const [isScreenSizeSm, setIsScreenSizeSm] = useState(
-    window.innerWidth <= 640
+    window.innerWidth <= 500
   );
   useEffect(() => {
     const handleResize = () => setIsScreenSizeSm(window.innerWidth <= 640);
@@ -106,16 +106,10 @@ const RollingGallery = ({
   };
 
   return (
-    <div className="relative h-[800px] w-full overflow-hidden bg-[#f3e9dc] mb-20">
-        <h2 className="text-5xl font-bold text-gray-700 mt-20 my-12 text-center animate-fade-down">
-          Our Product
+    <div className="relative  h-[500px] w-full overflow-hidden">
+     <h2 className="text-5xl font-bold text-gray-700 mt-12 mb-[-20px]  text-center animate-fade-down">
+          Admin Dashboard
         </h2>
-      <div
-        className="absolute top-0 left-0 h-full w-[48px] z-10"
-      />
-      <div
-        className="absolute top-0 right-0 h-full w-[48px] z-10"
-      />
 
       <div className="flex h-full items-center justify-center [perspective:1000px] [transform-style:preserve-3d]">
         <motion.div
@@ -133,12 +127,12 @@ const RollingGallery = ({
             width: cylinderWidth,
             transformStyle: "preserve-3d",
           }}
-          className="flex min-h-[800px] cursor-grab items-center justify-center [transform-style:preserve-3d]"
+          className="flex  min-h-[400px] cursor-grab items-center justify-center [transform-style:preserve-3d]"
         >
           {images.map((url, i) => (
             <div
               key={i}
-              className="group absolute flex h-fit items-center justify-center p-[8%] [backface-visibility:hidden] md:p-[6%]"
+              className="group absolute flex h-fit items-center justify-center p-[2%] [backface-visibility:hidden] md:p-[4%]"
               style={{
                 width: `${faceWidth}px`,
                 transform: `rotateY(${(360 / faceCount) * i
@@ -148,9 +142,9 @@ const RollingGallery = ({
               <img
                 src={url}
                 alt="gallery"
-                className="pointer-events-none h-[420px] w-[900px] rounded-[15px] border-[3px] border-white object-cover
-                           transition-transform duration-300 ease-out group-hover:scale-105
-                           sm:h-[300px] sm:w-[660px]"
+                className="pointer-events-none h-[200px] w-[400px] rounded-[15px] border-[3px] border-white object-cover
+                           transition-transform duration-300 ease-in-out group-hover:scale-150
+                           sm:h-[200px] sm:w-[620px]"
               />
             </div>
           ))}

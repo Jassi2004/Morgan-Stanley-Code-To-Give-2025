@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const TRANSLATION_API_URL = "http://172.20.10.2:5000/translate"; // Free API URL
+const TRANSLATION_API_URL = "http://172.20.10.2:5001/translate"; // Free API URL
 
 export const fetchTranslation = async (text, targetLang) => {
   try {

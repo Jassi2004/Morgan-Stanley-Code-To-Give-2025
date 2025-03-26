@@ -1,155 +1,124 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { updateStudent, getStudentProfile } from '../../services/studentServices';
-import { Upload, X } from 'lucide-react';
+import { Upload, X, ArrowLeft } from 'lucide-react';
 
-const EditStudent = ({ studentId, onClose, onUpdate }) => {
+const EditStudent = () => {
+  const navigate = useNavigate();
+  const { studentId } = useParams();
+
   const [loading, setLoading] = useState(false);
   const [studentData, setStudentData] = useState({
-    firstName: '',
-    lastName: '',
-    gender: '',
+    basicInfo: {
+      firstName: '',
+      lastName: '',
+      studentEmail: '',
+      gender: '',
+      dateOfBirth: '',
+      contactNumber: '',
+      altContactNumber: '',
+      avatar: {
+        secure_url: '',
+        public_id: ''
+      },
+      UDID: {
+        isAvailable: false,
+        secure_url: '',
+        public_id: ''
+      }
+    },
+    guardianDetails: {
+      fathersName: '',
+      mothersName: '',
+      parentEmail: '',
+      contactNumber: ''
+    },
+    enrollmentStatus: {
+      status: '',
+      approvalStatus: ''
+    },
+    programDetails: {
+      program: '',
+      numberOfSessions: 0,
+      sessionType: '',
+      daysOfWeek: []
+    },
+    educatorInfo: {
+      primary: '',
+      secondary: ''
+    },
+    medicalInfo: {
+      primaryDiagnosis: '',
+      comorbidity: false,
+      allergies: []
+    },
     address: '',
-    primaryDiagnosis: '',
-    comorbidity: false,
-    allergies: [],
-    transport: false,
     strengths: [],
     weaknesses: [],
-    comments: '',
-    preferredLanguage: '',
-    deviceAccess: [],
-    guardianDetails: {
-      name: '',
-      relation: '',
-      contactNumber: '',
-      parentEmail: ''
-    },
-    medicalHistory: {
-      medications: [],
-      surgeries: [],
-      notes: ''
-    }
+    comments: ''
   });
 
   const [files, setFiles] = useState({
     avatar: null,
-    UDID: null
+    documents: null
   });
-
-  const [avatarPreview, setAvatarPreview] = useState(studentData?.avatar?.secure_url || '');
-  const [UDIDFileName, setUDIDFileName] = useState('');
 
   useEffect(() => {
     const fetchStudentData = async () => {
       try {
         setLoading(true);
         const response = await getStudentProfile(studentId);
+        console.log('Fetched student data:', response.data);
         if (response.success) {
-          // Transform arrays that might come as strings
           const data = response.data;
-          
-          // Handle arrays that might be strings
-          const processArrayField = (field) => {
-            if (typeof field === 'string') {
-              return field.split(',').map(item => item.trim());
-            }
-            return Array.isArray(field) ? field : [];
-          };
-
-          const transformedData = {
-            ...data,
-            allergies: processArrayField(data.allergies),
-            strengths: processArrayField(data.strengths),
-            weaknesses: processArrayField(data.weaknesses),
-            deviceAccess: processArrayField(data.deviceAccess),
-            medicalHistory: {
-              ...data.medicalHistory,
-              medications: processArrayField(data.medicalHistory?.medications),
-              surgeries: processArrayField(data.medicalHistory?.surgeries)
-            }
-          };
-
-          setStudentData(transformedData);
-          
-          // Set avatar preview if exists
-          if (data.avatar?.secure_url) {
-            setAvatarPreview(data.avatar.secure_url);
-          }
-          
-          // Set UDID filename if exists
-          if (data.UDID?.secure_url) {
-            const fileName = data.UDID.secure_url.split('/').pop();
-            setUDIDFileName(fileName);
-          }
+          setStudentData(data);
         }
       } catch (error) {
         toast.error('Failed to fetch student details');
         console.error('Error fetching student:', error);
+        navigate('/students');
       } finally {
         setLoading(false);
       }
     };
 
     fetchStudentData();
-  }, [studentId]);
+  }, [studentId, navigate]);
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e, nestedPath = null) => {
     const { name, value, type, checked } = e.target;
-    
-    if (name.includes('.')) {
-      const [parent, child] = name.split('.');
-      setStudentData(prev => ({
-        ...prev,
-        [parent]: {
-          ...prev[parent],
-          [child]: value
-        }
-      }));
-    } else if (type === 'checkbox') {
-      setStudentData(prev => ({
-        ...prev,
-        [name]: checked
-      }));
-    } else if (type === 'select-multiple') {
-      setStudentData(prev => ({
-        ...prev,
-        [name]: Array.from(e.target.selectedOptions, option => option.value)
-      }));
-    } else {
-      setStudentData(prev => ({
-        ...prev,
-        [name]: value
-      }));
-    }
+
+    setStudentData(prev => {
+      if (nestedPath) {
+        const [parent, child] = nestedPath.split('.');
+        return {
+          ...prev,
+          [parent]: {
+            ...prev[parent],
+            [child]: type === 'checkbox' ? checked : value
+          }
+        };
+      }
+
+      if (type === 'checkbox') {
+        return { ...prev, [name]: checked };
+      }
+
+      return { ...prev, [name]: value };
+    });
   };
 
-  const handleArrayInput = (e, field) => {
-    const value = e.target.value.split(',').map(item => item.trim()).filter(Boolean);
+  const handleMultiSelectChange = (e, field) => {
+    const selectedValues = Array.from(e.target.selectedOptions, option => option.value);
     setStudentData(prev => ({
       ...prev,
-      [field]: value
+      [field]: selectedValues
     }));
   };
 
-  const handleFileChange = (e, type) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFiles(prev => ({
-        ...prev,
-        [type]: file
-      }));
-
-      if (type === 'avatar') {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setAvatarPreview(reader.result);
-        };
-        reader.readAsDataURL(file);
-      } else if (type === 'UDID') {
-        setUDIDFileName(file.name);
-      }
-    }
+  const handleCancel = () => {
+    navigate(`/students/${studentId}`);
   };
 
   const handleSubmit = async (e) => {
@@ -157,13 +126,11 @@ const EditStudent = ({ studentId, onClose, onUpdate }) => {
     setLoading(true);
 
     try {
-      const hasFiles = files.avatar || files.UDID;
-      const response = await updateStudent(studentId, studentData, hasFiles ? files : null);
+      const response = await updateStudent(studentId, studentData, files);
       
       if (response.success) {
         toast.success('Student details updated successfully');
-        onUpdate?.();
-        onClose?.();
+        navigate(`/students/${studentId}`);
       }
     } catch (error) {
       toast.error(error.message || 'Failed to update student details');
@@ -172,7 +139,7 @@ const EditStudent = ({ studentId, onClose, onUpdate }) => {
     }
   };
 
-  if (loading && !studentData.firstName) {
+  if (loading) {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
         <div className="bg-white p-6 rounded-lg">
@@ -183,27 +150,31 @@ const EditStudent = ({ studentId, onClose, onUpdate }) => {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center overflow-y-auto">
-      <div className="bg-[var(--color-bg-secondary)] p-6 rounded-lg w-full max-w-3xl m-4 relative">
+    <div className="p-6 max-w-4xl mx-auto">
+      <div className="flex items-center mb-6">
         <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+          onClick={() => navigate(`/students/${studentId}`)}
+          className="mr-4 p-2 rounded-md hover:bg-[var(--color-bg-secondary)]"
         >
-          <X size={24} />
+          <ArrowLeft size={20} />
         </button>
+        <h1 className="text-2xl font-bold">Edit Student Profile</h1>
+      </div>
 
-        <h2 className="text-2xl font-bold mb-6 text-[var(--color-text-primary)]">Edit Student Details</h2>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Personal Information */}
+      <form onSubmit={handleSubmit} className="bg-[var(--color-bg-secondary)] p-6 rounded-lg shadow-md space-y-6">
+        {/* Basic Information with Added Fields */}
+        <section>
+          <h2 className="text-lg font-semibold mb-4 text-[var(--color-brand)]">
+            Basic Information
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-[var(--color-text-secondary)]">First Name</label>
               <input
                 type="text"
                 name="firstName"
-                value={studentData.firstName}
-                onChange={handleInputChange}
+                value={studentData.basicInfo.firstName}
+                onChange={(e) => handleInputChange(e, 'basicInfo.firstName')}
                 className="mt-1 block w-full rounded-md border border-[var(--color-border-primary)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] px-3 py-2"
               />
             </div>
@@ -212,104 +183,215 @@ const EditStudent = ({ studentId, onClose, onUpdate }) => {
               <input
                 type="text"
                 name="lastName"
-                value={studentData.lastName}
-                onChange={handleInputChange}
+                value={studentData.basicInfo.lastName}
+                onChange={(e) => handleInputChange(e, 'basicInfo.lastName')}
+                className="mt-1 block w-full rounded-md border border-[var(--color-border-primary)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] px-3 py-2"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Email</label>
+              <input
+                type="email"
+                name="studentEmail"
+                value={studentData.basicInfo.studentEmail}
+                onChange={(e) => handleInputChange(e, 'basicInfo.studentEmail')}
+                className="mt-1 block w-full rounded-md border border-[var(--color-border-primary)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] px-3 py-2"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Gender</label>
+              <select
+                name="gender"
+                value={studentData.basicInfo.gender}
+                onChange={(e) => handleInputChange(e, 'basicInfo.gender')}
+                className="mt-1 block w-full rounded-md border border-[var(--color-border-primary)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] px-3 py-2"
+              >
+                <option value="">Select Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Date of Birth</label>
+              <input
+                type="date"
+                name="dateOfBirth"
+                value={studentData.basicInfo.dateOfBirth}
+                onChange={(e) => handleInputChange(e, 'basicInfo.dateOfBirth')}
+                className="mt-1 block w-full rounded-md border border-[var(--color-border-primary)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] px-3 py-2"
+              />
+            </div>
+            <br />
+            <div>
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Contact Number</label>
+              <input
+                type="tel"
+                name="contactNumber"
+                value={studentData.basicInfo.contactNumber}
+                onChange={(e) => handleInputChange(e, 'basicInfo.contactNumber')}
+                className="mt-1 block w-full rounded-md border border-[var(--color-border-primary)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] px-3 py-2"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Alternate Contact Number</label>
+              <input
+                type="tel"
+                name="altContactNumber"
+                value={studentData.basicInfo.altContactNumber}
+                onChange={(e) => handleInputChange(e, 'basicInfo.altContactNumber')}
+                className="mt-1 block w-full rounded-md border border-[var(--color-border-primary)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] px-3 py-2"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Enrollment Status</label>
+              <select
+                name="status"
+                value={studentData?.enrollmentStatus?.status || "Active"}
+                onChange={(e) => handleInputChange(e, 'enrollmentStatus.status')}
+                className="mt-1 block w-full rounded-md border border-[var(--color-border-primary)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] px-3 py-2"
+              >
+                <option value="">Select Status</option>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+                <option value="Graduated">Graduated</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Approval Status</label>
+              <select
+                name="approvalStatus"
+                value={studentData.enrollmentStatus?.approvalStatus || "pending"}
+                onChange={(e) => handleInputChange(e, 'enrollmentStatus.approvalStatus')}
+                className="mt-1 block w-full rounded-md border border-[var(--color-border-primary)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] px-3 py-2"
+              >
+                <option value="approved">Approved</option>
+                <option value="pending">Pending</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        {/* Program Details Section */}
+        <section>
+          <h2 className="text-lg font-semibold mb-4 text-[var(--color-brand)]">
+            Program Details
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Program</label>
+              <input
+                type="text"
+                name="program"
+                value={studentData.programDetails.program}
+                onChange={(e) => handleInputChange(e, 'programDetails.program')}
+                className="mt-1 block w-full rounded-md border border-[var(--color-border-primary)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] px-3 py-2"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Number of Sessions</label>
+              <input
+                type="number"
+                name="numberOfSessions"
+                value={studentData.programDetails.numberOfSessions}
+                onChange={(e) => handleInputChange(e, 'programDetails.numberOfSessions')}
+                className="mt-1 block w-full rounded-md border border-[var(--color-border-primary)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] px-3 py-2"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Session Type</label>
+              <select
+                name="sessionType"
+                value={studentData.programDetails.sessionType}
+                onChange={(e) => handleInputChange(e, 'programDetails.sessionType')}
+                className="mt-1 block w-full rounded-md border border-[var(--color-border-primary)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] px-3 py-2"
+              >
+                <option value="">Select Session Type</option>
+                <option value="Online">Online</option>
+                <option value="Offline">Offline</option>
+                <option value="Hybrid">Hybrid</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Days of Week</label>
+              <select
+                multiple
+                name="daysOfWeek"
+                value={studentData.programDetails.daysOfWeek}
+                onChange={(e) => handleMultiSelectChange(e, 'programDetails.daysOfWeek')}
+                className="mt-1 block w-full rounded-md border border-[var(--color-border-primary)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] px-3 py-2"
+              >
+                <option value="Monday">Monday</option>
+                <option value="Tuesday">Tuesday</option>
+                <option value="Wednesday">Wednesday</option>
+                <option value="Thursday">Thursday</option>
+                <option value="Friday">Friday</option>
+                <option value="Saturday">Saturday</option>
+                <option value="Sunday">Sunday</option>
+              </select>
+              <p className="text-xs text-[var(--color-text-secondary)] mt-1">Hold Ctrl/Cmd to select multiple days</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Educator Information */}
+        <section>
+          <h2 className="text-lg font-semibold mb-4 text-[var(--color-brand)]">
+            Educator Information
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Primary Educator</label>
+              <input
+                type="text"
+                name="primary"
+                value={studentData.educatorInfo.primary}
+                onChange={(e) => handleInputChange(e, 'educatorInfo.primary')}
+                className="mt-1 block w-full rounded-md border border-[var(--color-border-primary)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] px-3 py-2"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Secondary Educator</label>
+              <input
+                type="text"
+                name="secondary"
+                value={studentData.educatorInfo.secondary}
+                onChange={(e) => handleInputChange(e, 'educatorInfo.secondary')}
                 className="mt-1 block w-full rounded-md border border-[var(--color-border-primary)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] px-3 py-2"
               />
             </div>
           </div>
-
-          {/* Medical Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Primary Diagnosis</label>
-              <select
-                name="primaryDiagnosis"
-                value={studentData.primaryDiagnosis}
-                onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border border-[var(--color-border-primary)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] px-3 py-2"
-              >
-                <option value="">Select Diagnosis</option>
-                <option value="Autism">Autism</option>
-                <option value="Down Syndrome">Down Syndrome</option>
-                <option value="ADHD">ADHD</option>
-                <option value="Cerebral Palsy">Cerebral Palsy</option>
-                <option value="Others">Others</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Preferred Language</label>
-              <select
-                name="preferredLanguage"
-                value={studentData.preferredLanguage}
-                onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border border-[var(--color-border-primary)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] px-3 py-2"
-              >
-                <option value="English">English</option>
-                <option value="Hindi">Hindi</option>
-                <option value="Marathi">Marathi</option>
-                <option value="Sign Language">Sign Language</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Device Access */}
-          <div>
-            <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Device Access</label>
-            <select
-              name="deviceAccess"
-              multiple
-              value={studentData.deviceAccess}
-              onChange={handleInputChange}
-              className="mt-1 block w-full rounded-md border border-[var(--color-border-primary)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] px-3 py-2"
-            >
-              <option value="Tablet">Tablet</option>
-              <option value="Laptop">Laptop</option>
-              <option value="Smartphone">Smartphone</option>
-              <option value="Hearing Aid">Hearing Aid</option>
-              <option value="Braille Device">Braille Device</option>
-            </select>
-            <p className="text-xs text-[var(--color-text-secondary)] mt-1">Hold Ctrl/Cmd to select multiple options</p>
-          </div>
+        </section>
 
           {/* Guardian Details */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-[var(--color-text-primary)]">Guardian Details</h3>
+          <h2 className="text-lg font-semibold mb-4 text-[var(--color-brand)]">
+            Guardian Details
+          </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Guardian Name</label>
+                <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Father Name</label>
                 <input
                   type="text"
                   name="guardianDetails.name"
-                  value={studentData.guardianDetails.name}
+                  value={studentData.guardianDetails.fathersName}
                   onChange={handleInputChange}
                   className="mt-1 block w-full rounded-md border border-[var(--color-border-primary)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] px-3 py-2"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Relation</label>
+                <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Mother Name</label>
                 <input
                   type="text"
                   name="guardianDetails.relation"
-                  value={studentData.guardianDetails.relation}
+                  value={studentData.guardianDetails.mothersName}
                   onChange={handleInputChange}
                   className="mt-1 block w-full rounded-md border border-[var(--color-border-primary)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] px-3 py-2"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Contact Number</label>
-                <input
-                  type="tel"
-                  name="guardianDetails.contactNumber"
-                  value={studentData.guardianDetails.contactNumber}
-                  onChange={handleInputChange}
-                  pattern="[6-9]\d{9}"
-                  className="mt-1 block w-full rounded-md border border-[var(--color-border-primary)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] px-3 py-2"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Email</label>
+                <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Parents Email</label>
                 <input
                   type="email"
                   name="guardianDetails.parentEmail"
@@ -326,8 +408,8 @@ const EditStudent = ({ studentId, onClose, onUpdate }) => {
             <div>
               <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Profile Picture</label>
               <div className="mt-1 flex items-center space-x-4">
-                {avatarPreview && (
-                  <img src={avatarPreview} alt="Preview" className="w-16 h-16 rounded-full object-cover" />
+                {studentData?.basicInfo?.avatar?.secure_url?.toString()?.trim()?.length > 0 && (
+                  <img src={studentData?.basicInfo?.avatar?.secure_url?.toString()?.trim()} alt="Preview" className="w-16 h-16 rounded-full object-cover" />
                 )}
                 <label className="cursor-pointer flex items-center space-x-2 px-4 py-2 border border-[var(--color-border-primary)] rounded-md hover:bg-[var(--color-bg-hover)]">
                   <Upload size={20} />
@@ -344,7 +426,10 @@ const EditStudent = ({ studentId, onClose, onUpdate }) => {
             <div>
               <label className="block text-sm font-medium text-[var(--color-text-secondary)]">UDID Document</label>
               <div className="mt-1 flex items-center space-x-4">
-                {UDIDFileName && <span className="text-sm">{UDIDFileName}</span>}
+                <span className="text-sm">
+                  {studentData?.basicInfo?.UDID?.isAvailable ? 
+                  <img src={studentData?.basicInfo?.UDID?.secure_url?.toString()?.trim()} alt="Preview" className="w-16 h-16 rounded-full object-cover" /> : "No File Uploaded"}
+                </span>
                 <label className="cursor-pointer flex items-center space-x-2 px-4 py-2 border border-[var(--color-border-primary)] rounded-md hover:bg-[var(--color-bg-hover)]">
                   <Upload size={20} />
                   <span>Upload</span>
@@ -411,7 +496,7 @@ const EditStudent = ({ studentId, onClose, onUpdate }) => {
           <div className="flex justify-end space-x-4">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleCancel}
               className="px-4 py-2 border border-[var(--color-border-primary)] rounded-md hover:bg-[var(--color-bg-hover)] text-[var(--color-text-primary)]"
             >
               Cancel
@@ -427,7 +512,6 @@ const EditStudent = ({ studentId, onClose, onUpdate }) => {
             </button>
           </div>
         </form>
-      </div>
     </div>
   );
 };

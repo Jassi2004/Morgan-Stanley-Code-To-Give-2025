@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "react-markdown": "^10.1.0",
+    "react-tippy": "^1.4.0",
+    "react-tooltip": "^5.28.0"
+  }
+}

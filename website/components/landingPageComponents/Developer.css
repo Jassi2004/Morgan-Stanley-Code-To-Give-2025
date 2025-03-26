@@ -121,7 +121,7 @@
   .main-container {
     width: 100%;
     /* max-width: 1200px; */
-    margin-top: -200px;
+    margin-top: 200px;
     /* padding: 0px 20px; */
     box-sizing: border-box;
     /* background: linear-gradient(to bottom, #f8f9fa, #e9ecef);
@@ -130,7 +130,6 @@
   }
   
   .main-title {
-    margin-top: -200px;
     font-size: clamp(28px, 5vw, 42px);
     font-weight: 800;
     text-align: center;

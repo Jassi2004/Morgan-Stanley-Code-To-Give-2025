@@ -16,7 +16,15 @@ import {
 const router = Router();
 
 // Public routes (no auth required)
-router.route("/register").post(registerStudent);
+router.route("/register").post(upload.fields([
+  {
+    name: "avatar",
+    maxCount: 1
+  }, {
+    name: "UDIDDocument",
+    maxCount: 1
+  }
+]), registerStudent);
 router.route("/login").post(loginStudent);
 
 // Protected routes (require student authentication)

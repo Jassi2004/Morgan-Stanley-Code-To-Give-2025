@@ -49,10 +49,8 @@ const StudentProfile = () => {
         setError(null);
         const response = await getStudentProfile(studentId);
         if (response.success) {
-          const studentData = response.data;
-          setStudent(studentData);
+          setStudent(response.data);
           
-          // Initialize form data with student data, ensuring all fields are properly typed
           setFormData({
             firstName: studentData.firstName || '',
             lastName: studentData.lastName || '',
@@ -737,7 +735,7 @@ const StudentProfile = () => {
                   </div>
                   <div>
                     <span className="font-medium text-sm">Approval Status:</span>
-                    <p className="text-sm">{student?.isApproved ? 'Approved' : 'Pending'}</p>
+                    <p className="text-sm capitalize">{student?.approval?.status || 'Pending'}</p>
                   </div>
                 </div>
               </section>

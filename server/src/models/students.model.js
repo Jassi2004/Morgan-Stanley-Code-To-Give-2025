@@ -11,9 +11,16 @@ const studentSchema = new mongoose.Schema(
       index: true,
       trim: true,
     },
-    isApproved : {
-      type : Boolean, 
-      default : false
+    approval : {
+      status: {
+        type: String,
+        enum: ["approved", "pending", "rejected"],
+        default: "pending"
+      },
+      reason: {
+        type: String,
+        required: false
+      }
     },
     firstName: {
       type: String,
@@ -90,8 +97,14 @@ const studentSchema = new mongoose.Schema(
     program : {
       type : String,
       enum : ["Multi", "Job Readiness", "Vocation", "Spruha", "Suyog", "Sameti", "Shaale", "Siddhi", "Sattva"],
+      default: "Multi"
       // required : [true, "Program is required"]
-  },
+    },
+    program2 : {
+      type : String,
+      enum:  ["Multi", "Job Readiness", "Vocation", "Spruha", "Suyog", "Sameti", "Shaale", "Siddhi", "Sattva"],
+      default : "Job Readiness"
+    },
     // program: [
     //   {
     //     type: mongoose.Schema.Types.ObjectId,
@@ -167,9 +180,8 @@ const studentSchema = new mongoose.Schema(
       type: String,
     },
     status: {
-
         type: String,
-        enum: ["Active", "Graduated"],
+        enum: ["Active", "Inactive", "Graduated"],
         default: "Active",
     },
     // guardianDetails: {
@@ -217,9 +229,13 @@ const studentSchema = new mongoose.Schema(
       type: String,
       required: [true, "Parent email is required"],
     },
+
     contactNumber: {
       type: Number,
       required: [true, "Contact number is required"],
+    },
+    altContactNumber: {
+      type: Number,
     },
     
     // preferredLanguage: {
