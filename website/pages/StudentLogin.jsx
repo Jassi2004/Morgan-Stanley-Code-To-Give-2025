@@ -14,10 +14,18 @@ function StudentLogin() {
       const response = await fetch("http://localhost:8000/api/v1/student/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ studentEmail :email, password }),
       });
+
+      const data = await response.json();
+
+      // console.log("Email + password", email, password);
+
+      
       
       if(response.status === 200){
+        localStorage.setItem("studentId", data.data.student._id);
+        localStorage.setItem("studentData", JSON.stringify(data.data));
         navigate("/student/dashboard");
       } else {
         window.alert("Wrong credentials");

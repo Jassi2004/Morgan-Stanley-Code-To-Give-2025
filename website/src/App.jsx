@@ -21,6 +21,7 @@ import EmployeeProfile from "../pages/EmployeeProfile"
 import AdminProfile from "../pages/AdminProfile"
 import ViewReport from "../pages/ViewReport"
 import EditStudent from "../components/student/EditStudent";
+import StudentDashboard from "../pages/StudentDashboard";
 // import LandingPage3 from "../pages/LandingPage3";
 
 function App() {
@@ -40,10 +41,12 @@ function App() {
         <Route path="/" element={<Layout />}>
           {/* <Route index element={<Dashboard />} /> */}
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/student/profile" element={<StudentDashboard/>}></Route>
           <Route path="/students" element={<Students />} />
           <Route path="/students/add" element={<AddStudentForm />} />
           <Route path="/students/:studentId" element={<StudentProfileView />} />
           <Route path="/students/:studentId/edit" element={<EditStudent />} />
+          <Route path="/student/progress-report/:studentId" element={<ViewReport/>}></Route>
           <Route path="/reports/:studentId" element={<ViewReport />} />
 
           <Route path="/teachers" element={<Teachers />} />
