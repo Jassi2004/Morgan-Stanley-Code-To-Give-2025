@@ -2,14 +2,24 @@ import { useContext, useState } from "react";
 import { Search, Plus, Filter, Eye, Edit, Trash2, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
+import Folder from "../src/blocks/components/Folder";
+import UploadStudentData from "../components/dashboardComponents/UploadStudentData";
+import UploadEmployeeData from "../components/dashboardComponents/UploadEmployeeData";
 
 const Teachers = () => {
   const navigate = useNavigate();
-  const { employees: teachers, loading, error, refreshEmployees: refreshTeachers } = useContext(AppContext);
+  const {
+    employees: teachers,
+    loading,
+    error,
+    refreshEmployees: refreshTeachers,
+  } = useContext(AppContext);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [programFilter, setProgramFilter] = useState("all");
-
+    const [employeeDataUpload, setEmployeeDataUpload] = useState(false);
+  
+const [studentDataUpload, setStudentDataUpload] = useState(false);
   const programs = [
     "Multi",
     "Job Readiness",
@@ -19,7 +29,7 @@ const Teachers = () => {
     "Sameti",
     "Shaale",
     "Siddhi",
-    "Sattva"
+    "Sattva",
   ];
 
   const filteredTeachers = teachers.filter((teacher) => {
@@ -28,7 +38,7 @@ const Teachers = () => {
       teacher.employeeId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       teacher.designation?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = 
+    const matchesStatus =
       statusFilter === "all" || teacher.status === statusFilter;
 
     const matchesProgram =
@@ -40,7 +50,9 @@ const Teachers = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-48">
-        <div className="text-lg text-[var(--color-text-secondary)]">Loading teachers...</div>
+        <div className="text-lg text-[var(--color-text-secondary)]">
+          Loading teachers...
+        </div>
       </div>
     );
   }
@@ -49,7 +61,7 @@ const Teachers = () => {
     return (
       <div className="flex flex-col items-center justify-center h-48 gap-4">
         <div className="text-lg text-red-500">{error}</div>
-        <button 
+        <button
           onClick={refreshTeachers}
           className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
         >
@@ -65,7 +77,7 @@ const Teachers = () => {
         <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">
           Teachers
         </h1>
-        <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex flex-col md:flex-row gap-4 max-h-10">
           <div className="relative">
             <input
               type="text"
@@ -89,7 +101,9 @@ const Teachers = () => {
               <option value="all">All Status</option>
               <option value="Active">Active</option>
               <option value="Discontinued">Discontinued</option>
-              <option value="Temporary Discontinue">Temporary Discontinue</option>
+              <option value="Temporary Discontinue">
+                Temporary Discontinue
+              </option>
             </select>
 
             <select
@@ -104,15 +118,25 @@ const Teachers = () => {
                 </option>
               ))}
             </select>
-
-            <button
-              onClick={() => navigate("/teachers/add")}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center"
-            >
+            <div className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center">
               <Plus size={18} />
               <Users className="mr-2" size={16} />
               Add Teacher
-            </button>
+            </div>
+            <div
+              onClick={() => setEmployeeDataUpload(true)}
+              className="px-4 py-2 rounded-lg flex items-center relative group"
+            >
+              <Folder size={0.6} color="#00d8ff" className="custom-folder" />
+              <span
+    className="absolute  left-1/2 -translate-x-1/2 mb-2 
+              bg-gray-800 text-white text-xs font-medium px-3 py-[-80px] 
+              rounded-md opacity-0 invisible transition-all duratiopx300 
+              group-hover:opacity-100 group-hover:visible bottom-[-70px]"
+  >
+    Bulk Upload Teachers
+  </span>
+            </div>
           </div>
         </div>
       </div>
@@ -258,6 +282,9 @@ const Teachers = () => {
           </button>
         </div>
       </div>
+      {employeeDataUpload && (
+         <UploadEmployeeData onClose={() => setEmployeeDataUpload(false)} />
+      )}
     </div>
   );
 };

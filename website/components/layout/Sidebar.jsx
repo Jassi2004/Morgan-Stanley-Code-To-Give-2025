@@ -17,8 +17,9 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
   const [transitionStage, setTransitionStage] = useState('idle');
 
   useEffect(() => {
-    const educatorStatus = localStorage.getItem("educatorId") === "true";
-    console.log(educatorStatus);
+    const educatorStatus = localStorage.getItem("educatorId") ? true : false;
+    // console.log( localStorage.getItem("educatorId"))
+    // console.log(educatorStatus);
     
     setIsEducator(educatorStatus);
   }, []);
@@ -39,7 +40,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
   const navigationItems = isEducator
     ? [
-        { title: "Dashboard", icon: <LayoutDashboard size={20} />, path: "/dashboard" },
+        { title: "Dashboard", icon: <LayoutDashboard size={20} />, path: "/employee/dashboard" },
         { title: "Students", icon: <GraduationCap size={20} />, path: "/students" },
       ]
       : [
@@ -60,7 +61,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="flex flex-col h-full">
-        <div className="flex items-center justify-between h-[74.5px] px-4 border-b border-[var(--color-border-primary)]">
+        <div className="flex items-center justify-between h-[73px] px-4 border-b border-[var(--color-border-primary)]">
           <div className="flex items-center">
             <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
               SH

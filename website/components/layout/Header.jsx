@@ -22,6 +22,16 @@ const Header = ({ sidebarOpen, setSidebarOpen }) => {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [notificationLimit, setNotificationLimit] = useState(3);
+   const [isEducator, setIsEducator] = useState(false);
+
+  useEffect(() => {
+    const educatorStatus = localStorage.getItem("educatorId") ? true : false;
+    // console.log( localStorage.getItem("educatorId"))
+    // console.log(educatorStatus);
+    
+    setIsEducator(educatorStatus);
+  }, []);
+
 
   const notificationRef = useRef(null);
   const profileRef = useRef(null);
@@ -86,40 +96,52 @@ const Header = ({ sidebarOpen, setSidebarOpen }) => {
     };
   }, [profileOpen]);
 
-  return (
+  const handleLogOut = () => {
+    localStorage.clear();
+    window.location.href = "/"; // Redirect to home
+  };
+  
+
+  return isEducator ? (
     <header className="bg-[var(--color-bg-primary)] border-b border-[var(--color-border-primary)] py-4 px-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={toggleSidebar} 
-            className="text-[var(--color-text-primary)] hover:text-[var(--color-brand)] focus:outline-none"
-          >
-            {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+    <div className="flex items-center justify-between">
+      <h1 className="text-[var(--color-text-primary)] text-lg font-bold">
+        Educator Dashboard
+      </h1>
+      <div className="gap-10">
 
-          {/* <div className="relative hidden md:block">
-            <input
-              type="text"
-              placeholder="Search students, teachers..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-64 py-2 pl-10 pr-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border-primary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]"
-            />
-            <Search className="absolute left-3 top-2.5 text-[var(--color-text-accent)]" size={18} />
-          </div> */}
+      <button
+        onClick={() => navigate('/employee/profile')}
+        className="px-4 py-2 bg-blue-500 text-white rounded-md mx-10 hover:bg-blue-600"
+        >
+        Profile
+      </button>
+      <button onClick={handleLogOut} className="text-[var(--color-danger)]">
+        Logout
+      </button>
         </div>
+    </div>
+  </header>
+) : (
+  <header className="bg-[var(--color-bg-primary)] border-b border-[var(--color-border-primary)] py-4 px-6">
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-4">
+        {/* <button 
+          onClick={toggleSidebar} 
+          className="text-[var(--color-text-primary)] hover:text-[var(--color-brand)] focus:outline-none"
+        >
+          {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
+        </button> */}
+      </div>
 
-        <div className="flex items-center gap-4">
-          {/* Theme Toggle */}
-          <button
-            onClick={toggleTheme}
-            className="p-2 rounded-full hover:bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)]"
-          >
-            {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-          </button>
-
-          {/* Notifications */}
-          <div className="relative" ref={notificationRef}>
+      <div className="flex items-center gap-4">
+        <button
+          onClick={toggleTheme}
+          className="p-2 rounded-full hover:bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)]"
+        >
+          {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+        </button>
+        <div className="relative" ref={notificationRef}>
             <button
               onClick={() => setNotificationsOpen(!notificationsOpen)}
               className="p-2 rounded-full hover:bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] relative"
@@ -156,55 +178,24 @@ const Header = ({ sidebarOpen, setSidebarOpen }) => {
               </div>
             )}
           </div>
-
-          {/* Profile Menu */}
-          <div className="relative" ref={profileRef}>
-            <button
-              onClick={() => setProfileOpen(!profileOpen)}
-              className="flex items-center gap-2 focus:outline-none"
-            >
-              <div className="w-8 h-8 rounded-full bg-[var(--color-brand)] flex items-center justify-center text-white">
-                <span className="font-medium">AM</span>
-              </div>
-              <span className="hidden md:block text-[var(--color-text-primary)]">Admin</span>
-            </button>
-
-            {profileOpen && (
-              <div className="absolute right-0 mt-2 w-48 rounded-lg shadow-lg bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] z-10">
-                <div className="p-4 border-b border-[var(--color-border-primary)]">
-                  <p className="font-medium text-[var(--color-text-primary)]">Admin Manager</p>
-                  <p className="text-sm text-[var(--color-text-accent)]">admin@spectrumsupport.org</p>
-                </div>
-                <div className="py-2">
-                  <button 
-                    onClick={handleProfileClick}
-                    className="flex items-center gap-2 w-full px-4 py-2 text-left text-[var(--color-text-primary)] hover:bg-[var(--color-bg-secondary)]"
-                  >
-                    <User size={16} />
-                    <span>Profile</span>
-                  </button>
-                  <button className="flex items-center gap-2 w-full px-4 py-2 text-left text-[var(--color-text-primary)] hover:bg-[var(--color-bg-secondary)]">
-                    <Settings size={16} />
-                    <span>Settings</span>
-                  </button>
-                  <button className="flex items-center gap-2 w-full px-4 py-2 text-left text-[var(--color-text-primary)] hover:bg-[var(--color-bg-secondary)]">
-                    <HelpCircle size={16} />
-                    <span>Help</span>
-                  </button>
-                  <div className="border-t border-[var(--color-border-primary)] mt-2 pt-2">
-                    <button className="flex items-center gap-2 w-full px-4 py-2 text-left text-[var(--color-danger)] hover:bg-[var(--color-bg-secondary)]">
-                      <LogOut size={16} />
-                      <span>Logout</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
+        {/* Profile Menu */}
+        <div className="relative">
+        <button
+        onClick={() => navigate('/admin/profile')}
+        className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+      >
+        Profile
+      </button>
+          <button
+            onClick={handleLogOut}
+            className="text-[var(--color-danger)] px-4 py-2 rounded-md hover:bg-[var(--color-bg-secondary)]"
+          >
+            Logout
+          </button>
         </div>
       </div>
-    </header>
+    </div>
+  </header>
   );
 };
 

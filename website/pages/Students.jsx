@@ -1,11 +1,13 @@
 import { useContext, useState, useEffect } from "react";
-import { Search, Plus, Eye, Edit, Trash2, Calendar, FileText, ClipboardList, Folder } from "lucide-react";
+import { Search, Plus, Eye, Edit, Trash2, Calendar, FileText, ClipboardList } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
 import EditStudent from "../components/student/EditStudent";
 import GenerateReport from "./GenerateReport";
 import { toast } from 'react-toastify';
 import UploadAttendanceData from "../components/dashboardComponents/UploadAttendanceData";
+import Folder from "../src/blocks/components/Folder";
+import UploadStudentData from "../components/dashboardComponents/UploadStudentData";
 
 const ActionButton = ({ icon: Icon, label, onClick, colorClass = "text-[var(--color-brand)]" }) => (
   <div className="relative group">
@@ -35,6 +37,8 @@ const Students = () => {
   const [isViewReportsModalOpen, setIsViewReportsModalOpen] = useState(false);
   const [AttendanceUploadModal, setAttendanceUploadModal ]  = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [studentDataUpload, setStudentDataUpload] = useState(false);
+
   const studentsPerPage = 10;
 
   // Get unique diagnoses from students
@@ -126,11 +130,7 @@ const Students = () => {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">Students</h1>
-        <div className="flex flex-col md:flex-row gap-4">
-          <button onClick={() => setAttendanceUploadModal(true)} className="flex justify-center items-center gap-2 cursor-pointer">
-            <Folder/> 
-            <span>Upload Attendance</span>
-          </button>
+        <div className="flex flex-col md:flex-row gap-4  max-h-10" >
           <div className="relative">
             <input
               type="text"
@@ -179,6 +179,20 @@ const Students = () => {
               <Plus size={18} className="mr-2" />
               Add Student
             </button>
+            <div
+              onClick={() => setStudentDataUpload(true)}
+              className="px-4 py-2 rounded-lg flex items-center relative group"
+            >
+              <Folder size={0.6} color="#00d8ff" className="custom-folder" />
+              <span
+    className="absolute  left-1/2 -translate-x-1/2 mb-2 
+              bg-gray-800 text-white text-xs font-medium px-3 py-[-80px] 
+              rounded-md opacity-0 invisible transition-all duratiopx300 
+              group-hover:opacity-100 group-hover:visible bottom-[-70px]"
+  >
+    Bulk Upload Students
+  </span>
+            </div>
           </div>
         </div>
       </div>
@@ -364,6 +378,9 @@ const Students = () => {
           <UploadAttendanceData onClose={() => setAttendanceUploadModal(false)} />
         )
       }
+       {studentDataUpload && (
+        <UploadStudentData onClose={() => setStudentDataUpload(false)} />
+      )}
     </div>
   );
 };
