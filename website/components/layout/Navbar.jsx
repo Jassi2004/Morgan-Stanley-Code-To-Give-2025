@@ -1,23 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X, User, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from 'react-icons/fa';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoginDropdownOpen, setIsLoginDropdownOpen] = useState(false);
 
   const navItems = [
-    { label: '', href: '#home' },
-    // { label: 'About', href: '#about' },
-    // { label: 'Our Work', href: '#work' },
-    // { label: 'Gallery', href: '#gallery' },
-    // { label: 'Contact', href: '#contact' }
+    { label: 'About', href: '#about' },
+    { label: 'Our Work', href: '#work' },
+    { label: 'Impact', href: '#impact' },
+    { label: 'Contact', href: '#contact' }
   ];
 
   const loginOptions = [
     { label: 'Admin Login', href: '/login/admin' },
     { label: 'Employee Login', href: '/employee/login' },
     { label: 'Student Login', href: '/student/login' }
+  ];
+
+  const socialLinks = [
+    { icon: <FaFacebook size={20} />, href: 'https://facebook.com/ishanya' },
+    { icon: <FaTwitter size={20} />, href: 'https://twitter.com/ishanya' },
+    { icon: <FaInstagram size={20} />, href: 'https://instagram.com/ishanya' },
+    { icon: <FaLinkedin size={20} />, href: 'https://linkedin.com/company/ishanya' }
   ];
 
   const toggleMenu = () => {
@@ -43,47 +50,56 @@ const Navbar = () => {
   }, []);
 
   return (
-    <nav className="fixed max-h-[60px] top-0 left-0 w-full bg-[#236638] text-white z-50 shadow-md">
-      <div className="max-w-6xl mx-auto mt-[-20px] px-4 py-3 flex justify-between items-center">
-        {/* Logo */}
-        <div className="flex items-center">
-          <img 
-            src="https://bangaloreinternationalcentre.org/wp-content/uploads/Ishanya_logo-592x296.png" 
-            alt="Ishanya India Foundation Logo" 
-            className="h-20 w-auto"
-          />
-        </div>
-
+    <nav className="fixed max-h-[80px] top-0 left-0 w-full bg-[#3B8A4E] text-white z-50 shadow-md">
+      <div className="max-w-7xl mx-auto px-12 py-8 flex justify-between items-center">
         {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center space-x-6">
+        <div className="hidden md:flex items-center space-x-12">
           {navItems.map((item) => (
             <a 
               key={item.label} 
               href={item.href} 
-              className="hover:text-[#ffc34f] transition-colors duration-300"
+              className="text-lg hover:text-[#ffc34f] transition-colors duration-300"
             >
               {item.label}
             </a>
           ))}
+        </div>
+
+        {/* Right side items */}
+        <div className="hidden md:flex items-center space-x-8">
+          {/* Social Links */}
+          <div className="flex items-center space-x-6">
+            {socialLinks.map((social, index) => (
+              <a
+                key={index}
+                href={social.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-[#ffc34f] transition-colors duration-300"
+              >
+                {social.icon}
+              </a>
+            ))}
+          </div>
           
           {/* Login Dropdown */}
           <div className="relative">
             <button
               onClick={toggleLoginDropdown}
-              className="login-button flex items-center space-x-2 hover:text-[#ffc34f] transition-colors duration-300"
+              className="login-button flex items-center space-x-2 text-lg hover:text-[#ffc34f] transition-colors duration-300"
             >
-              <User size={20} />
+              <User size={24} />
               <span>Login</span>
-              <ChevronDown size={16} />
+              <ChevronDown size={20} />
             </button>
             
             {isLoginDropdownOpen && (
-              <div className="login-dropdown absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+              <div className="login-dropdown absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg py-1 z-50">
                 {loginOptions.map((option) => (
                   <Link
                     key={option.label}
                     to={option.href}
-                    className="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors duration-200"
+                    className="block px-6 py-3 text-gray-800 hover:bg-gray-100 transition-colors duration-200 text-base"
                     onClick={() => setIsLoginDropdownOpen(false)}
                   >
                     {option.label}
@@ -95,33 +111,48 @@ const Navbar = () => {
         </div>
 
         {/* Mobile Menu Button */}
-        <div className="md:hidden flex items-center space-x-4">
+        <div className="md:hidden flex items-center space-x-6">
+          {/* Social Links for Mobile */}
+          <div className="flex items-center space-x-4">
+            {socialLinks.map((social, index) => (
+              <a
+                key={index}
+                href={social.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-[#ffc34f] transition-colors duration-300"
+              >
+                {social.icon}
+              </a>
+            ))}
+          </div>
+          
           {/* Login Button for Mobile */}
           <button 
             onClick={toggleLoginDropdown}
             className="text-white focus:outline-none"
           >
-            <User size={24} />
+            <User size={28} />
           </button>
           
           <button 
             onClick={toggleMenu} 
             className="text-white focus:outline-none"
           >
-            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
           </button>
         </div>
       </div>
 
       {/* Mobile Menu Dropdown */}
       {isMenuOpen && (
-        <div className="md:hidden bg-[#236638] absolute top-full left-0 w-full">
-          <div className="flex flex-col items-center py-4 space-y-4">
+        <div className="md:hidden bg-[#222328] absolute top-full left-0 w-full">
+          <div className="flex flex-col items-center py-6 space-y-6">
             {navItems.map((item) => (
               <a 
                 key={item.label} 
                 href={item.href} 
-                className="hover:text-[#ffc34f] transition-colors duration-300"
+                className="text-lg hover:text-[#ffc34f] transition-colors duration-300"
                 onClick={toggleMenu}
               >
                 {item.label}
@@ -132,7 +163,7 @@ const Navbar = () => {
               <Link
                 key={option.label}
                 to={option.href}
-                className="hover:text-[#ffc34f] transition-colors duration-300"
+                className="text-lg hover:text-[#ffc34f] transition-colors duration-300"
                 onClick={toggleMenu}
               >
                 {option.label}
@@ -144,13 +175,13 @@ const Navbar = () => {
 
       {/* Mobile Login Dropdown */}
       {isLoginDropdownOpen && (
-        <div className="md:hidden bg-[#236638] absolute top-full right-0 w-48">
+        <div className="md:hidden bg-[#222328] absolute top-full right-0 w-56">
           <div className="flex flex-col py-4">
             {loginOptions.map((option) => (
               <Link
                 key={option.label}
                 to={option.href}
-                className="px-4 py-2 hover:text-[#ffc34f] transition-colors duration-300"
+                className="px-6 py-3 text-lg hover:text-[#ffc34f] transition-colors duration-300"
                 onClick={() => setIsLoginDropdownOpen(false)}
               >
                 {option.label}

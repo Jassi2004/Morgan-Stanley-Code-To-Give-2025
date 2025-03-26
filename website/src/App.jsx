@@ -22,6 +22,7 @@ import AdminProfile from "../pages/AdminProfile"
 import ViewReport from "../pages/ViewReport"
 import EditStudent from "../components/student/EditStudent";
 // import LandingPage3 from "../pages/LandingPage3";
+import LandingPages from "../pages/LandingPages"
 
 function App() {
   return (
@@ -52,6 +53,7 @@ function App() {
           <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
           <Route path="/employee/profile" element={<EmployeeProfile />} />
           <Route path="/admin/profile" element={<AdminProfile />} />
+          <Route path="/landingPages" element={<LandingPages />} />
         </Route>
       </Routes>
     </Router>

@@ -9,98 +9,143 @@ import { ChevronDown } from "lucide-react";
 import OurProduct from "../components/ui/RollingGallery";
 import Developers from "../components/landingPageComponents/Developers";
 import Footer from "../components/landingPageComponents/Footer";
+import Slider from 'react-slick';
+import { motion } from 'framer-motion';
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
+
+// Add custom styles for the scrollbar
+const customStyles = `
+  .slick-slider {
+    background: white;
+  }
+  .slick-slide {
+    background: white;
+  }
+  .slick-track {
+    background: white;
+  }
+  .slick-list {
+    background: white;
+  }
+`;
 
 const LandingPage = () => {
-  const [showNavbar, setShowNavbar] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isScrolledButton, setIsScrolledButton] = useState(false);
-  const scrollThreshold = window.innerHeight * 7.8;
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(true);
 
-  const handleAutoScroll = () => {
-    window.scrollTo({
-      top: scrollThreshold + 80,
-      behavior: "smooth",
-    });
+  const images = [
+    "https://res.cloudinary.com/dh2gwea4g/image/upload/v1742981609/yannis-h-uaPaEM7MiQQ-unsplash_xc9qoh.jpg",
+    "https://res.cloudinary.com/dh2gwea4g/image/upload/v1742981965/nikhita-s-NsPDiPFTp4c-unsplash_nafumc.jpg",
+    "https://res.cloudinary.com/dh2gwea4g/image/upload/v1742982105/church-of-the-king-j9jZSqfH5YI-unsplash_z0oa6e.jpg"
+  ];
+
+  const settings = {
+    dots: false,
+    infinite: true,
+    speed: 500,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    autoplay: true,
+    autoplaySpeed: 5000,
+    arrows: true,
+    nextArrow: <SampleNextArrow />,
+    prevArrow: <SamplePrevArrow />,
+    beforeChange: (current, next) => {
+      setCurrentSlide(next);
+      setIsAnimating(true);
+    }
   };
 
-  // useEffect(() => {
-  //   const handleScroll = () => {
-  //     if (window.scrollY > scrollThreshold) {
-  //       setShowNavbar(true);
-  //       setIsScrolledButton(true);
-  //     } else {
-  //       setShowNavbar(false);
-  //       setIsScrolledButton(false);
-  //     }
-  //     if (window.scrollY > 100) {
-  //       setIsScrolled(true);
-  //     } else {
-  //       setIsScrolled(false);
-  //     }
-  //   };
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsAnimating(false);
+    }, 2000);
 
-  //   window.addEventListener("scroll", handleScroll);
-  //   return () => {
-  //     window.removeEventListener("scroll", handleScroll);
-  //   };
-  // }, []);
+    return () => clearTimeout(timer);
+  }, [currentSlide]);
+
+  function SampleNextArrow(props) {
+    const { className, style, onClick } = props;
+    return (
+      <div
+        className={className}
+        style={{ ...style, right: '20px', zIndex: 1 }}
+        onClick={onClick}
+      />
+    );
+  }
+
+  function SamplePrevArrow(props) {
+    const { className, style, onClick } = props;
+    return (
+      <div
+        className={className}
+        style={{ ...style, left: '20px', zIndex: 1 }}
+        onClick={onClick}
+      />
+    );
+  }
 
   return (
     <>
-      <div className="overflow-x-hidden relative">
-        {/* Scroll Prompt */}
-        {/* {!isScrolled && (
-          <div className="fixed top-10 left-0 w-full z-50 text-center transition-opacity duration-300">
-          <p className="text-white text-3xl font-light tracking-widest opacity-70 animate-fade-in ">
-            Scroll to Uncover the Journey
-          </p>
-        </div>
-        )} */}
+      <style>{customStyles}</style>
+      <div className="overflow-x-hidden relative bg-white">
+        <Navbar />
+        
+        {/* Hero Section */}
+        <section className="relative h-screen">
+          <Slider {...settings}>
+            {images.map((image, index) => (
+              <div key={`${index}-${currentSlide}`} className="relative h-screen">
+                <div className="absolute inset-0">
+                  <img
+                    src={image}
+                    alt={`Slide ${index + 1}`}
+                    className="w-full h-full object-cover grayscale"
+                  />
+                  <div className="absolute inset-0 bg-black opacity-50"></div>
+                </div>
+                <div className="relative h-full flex items-center justify-center">
+                  <motion.div
+                    key={currentSlide}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8 }}
+                    className="text-center text-white"
+                  >
+                    <motion.h1
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.8, delay: 0.2 }}
+                      className="text-3xl md:text-5xl font-normal tracking-normal mb-6 leading-tight"
+                    >
+                      Making Society More Inclusive
+                    </motion.h1>
+                    <motion.button
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.8, delay: 0.6 }}
+                      className="bg-[#E4B124] text-white px-12 py-4 rounded-full text-lg font-semibold hover:bg-[#f5c13c] transition-colors duration-300 shadow-lg hover:shadow-xl"
+                    >
+                      Join Our Movement
+                    </motion.button>
+                  </motion.div>
+                </div>
+              </div>
+            ))}
+          </Slider>
+        </section>
 
-        {/* {showNavbar && <Navbar />} */}
-        {/* Main Content */}
-        {/* <div className="w-full h-[900vh] mt-16">
-          <LandingPageStory/>
-          </div> */}
-
-        {/* Auto Scroll Button */}
-        {/* {!isScrolledButton && (
-          <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-50">
-          <button 
-          onClick={handleAutoScroll}
-          className="group relative w-24 h-24 border-2 border-white/50 rounded-full bg-transparent backdrop-blur-sm flex items-center justify-center transition-all duration-300 hover:border-white hover:scale-105"
-          >
-          <span className="absolute text-white text-xs font-light tracking-wider opacity-80 group-hover:opacity-100">
-          Skip Story
-          </span>
-          <ChevronDown
-          className="text-white/70 absolute animate-bounce group-hover:text-white" 
-          size={24} 
-          />
-          </button>
-          </div>
-          )} */}
-
-          <Navbar />
         <div className="bg-[#f3e9dc]">
-        <AboutUs />
+          <AboutUs />
           <ImageSlider />
           <FieldWorkGallery />
           <OurProduct autoplay={true} pauseOnHover={true} />
-<Developers />
-<Footer/>
+          <Developers />
+          <Footer/>
         </div>
       </div>
-      {/* {isScrolled && (
-        <div className="fixed top-10 left-0 w-full z-50 text-center transition-opacity duration-300">
-          <p className="text-white text-3xl font-light tracking-widest opacity-70 animate-fade-in ">
-            Scroll to Uncover the Journey
-          </p>
-        </div>
-      )}
-      <div className="w-full h-[900vh] mt-16">
-        <LandingPageStory />
-      </div> */}
     </>
   );
 };
