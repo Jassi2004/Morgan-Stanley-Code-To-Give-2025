@@ -24,98 +24,256 @@ const TimelineScreen = () => {
   // Expanded progress data including previous year
   const progressData = {
     2023: {
-      'January': { marks: 78, assessments: [
-        { id: 1, title: 'Math Quiz', score: 75, date: '2023-01-10' },
-        { id: 2, title: 'Science Test', score: 82, date: '2023-01-20' },
-      ]},
-      'February': { marks: 82, assessments: [
-        { id: 1, title: 'History Essay', score: 88, date: '2023-02-05' },
-        { id: 2, title: 'English Presentation', score: 76, date: '2023-02-15' },
-      ]},
-      'March': { marks: 85, assessments: [
-        { id: 1, title: 'Physics Lab', score: 90, date: '2023-03-08' },
-        { id: 2, title: 'Chemistry Test', score: 80, date: '2023-03-18' },
-      ]},
-      'April': { marks: 79, assessments: [
-        { id: 1, title: 'Geography Project', score: 85, date: '2023-04-12' },
-        { id: 2, title: 'Biology Quiz', score: 73, date: '2023-04-22' },
-      ]},
-      'May': { marks: 88, assessments: [
-        { id: 1, title: 'Math Final', score: 92, date: '2023-05-05' },
-        { id: 2, title: 'Science Final', score: 84, date: '2023-05-15' },
-      ]},
-      'June': { marks: 91, assessments: [
-        { id: 1, title: 'End of Year Project', score: 95, date: '2023-06-10' },
-        { id: 2, title: 'Final Presentation', score: 87, date: '2023-06-20' },
-      ]},
-      'July': { marks: 0, assessments: [] }, // Summer break
-      'August': { marks: 0, assessments: [] }, // Summer break
-      'September': { marks: 80, assessments: [
-        { id: 1, title: 'Back to School Quiz', score: 80, date: '2023-09-15' },
-      ]},
-      'October': { marks: 83, assessments: [
-        { id: 1, title: 'Mid-term Exam', score: 83, date: '2023-10-20' },
-      ]},
-      'November': { marks: 86, assessments: [
-        { id: 1, title: 'Research Paper', score: 86, date: '2023-11-10' },
-      ]},
-      'December': { marks: 89, assessments: [
-        { id: 1, title: 'Final Exam', score: 89, date: '2023-12-15' },
-      ]},
+      'January': { 
+        overall: 3.8, 
+        assessments: [
+          { id: 1, title: 'Cognitive', score: 4, date: '2023-01-10', notes: 'Good problem-solving skills, improving memory tasks' },
+          { id: 2, title: 'Communication', score: 3.5, date: '2023-01-20', notes: 'Responds well in one-on-one sessions, needs support in groups' },
+          { id: 3, title: 'Attention', score: 3, date: '2023-01-15', notes: 'Can focus for 25 minutes, still easily distracted' },
+          { id: 4, title: 'Behavior', score: 4.5, date: '2023-01-25', notes: 'Shows positive behaviors, follows classroom rules consistently' },
+          { id: 5, title: 'Others', score: 4, date: '2023-01-30', notes: 'Good social interaction with peers' }
+        ]
+      },
+      'February': { 
+        overall: 4.0, 
+        assessments: [
+          { id: 1, title: 'Cognitive', score: 4.5, date: '2023-02-10', notes: 'Excellent pattern recognition, cognitive flexibility improving' },
+          { id: 2, title: 'Communication', score: 3.5, date: '2023-02-15', notes: 'Better verbal expression, still working on non-verbal cues' },
+          { id: 3, title: 'Attention', score: 3.5, date: '2023-02-12', notes: 'Focus duration increasing, responds well to timers' },
+          { id: 4, title: 'Behavior', score: 4.5, date: '2023-02-20', notes: 'Consistent positive behavior across settings' },
+          { id: 5, title: 'Others', score: 4, date: '2023-02-25', notes: 'More engaged in group activities' }
+        ]
+      },
+      'March': { 
+        overall: 4.1, 
+        assessments: [
+          { id: 1, title: 'Cognitive', score: 4.5, date: '2023-03-08', notes: 'Strong logical reasoning, excelling in puzzle tasks' },
+          { id: 2, title: 'Communication', score: 4, date: '2023-03-18', notes: 'Significant improvement in verbal communication' },
+          { id: 3, title: 'Attention', score: 3.5, date: '2023-03-15', notes: 'Can maintain focus for 30 minutes now' },
+          { id: 4, title: 'Behavior', score: 4.5, date: '2023-03-20', notes: 'Very good self-regulation skills' },
+          { id: 5, title: 'Others', score: 4, date: '2023-03-25', notes: 'Showing leadership qualities in group activities' }
+        ]
+      },
+      'April': { 
+        overall: 3.9, 
+        assessments: [
+          { id: 1, title: 'Cognitive', score: 4, date: '2023-04-12', notes: 'Good abstract thinking, working on sequential tasks' },
+          { id: 2, title: 'Communication', score: 4, date: '2023-04-22', notes: 'Improved narrative skills, better turn-taking in conversations' },
+          { id: 3, title: 'Attention', score: 3, date: '2023-04-18', notes: 'Some regression in attention span, possibly due to schedule changes' },
+          { id: 4, title: 'Behavior', score: 4.5, date: '2023-04-25', notes: 'Maintains positive behavior despite challenges' },
+          { id: 5, title: 'Others', score: 4, date: '2023-04-28', notes: 'Adapting well to new classroom routines' }
+        ]
+      },
+      'May': { 
+        overall: 4.2, 
+        assessments: [
+          { id: 1, title: 'Cognitive', score: 4.5, date: '2023-05-10', notes: 'Strong analytical skills, thriving with complex tasks' },
+          { id: 2, title: 'Communication', score: 4, date: '2023-05-20', notes: 'Using more complex sentences, better listening skills' },
+          { id: 3, title: 'Attention', score: 3.5, date: '2023-05-15', notes: 'Improved focus, especially in preferred activities' },
+          { id: 4, title: 'Behavior', score: 5, date: '2023-05-22', notes: 'Excellent behavior, helping peers with regulation' },
+          { id: 5, title: 'Others', score: 4, date: '2023-05-25', notes: 'Strong participation in extracurricular activities' }
+        ]
+      },
+      'June': { 
+        overall: 4.3, 
+        assessments: [
+          { id: 1, title: 'Cognitive', score: 4.5, date: '2023-06-10', notes: 'Excellent final project showing high cognitive skills' },
+          { id: 2, title: 'Communication', score: 4.5, date: '2023-06-20', notes: 'Great progress in communication skills this semester' },
+          { id: 3, title: 'Attention', score: 4, date: '2023-06-15', notes: 'Significant improvement in sustained attention' },
+          { id: 4, title: 'Behavior', score: 4.5, date: '2023-06-25', notes: 'Consistent positive behavior throughout the term' },
+          { id: 5, title: 'Others', score: 4, date: '2023-06-28', notes: 'Good end-of-year social adaptation' }
+        ]
+      },
+      'July': { 
+        overall: 0, 
+        assessments: [] 
+      }, // Summer break
+      'August': { 
+        overall: 0, 
+        assessments: [] 
+      }, // Summer break
+      'September': { 
+        overall: 3.8, 
+        assessments: [
+          { id: 1, title: 'Cognitive', score: 4, date: '2023-09-10', notes: 'Good return from summer, retaining concepts well' },
+          { id: 2, title: 'Communication', score: 3.5, date: '2023-09-15', notes: 'Some regression in communication after break' },
+          { id: 3, title: 'Attention', score: 3.5, date: '2023-09-12', notes: 'Working on rebuilding attention stamina' },
+          { id: 4, title: 'Behavior', score: 4.5, date: '2023-09-20', notes: 'Excellent behavior transition back to school' },
+          { id: 5, title: 'Others', score: 3.5, date: '2023-09-25', notes: 'Readjusting to school social environment' }
+        ]
+      },
+      'October': { 
+        overall: 4.0, 
+        assessments: [
+          { id: 1, title: 'Cognitive', score: 4.5, date: '2023-10-10', notes: 'Excelling in new cognitive challenges' },
+          { id: 2, title: 'Communication', score: 4, date: '2023-10-20', notes: 'Communication back to pre-summer levels' },
+          { id: 3, title: 'Attention', score: 3.5, date: '2023-10-15', notes: 'Steady improvement in focus duration' },
+          { id: 4, title: 'Behavior', score: 4, date: '2023-10-25', notes: 'Good behavioral consistency' },
+          { id: 5, title: 'Others', score: 4, date: '2023-10-28', notes: 'Engaging well with peers in collaborative work' }
+        ]
+      },
+      'November': { 
+        overall: 4.1, 
+        assessments: [
+          { id: 1, title: 'Cognitive', score: 4.5, date: '2023-11-10', notes: 'Strong performance in mid-term assessments' },
+          { id: 2, title: 'Communication', score: 4, date: '2023-11-15', notes: 'Excellent presentations, good questioning skills' },
+          { id: 3, title: 'Attention', score: 3.5, date: '2023-11-12', notes: 'Consistent attention in most classroom settings' },
+          { id: 4, title: 'Behavior', score: 4.5, date: '2023-11-20', notes: 'Positive behavior even during challenging units' },
+          { id: 5, title: 'Others', score: 4, date: '2023-11-25', notes: 'Contributing well to class discussions' }
+        ]
+      },
+      'December': { 
+        overall: 4.2, 
+        assessments: [
+          { id: 1, title: 'Cognitive', score: 4.5, date: '2023-12-10', notes: 'Excellent end-of-term cognitive assessment' },
+          { id: 2, title: 'Communication', score: 4, date: '2023-12-15', notes: 'Strong verbal and written communication skills' },
+          { id: 3, title: 'Attention', score: 4, date: '2023-12-12', notes: 'Improved attention despite holiday excitement' },
+          { id: 4, title: 'Behavior', score: 4.5, date: '2023-12-20', notes: 'Maintaining excellent behavior standards' },
+          { id: 5, title: 'Others', score: 4, date: '2023-12-22', notes: 'Great participation in holiday activities' }
+        ]
+      },
     },
     2024: {
-      'January': { marks: 78, assessments: [
-        { id: 1, title: 'Math Quiz', score: 75, date: '2023-01-10' },
-        { id: 2, title: 'Science Test', score: 82, date: '2023-01-20' },
-      ]},
-      'February': { marks: 82, assessments: [
-        { id: 1, title: 'History Essay', score: 88, date: '2023-02-05' },
-        { id: 2, title: 'English Presentation', score: 76, date: '2023-02-15' },
-      ]},
-      'March': { marks: 85, assessments: [
-        { id: 1, title: 'Physics Lab', score: 90, date: '2023-03-08' },
-        { id: 2, title: 'Chemistry Test', score: 80, date: '2023-03-18' },
-      ]},
-      'April': { marks: 79, assessments: [
-        { id: 1, title: 'Geography Project', score: 85, date: '2023-04-12' },
-        { id: 2, title: 'Biology Quiz', score: 73, date: '2023-04-22' },
-      ]},
-      'May': { marks: 88, assessments: [
-        { id: 1, title: 'Math Final', score: 92, date: '2023-05-05' },
-        { id: 2, title: 'Science Final', score: 84, date: '2023-05-15' },
-      ]},
-      'June': { marks: 91, assessments: [
-        { id: 1, title: 'End of Year Project', score: 95, date: '2023-06-10' },
-        { id: 2, title: 'Final Presentation', score: 87, date: '2023-06-20' },
-      ]},
-      'July': { marks: 0, assessments: [] }, // Summer break
-      'August': { marks: 0, assessments: [] }, // Summer break
-      'September': { marks: 80, assessments: [
-        { id: 1, title: 'Back to School Quiz', score: 80, date: '2023-09-15' },
-      ]},
-      'October': { marks: 83, assessments: [
-        { id: 1, title: 'Mid-term Exam', score: 83, date: '2023-10-20' },
-      ]},
-      'November': { marks: 86, assessments: [
-        { id: 1, title: 'Research Paper', score: 86, date: '2023-11-10' },
-      ]},
-      'December': { marks: 89, assessments: [
-        { id: 1, title: 'Final Exam', score: 89, date: '2023-12-15' },
-      ]},
+      'January': { 
+        overall: 4.0, 
+        assessments: [
+          { id: 1, title: 'Cognitive', score: 4.5, date: '2024-01-10', notes: 'Strong start to new year, excellent cognitive flexibility' },
+          { id: 2, title: 'Communication', score: 4, date: '2024-01-20', notes: 'Better expressive language, still working on receptive' },
+          { id: 3, title: 'Attention', score: 3.5, date: '2024-01-15', notes: 'Can focus for longer periods with fewer breaks' },
+          { id: 4, title: 'Behavior', score: 4.5, date: '2024-01-25', notes: 'Excellent self-regulation, good transition skills' },
+          { id: 5, title: 'Others', score: 3.5, date: '2024-01-30', notes: 'Forming new peer relationships well' }
+        ]
+      },
+      'February': { 
+        overall: 4.1, 
+        assessments: [
+          { id: 1, title: 'Cognitive', score: 4.5, date: '2024-02-10', notes: 'Excellent critical thinking in new units' },
+          { id: 2, title: 'Communication', score: 4, date: '2024-02-15', notes: 'Good progress in conversation skills' },
+          { id: 3, title: 'Attention', score: 3.5, date: '2024-02-12', notes: 'Continues to show improvement in sustained attention' },
+          { id: 4, title: 'Behavior', score: 4.5, date: '2024-02-20', notes: 'Very good emotional regulation during challenges' },
+          { id: 5, title: 'Others', score: 4, date: '2024-02-25', notes: 'Showing interest in helping younger students' }
+        ]
+      },
+      'March': { 
+        overall: 4.2, 
+        assessments: [
+          { id: 1, title: 'Cognitive', score: 4.5, date: '2024-03-08', notes: 'High performance in analytical thinking tasks' },
+          { id: 2, title: 'Communication', score: 4, date: '2024-03-18', notes: 'Excellent presentation on self-chosen topic' },
+          { id: 3, title: 'Attention', score: 4, date: '2024-03-15', notes: 'New strategies for attention management working well' },
+          { id: 4, title: 'Behavior', score: 4.5, date: '2024-03-20', notes: 'Consistently positive behavior in all settings' },
+          { id: 5, title: 'Others', score: 4, date: '2024-03-25', notes: 'Taking on more responsibilities in class' }
+        ]
+      },
+      'April': { 
+        overall: 4.3, 
+        assessments: [
+          { id: 1, title: 'Cognitive', score: 4.5, date: '2024-04-12', notes: 'Excelling in complex problem-solving activities' },
+          { id: 2, title: 'Communication', score: 4.5, date: '2024-04-22', notes: 'Great improvement in group discussion skills' },
+          { id: 3, title: 'Attention', score: 4, date: '2024-04-18', notes: 'Good focus even during high-energy activities' },
+          { id: 4, title: 'Behavior', score: 4.5, date: '2024-04-25', notes: 'Excellent behavior, helping peers with regulation' },
+          { id: 5, title: 'Others', score: 4, date: '2024-04-28', notes: 'Showing leadership in collaborative projects' }
+        ]
+      },
+      'May': { 
+        overall: 4.4, 
+        assessments: [
+          { id: 1, title: 'Cognitive', score: 5, date: '2024-05-10', notes: 'Outstanding performance in final cognitive assessment' },
+          { id: 2, title: 'Communication', score: 4.5, date: '2024-05-20', notes: 'Excellent communication across all contexts' },
+          { id: 3, title: 'Attention', score: 4, date: '2024-05-15', notes: 'Very good attention management, using tools independently' },
+          { id: 4, title: 'Behavior', score: 5, date: '2024-05-22', notes: 'Role model behavior for other students' },
+          { id: 5, title: 'Others', score: 3.5, date: '2024-05-25', notes: 'Some challenges with end-of-year transitions' }
+        ]
+      },
+      'June': { 
+        overall: 4.5, 
+        assessments: [
+          { id: 1, title: 'Cognitive', score: 5, date: '2024-06-10', notes: 'Exceptional year-end project showing cognitive growth' },
+          { id: 2, title: 'Communication', score: 4.5, date: '2024-06-20', notes: 'Significant progress in all communication areas' },
+          { id: 3, title: 'Attention', score: 4, date: '2024-06-15', notes: 'Consistent attention throughout the day' },
+          { id: 4, title: 'Behavior', score: 5, date: '2024-06-25', notes: 'Exemplary behavior throughout the school year' },
+          { id: 5, title: 'Others', score: 4, date: '2024-06-28', notes: 'Well prepared for next academic level' }
+        ]
+      },
+      'July': { 
+        overall: 0, 
+        assessments: [] 
+      }, // Summer break
+      'August': { 
+        overall: 0, 
+        assessments: [] 
+      }, // Summer break
+      'September': { 
+        overall: 4.1, 
+        assessments: [
+          { id: 1, title: 'Cognitive', score: 4.5, date: '2024-09-10', notes: 'Strong cognitive retention over summer break' },
+          { id: 2, title: 'Communication', score: 4, date: '2024-09-15', notes: 'Good communication skills maintained' },
+          { id: 3, title: 'Attention', score: 3.5, date: '2024-09-12', notes: 'Reestablishing attention routines after break' },
+          { id: 4, title: 'Behavior', score: 4.5, date: '2024-09-20', notes: 'Excellent behavior transition to new grade' },
+          { id: 5, title: 'Others', score: 4, date: '2024-09-25', notes: 'Adapting well to new classroom structure' }
+        ]
+      },
+      'October': { 
+        overall: 4.2, 
+        assessments: [
+          { id: 1, title: 'Cognitive', score: 4.5, date: '2024-10-10', notes: 'Excellent performance in first unit assessments' },
+          { id: 2, title: 'Communication', score: 4, date: '2024-10-20', notes: 'Strong communication with new peer group' },
+          { id: 3, title: 'Attention', score: 4, date: '2024-10-15', notes: 'Good focus in new, more demanding curriculum' },
+          { id: 4, title: 'Behavior', score: 4.5, date: '2024-10-25', notes: 'Very good self-regulation in challenging activities' },
+          { id: 5, title: 'Others', score: 4, date: '2024-10-28', notes: 'Contributing positively to classroom community' }
+        ]
+      },
+      'November': { 
+        overall: 4.3, 
+        assessments: [
+          { id: 1, title: 'Cognitive', score: 4.5, date: '2024-11-10', notes: 'Excellent mid-term assessment results' },
+          { id: 2, title: 'Communication', score: 4.5, date: '2024-11-15', notes: 'Great progress in presentation skills' },
+          { id: 3, title: 'Attention', score: 4, date: '2024-11-12', notes: 'Good sustained attention even during complex tasks' },
+          { id: 4, title: 'Behavior', score: 4.5, date: '2024-11-20', notes: 'Consistently positive behavior across all settings' },
+          { id: 5, title: 'Others', score: 4, date: '2024-11-25', notes: 'Shows excellent teamwork skills' }
+        ]
+      },
+      'December': { 
+        overall: 4.4, 
+        assessments: [
+          { id: 1, title: 'Cognitive', score: 5, date: '2024-12-10', notes: 'Outstanding end-of-term assessment performance' },
+          { id: 2, title: 'Communication', score: 4.5, date: '2024-12-15', notes: 'Excellent verbal and written expression' },
+          { id: 3, title: 'Attention', score: 4, date: '2024-12-12', notes: 'Great focus despite holiday activities' },
+          { id: 4, title: 'Behavior', score: 4.5, date: '2024-12-20', notes: 'Excellent behavior throughout the term' },
+          { id: 5, title: 'Others', score: 4, date: '2024-12-22', notes: 'Great participation in all school events' }
+        ]
+      },
     },
     2025: {
-      'January': { marks: 82, assessments: [
-        { id: 1, title: 'Winter Math Challenge', score: 85, date: '2024-01-15' },
-        { id: 2, title: 'Science Olympiad', score: 79, date: '2024-01-25' },
-      ]},
-      'February': { marks: 86, assessments: [
-        { id: 1, title: 'Literature Analysis', score: 90, date: '2024-02-10' },
-        { id: 2, title: 'History Presentation', score: 82, date: '2024-02-20' },
-      ]},
-      'March': { marks: 88, assessments: [
-        { id: 1, title: 'Biology Project', score: 92, date: '2024-03-05' },
-        { id: 2, title: 'Math Competition', score: 84, date: '2024-03-15' },
-      ]},
+      'January': { 
+        overall: 4.3, 
+        assessments: [
+          { id: 1, title: 'Cognitive', score: 4.5, date: '2025-01-10', notes: 'Excellent start to the new year, mastering new concepts quickly' },
+          { id: 2, title: 'Communication', score: 4.5, date: '2025-01-20', notes: 'Great communication skills in new project-based learning' },
+          { id: 3, title: 'Attention', score: 4, date: '2025-01-15', notes: 'Very good focus with minimal prompting needed' },
+          { id: 4, title: 'Behavior', score: 4.5, date: '2025-01-25', notes: 'Excellent self-management in all contexts' },
+          { id: 5, title: 'Others', score: 4, date: '2025-01-30', notes: 'Taking on mentor role with younger students' }
+        ]
+      },
+      'February': { 
+        overall: 4.4, 
+        assessments: [
+          { id: 1, title: 'Cognitive', score: 5, date: '2025-02-10', notes: 'Outstanding problem-solving in STEM project' },
+          { id: 2, title: 'Communication', score: 4.5, date: '2025-02-15', notes: 'Excellent debate participation and persuasive skills' },
+          { id: 3, title: 'Attention', score: 4, date: '2025-02-12', notes: 'Consistent attention span across all subjects' },
+          { id: 4, title: 'Behavior', score: 4.5, date: '2025-02-20', notes: 'Very good emotional regulation during challenging work' },
+          { id: 5, title: 'Others', score: 4, date: '2025-02-25', notes: 'Shows great organization and planning skills' }
+        ]
+      },
+      'March': { 
+        overall: 4.5, 
+        assessments: [
+          { id: 1, title: 'Cognitive', score: 5, date: '2025-03-08', notes: 'Exceptional analytical thinking in research project' },
+          { id: 2, title: 'Communication', score: 4.5, date: '2025-03-18', notes: 'Outstanding presentation to school assembly' },
+          { id: 3, title: 'Attention', score: 4.5, date: '2025-03-15', notes: 'Excellent task persistence even with distractions' },
+          { id: 4, title: 'Behavior', score: 4.5, date: '2025-03-20', notes: 'Consistent positive behavior in all environments' },
+          { id: 5, title: 'Others', score: 4, date: '2025-03-25', notes: 'Taking initiative in community service projects' }
+        ]
+      },
       // Other months can be added as they progress
     }
   };

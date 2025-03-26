@@ -4,26 +4,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Award, Star, TrendingUp } from 'lucide-react-native';
 
 const ProgressModal = ({ visible, month, data, onClose }) => {
-  // Default data with fallback values to prevent undefined errors
-  const reportData = {
-    reportDetails: {
-      reportYear: data?.reportDetails?.reportYear || '2024',
-      reportQuarter: data?.reportDetails?.reportQuarter || 'Q2'
-    },
-    programFeedback: {
-      programName: data?.programFeedback?.programName || 'Shaale',
-      programSkillsFeedback: data?.programFeedback?.programSkillsFeedback || [
-        { skillName: 'Communication', skillScore: 85 },
-        { skillName: 'Problem Solving', skillScore: 78 },
-        { skillName: 'Creativity', skillScore: 90 }
-      ]
-    },
-    feedback: {
-      suggestions: data?.feedback?.suggestions || 'Keep up the great work!',
-      teacherComments: data?.feedback?.teacherComments || 'Showing good progress in class.'
-    },
-    overallScore: data?.overallScore || 84
-  };
+  if (!data) {
+    return null;
+  }
+
+  const { overall, assessments } = data;
 
   return (
     <Modal
@@ -41,12 +26,8 @@ const ProgressModal = ({ visible, month, data, onClose }) => {
             <Text style={styles.monthTitle}>{month} Report</Text>
             <View style={styles.headerStats}>
               <View style={styles.statItem}>
-                <Award color="#FF4081" size={24} />
-                <Text style={styles.statText}>{reportData.reportDetails.reportQuarter}</Text>
-              </View>
-              <View style={styles.statItem}>
                 <Star color="#FF4081" size={24} />
-                <Text style={styles.statText}>{reportData.overallScore}%</Text>
+                <Text style={styles.statText}>Overall: {overall}/5</Text>
               </View>
             </View>
           </View>
@@ -56,29 +37,48 @@ const ProgressModal = ({ visible, month, data, onClose }) => {
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Program Progress</Text>
-              <Text style={styles.programName}>{reportData.programFeedback.programName}</Text>
+              <Text style={styles.sectionTitle}>Development Assessment</Text>
               
-              {reportData.programFeedback.programSkillsFeedback.map((skill, index) => (
-                <View key={index} style={styles.skillItem}>
-                  <Text style={styles.skillName}>{skill.skillName}</Text>
+              {assessments && assessments.map((assessment, index) => (
+                <View key={index} style={styles.assessmentItem}>
+                  <View style={styles.assessmentHeader}>
+                    <Text style={styles.assessmentTitle}>{assessment.title}</Text>
+                    <View style={styles.scoreContainer}>
+                      <Text style={[
+                        styles.assessmentScore, 
+                        { color: getScoreColor(assessment.score) }
+                      ]}>
+                        {assessment.score}/5
+                      </Text>
+                    </View>
+                  </View>
+                  
                   <View style={styles.skillBarContainer}>
                     <View 
                       style={[
                         styles.skillBar, 
-                        { width: `${skill.skillScore}%`, backgroundColor: getSkillColor(skill.skillScore) }
+                        { 
+                          width: `${(assessment.score / 5) * 100}%`, 
+                          backgroundColor: getScoreColor(assessment.score) 
+                        }
                       ]} 
                     />
                   </View>
-                  <Text style={styles.skillScore}>{skill.skillScore}%</Text>
+                  
+                  <Text style={styles.assessmentNotes}>{assessment.notes}</Text>
                 </View>
               ))}
             </View>
 
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Teacher's Feedback</Text>
-              <Text style={styles.feedbackText}>{reportData.feedback.teacherComments}</Text>
-            </View>
+            {assessments && assessments.length > 0 && (
+              <View style={styles.sectionContainer}>
+                <Text style={styles.sectionTitle}>Teacher's Notes</Text>
+                <Text style={styles.feedbackText}>
+                  Overall, {month}'s assessment shows {getOverallFeedback(overall)} progress in the key developmental areas. 
+                  Notable strengths are in {getStrengthAreas(assessments)} with opportunities for growth in {getGrowthAreas(assessments)}.
+                </Text>
+              </View>
+            )}
           </ScrollView>
 
           <TouchableOpacity 
@@ -93,11 +93,34 @@ const ProgressModal = ({ visible, month, data, onClose }) => {
   );
 };
 
-// Helper function to get skill color based on score
-const getSkillColor = (score) => {
-  if (score < 50) return '#FF6B6B';
-  if (score < 75) return '#FFD93D';
-  return '#6BCB77';
+// Helper function to get score color based on score out of 5
+const getScoreColor = (score) => {
+  if (score < 2.5) return '#FF6B6B';
+  if (score < 3.5) return '#FFD93D';
+  if (score < 4.5) return '#4CAF50';
+  return '#1E88E5';
+};
+
+// Helper function to determine overall feedback
+const getOverallFeedback = (overall) => {
+  if (overall < 2.5) return 'concerning';
+  if (overall < 3.5) return 'satisfactory';
+  if (overall < 4.5) return 'good';
+  return 'excellent';
+};
+
+// Helper function to find strengths
+const getStrengthAreas = (assessments) => {
+  const sortedAssessments = [...assessments].sort((a, b) => b.score - a.score);
+  const topTwo = sortedAssessments.slice(0, 2);
+  return topTwo.map(a => a.title).join(' and ');
+};
+
+// Helper function to find growth areas
+const getGrowthAreas = (assessments) => {
+  const sortedAssessments = [...assessments].sort((a, b) => a.score - b.score);
+  const lowestTwo = sortedAssessments.slice(0, 2);
+  return lowestTwo.map(a => a.title).join(' and ');
 };
 
 const styles = StyleSheet.create({
@@ -139,7 +162,8 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   statText: {
-    fontSize: 16,
+    fontSize: 18,
+    fontWeight: 'bold',
     color: '#5D4037',
   },
   contentContainer: {
@@ -155,43 +179,56 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#FF4081',
-    marginBottom: 10,
-  },
-  programName: {
-    fontSize: 16,
-    color: '#5D4037',
-    marginBottom: 10,
+    marginBottom: 15,
     textAlign: 'center',
   },
-  skillItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
+  assessmentItem: {
+    marginBottom: 20,
+    backgroundColor: 'rgba(255,255,255,0.5)',
+    borderRadius: 10,
+    padding: 12,
   },
-  skillName: {
-    flex: 2,
+  assessmentHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  assessmentTitle: {
     fontSize: 16,
+    fontWeight: 'bold',
     color: '#5D4037',
   },
+  scoreContainer: {
+    backgroundColor: 'rgba(255,255,255,0.7)',
+    borderRadius: 15,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  assessmentScore: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   skillBarContainer: {
-    flex: 3,
     height: 10,
     backgroundColor: '#E0E0E0',
     borderRadius: 5,
     overflow: 'hidden',
-    marginHorizontal: 10,
+    marginBottom: 10,
   },
   skillBar: {
     height: '100%',
     borderRadius: 5,
   },
-  skillScore: {
+  assessmentNotes: {
     fontSize: 14,
     color: '#5D4037',
+    fontStyle: 'italic',
   },
   feedbackText: {
     fontSize: 16,
     color: '#5D4037',
+    lineHeight: 22,
     textAlign: 'center',
   },
   closeButton: {

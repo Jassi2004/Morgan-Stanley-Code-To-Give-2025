@@ -40,6 +40,7 @@ export default function Home() {
         faculty: "Faculty",
         speechTherapy: "Speech Therapy",
         artEducation: "Art Education",
+        occupationalTherapy: "Occupational Therapy",
         birthdayMessage: "Rahul's birthday is today!🎂",
         birthdaySubtext: "Wish them a happy birthday!",
         birthdayPlaceholder: "Write your birthday wish...",

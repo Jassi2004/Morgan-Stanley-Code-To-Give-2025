@@ -7,7 +7,7 @@ import Navbar from '../components/Navbar';
 import { fetchTranslation } from '../utils/translate';
 import { useLanguage } from '../context/LanguageContext';
 
-const DEFAULT_EDUCATOR_IMAGE = "https://res.cloudinary.com/dh2gwea4g/image/upload/v1710834756/educator_default_kxoxyk.png";
+const DEFAULT_EDUCATOR_IMAGE = "https://res.cloudinary.com/dh2gwea4g/image/upload/v1742700741/educator1_hp7vhz.jpg";
 
 export default function PrimaryEducator() {
     const navigation = useNavigation();
