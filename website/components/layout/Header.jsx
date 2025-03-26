@@ -116,7 +116,50 @@ const Header = ({ sidebarOpen, setSidebarOpen }) => {
       <h1 className="text-[var(--color-text-primary)] text-lg font-bold">
         Educator Dashboard
       </h1>
-      <div className="gap-10">
+      <div className="gap-10 flex">
+      <button
+          onClick={toggleTheme}
+          className="p-2 rounded-full hover:bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)]"
+        >
+          {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+        </button>
+        <div className="relative" ref={notificationRef}>
+            <button
+              onClick={() => setNotificationsOpen(!notificationsOpen)}
+              className="p-2 rounded-full hover:bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] relative"
+            >
+              <Bell size={20} />
+              {/* {notificationArray.length > 0 && (
+                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[var(--color-danger)]"></span>
+              )} */}
+            </button>
+
+            {notificationsOpen && (
+              <div className="absolute right-0 mt-2 w-80 rounded-lg shadow-lg bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)] z-10">
+                <div className="p-4 border-b border-[var(--color-border-primary)]">
+                  <h3 className="font-semibold text-[var(--color-text-primary)]">Notifications</h3>
+                </div>
+                <div className="max-h-96 overflow-y-auto">
+                  {notificationArray.slice(0, notificationLimit).map(notification => (
+                    <div key={notification.id} className="p-4 border-b border-[var(--color-border-primary)] hover:bg-[var(--color-bg-secondary)]">
+                      <p className="text-sm text-[var(--color-text-primary)]">{notification.message}</p>
+                      <p className="text-xs text-[var(--color-text-accent)] mt-1">{notification.time}</p>
+                    </div>
+                  ))}
+                </div>
+                {notificationLimit < notificationArray.length && (
+                  <div className="p-2 text-center">
+                    <button
+                      onClick={() => setNotificationLimit(notificationLimit + 3)}
+                      className="text-sm text-[var(--color-brand)] hover:underline"
+                    >
+                      View more
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
       <button
         onClick={() => navigate('/employee/profile')}
@@ -134,12 +177,7 @@ const Header = ({ sidebarOpen, setSidebarOpen }) => {
   <header className="bg-[var(--color-bg-primary)] border-b border-[var(--color-border-primary)] py-4 px-6">
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-4">
-        {/* <button 
-          onClick={toggleSidebar} 
-          className="text-[var(--color-text-primary)] hover:text-[var(--color-brand)] focus:outline-none"
-        >
-          {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
-        </button> */}
+        Welcome Admin
       </div>
 
       <div className="flex items-center gap-4">

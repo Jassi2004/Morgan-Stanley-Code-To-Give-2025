@@ -288,7 +288,7 @@ export default function Orb({
     <div className="relative w-full h-full">
       <div ref={ctnDom} className="w-full h-full absolute inset-0" />
       <div className="absolute inset-0 flex items-center justify-center text-white/70 font-medium text-lg pointer-events-none">
-        Ask IshanyaAI 
+        IshanyaAI 
       </div>
     </div>
   );
