@@ -16,8 +16,7 @@ import StudentProfile from "../components/student/StudentProfile";
 import AdminLogin from "../pages/AdminLogin";
 import EmployeeRegister from "../pages/EmplooyeeRegister";
 import EmployeeLogin from "../pages/EmployeeLogin";
-import LandingPage2 from "../pages/LandingPage2";
-import LandingPage3 from "../pages/LandingPage3";
+import LandingPage2 from "../pages/LandingPage";
 import EmployeeProfile from "../pages/EmployeeProfile"
 import AdminProfile from "../pages/AdminProfile"
 import ViewReport from "../pages/ViewReport"
@@ -41,9 +40,6 @@ function App() {
         <Route path="/employee/register" element={<EmployeeRegister />} />
         <Route path="/employee/login" element={<EmployeeLogin />} />
         <Route path="/login/admin" element={<AdminLogin />} />
-
-        <Route path="/landing" element={<LandingPage2/>}/> 
-        <Route path="/landing3d" element={<LandingPage3/>}/> 
 
         <Route path="/" element={<LandingPage2/>}/> 
 

@@ -92,6 +92,7 @@ const loginEmployeeAccount = asyncHandler(async (req, res) => {
 
         // Find employee by email
         const user = await Employee.findOne({ email }).select("+password"); 
+        console.log("user : ", user);
         if (!user) {
             throw new ApiError(401, "Invalid email or password");
         }
