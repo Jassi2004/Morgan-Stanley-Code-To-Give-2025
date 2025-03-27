@@ -16,7 +16,7 @@ import StudentProfile from "../components/student/StudentProfile";
 import AdminLogin from "../pages/AdminLogin";
 import EmployeeRegister from "../pages/EmplooyeeRegister";
 import EmployeeLogin from "../pages/EmployeeLogin";
-import LandingPage2 from "../pages/LandingPage";
+import LandingPage2 from "../pages/LandingPage2";
 import EmployeeProfile from "../pages/EmployeeProfile"
 import AdminProfile from "../pages/AdminProfile"
 import ViewReport from "../pages/ViewReport"
@@ -25,7 +25,7 @@ import EditStudent from "../components/student/EditStudent";
 import StudentDashboard from "../pages/StudentDashboard";
 import AttendanceChart from "../pages/AttendanceCharts";
 
-import LandingPage from "../pages/LandingPage";
+//import LandingPage from "../pages/LandingPage";
 
 // import LandingPage3 from "../pages/LandingPage3";
 // import LandingPages from "../pages/LandingPage2"

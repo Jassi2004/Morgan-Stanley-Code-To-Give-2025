@@ -160,13 +160,14 @@ export default function Home() {
                 <View style={styles.headerLeft}>
                     {/* Font Size Control Button */}
                     <TouchableOpacity
-                        style={styles.headerButton}
+                        style={[styles.headerButton, styles.fontSizeButton]}
                         onPress={() => {
                             setControlsVisible(!controlsVisible);
                             setLangSwitchVisible(false);
                         }}
                     >
-                        <FontAwesome name="text-height" size={24} color="#001F3F" />
+                        <FontAwesome name="text-height" size={20} color="#001F3F" />
+                        <Text style={styles.fontButtonLabelText}>Font Size</Text>
                     </TouchableOpacity>
 
                     {/* Language Switch Button */}
@@ -187,18 +188,24 @@ export default function Home() {
                 {/* Font Size Controls Popup */}
                 {controlsVisible && (
                     <View style={[styles.popup, styles.fontControlsPopup]}>
-                        <TouchableOpacity
-                            style={styles.fontButton}
-                            onPress={decreaseFontSize}
-                        >
-                            <Text style={styles.fontButtonText}>A-</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            style={styles.fontButton}
-                            onPress={increaseFontSize}
-                        >
-                            <Text style={styles.fontButtonText}>A+</Text>
-                        </TouchableOpacity>
+                        <Text style={styles.popupTitle}>Adjust Font Size</Text>
+                        <View style={styles.fontControlsRow}>
+                            <TouchableOpacity
+                                style={styles.fontButton}
+                                onPress={decreaseFontSize}
+                            >
+                                <Text style={styles.fontButtonText}>A-</Text>
+                            </TouchableOpacity>
+                            <View style={styles.fontScaleIndicator}>
+                                <Text style={styles.fontScaleText}>{Math.round(fontScale * 100)}%</Text>
+                            </View>
+                            <TouchableOpacity
+                                style={styles.fontButton}
+                                onPress={increaseFontSize}
+                            >
+                                <Text style={styles.fontButtonText}>A+</Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
                 )}
 
@@ -399,7 +406,7 @@ export default function Home() {
                 {/* Success Stories Section */}
                 <View style={styles.section}>
                     <Text style={[styles.sectionTitle, { fontSize: scaledFont(18) }]}>Success Stories</Text>
-                    <Text style={[styles.sectionSubtitle, { fontSize: scaledFont(14) }]}>Inspiring journeys of children with ADHD</Text>
+                    <Text style={[styles.sectionSubtitle, { fontSize: scaledFont(14) }]}>Inspiring journeys of people with ADHD who achieved greatness</Text>
                     <ScrollView 
                         horizontal={true}
                         showsHorizontalScrollIndicator={false}
@@ -407,61 +414,76 @@ export default function Home() {
                     >
                         <TouchableOpacity 
                             style={styles.articleCard}
-                            onPress={() => Linking.openURL('https://medium.com/@adhdparenting/from-struggle-to-success-how-early-intervention-transformed-my-sons-life-8f2d3c4e5a1b')}
+                            onPress={() => Linking.openURL('https://www.additudemag.com/michael-phelps-adhd/')}
                         >
                             <Image 
-                                source={{ uri: 'https://images.unsplash.com/photo-1491013516836-7db643ee125a?w=500&auto=format&fit=crop&q=80' }}
+                                source={{ uri: 'https://res.cloudinary.com/dh2gwea4g/image/upload/v1743037725/michaelphelps_fzbn36.jpg' }}
                                 style={styles.articleImage}
                             />
                             <View style={styles.articleContent}>
-                                <Text style={[styles.articleTitle, { fontSize: scaledFont(14) }]}>From Struggle to Success</Text>
-                                <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>How early intervention and personalized support helped my son thrive with ADHD...</Text>
-                                <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>5 min read • Parent Story</Text>
+                                <Text style={[styles.articleTitle, { fontSize: scaledFont(14) }]}>Michael Phelps</Text>
+                                <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>How the most decorated Olympian of all time used his ADHD diagnosis as a strength to win 28 Olympic medals...</Text>
+                                <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>Olympic Champion • Sports</Text>
                             </View>
                         </TouchableOpacity>
 
                         <TouchableOpacity 
                             style={styles.articleCard}
-                            onPress={() => Linking.openURL('https://medium.com/education-innovation/breaking-barriers-how-inclusive-education-helped-my-adhd-child-excel-9c4e8d2b5f3a')}
+                            onPress={() => Linking.openURL('https://www.additudemag.com/slideshows/famous-people-with-adhd-simone-biles/')}
                         >
                             <Image 
-                                source={{ uri: 'https://images.unsplash.com/photo-1577896851231-70ef18881754?w=500&auto=format&fit=crop&q=80' }}
+                                source={{ uri: 'https://res.cloudinary.com/dh2gwea4g/image/upload/v1743037881/simonebiles_ff1wdf.png' }}
                                 style={styles.articleImage}
                             />
                             <View style={styles.articleContent}>
-                                <Text style={[styles.articleTitle, { fontSize: scaledFont(14) }]}>Breaking Barriers</Text>
-                                <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>A teacher's perspective on creating an inclusive classroom for ADHD students...</Text>
-                                <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>6 min read • Teacher's Journey</Text>
+                                <Text style={[styles.articleTitle, { fontSize: scaledFont(14) }]}>Simone Biles</Text>
+                                <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>From foster care to becoming the most decorated gymnast in history, how Simone embraced ADHD as her superpower...</Text>
+                                <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>Olympic Gold Medalist • Gymnastics</Text>
                             </View>
                         </TouchableOpacity>
 
                         <TouchableOpacity 
                             style={styles.articleCard}
-                            onPress={() => Linking.openURL('https://medium.com/mental-health/empowering-adhd-kids-through-art-and-music-therapy-7d842f5a1e9c')}
+                            onPress={() => Linking.openURL('https://www.additudemag.com/richard-branson-adhd/')}
                         >
                             <Image 
-                                source={{ uri: 'https://images.unsplash.com/photo-1514119412350-e174d90d280e?w=500&auto=format&fit=crop&q=80' }}
+                                source={{ uri: 'https://res.cloudinary.com/dh2gwea4g/image/upload/v1743037726/richardbranson_jhgzui.jpg' }}
                                 style={styles.articleImage}
                             />
                             <View style={styles.articleContent}>
-                                <Text style={[styles.articleTitle, { fontSize: scaledFont(14) }]}>Art & Music Therapy Success</Text>
-                                <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>How creative therapies helped my child develop focus and confidence...</Text>
-                                <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>4 min read • Therapy Journey</Text>
+                                <Text style={[styles.articleTitle, { fontSize: scaledFont(14) }]}>Richard Branson</Text>
+                                <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>How the Virgin Group founder turned his ADHD traits of creativity and risk-taking into a multibillion-dollar empire...</Text>
+                                <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>Entrepreneur • Business Leader</Text>
                             </View>
                         </TouchableOpacity>
 
                         <TouchableOpacity 
                             style={styles.articleCard}
-                            onPress={() => Linking.openURL('https://medium.com/parenting-matters/from-homework-battles-to-academic-achievement-adhd-success-story-3f9d2c8e4b5a')}
+                            onPress={() => Linking.openURL('https://www.additudemag.com/emma-watson-adhd/')}
                         >
                             <Image 
-                                source={{ uri: 'https://images.unsplash.com/photo-1488998427799-e3362cec87c3?w=500&auto=format&fit=crop&q=80' }}
+                                source={{ uri: 'https://res.cloudinary.com/dh2gwea4g/image/upload/v1743037726/emmawatson_yfjmih.jpg' }}
                                 style={styles.articleImage}
                             />
                             <View style={styles.articleContent}>
-                                <Text style={[styles.articleTitle, { fontSize: scaledFont(14) }]}>Academic Achievement</Text>
-                                <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>Transforming homework struggles into learning success with ADHD...</Text>
-                                <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>7 min read • Academic Journey</Text>
+                                <Text style={[styles.articleTitle, { fontSize: scaledFont(14) }]}>Emma Watson</Text>
+                                <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>From struggling with focus to becoming an award-winning actress, UN ambassador, and Oxford graduate...</Text>
+                                <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>Actress • Activist • Academic</Text>
+                            </View>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity 
+                            style={styles.articleCard}
+                            onPress={() => Linking.openURL('https://www.additudemag.com/jim-carrey-adhd/')}
+                        >
+                            <Image 
+                                source={{ uri: 'https://res.cloudinary.com/dh2gwea4g/image/upload/v1743037725/jimcarrey_kgo47u.jpg' }}
+                                style={styles.articleImage}
+                            />
+                            <View style={styles.articleContent}>
+                                <Text style={[styles.articleTitle, { fontSize: scaledFont(14) }]}>Jim Carrey</Text>
+                                <Text style={[styles.articlePreview, { fontSize: scaledFont(12) }]}>How Jim transformed his hyperactivity and impulsivity into a legendary comedy career and Hollywood success story...</Text>
+                                <Text style={[styles.articleMeta, { fontSize: scaledFont(10) }]}>Actor • Comedian • Artist</Text>
                             </View>
                         </TouchableOpacity>
                     </ScrollView>
@@ -739,19 +761,19 @@ const styles = StyleSheet.create({
     popup: {
         position: 'absolute',
         top: 85,
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        backgroundColor: '#FFFFFF',
         borderRadius: 12,
-        padding: 8,
+        padding: 15,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.2,
         shadowRadius: 3,
         elevation: 5,
         zIndex: 1000,
+        minWidth: 200,
     },
     fontControlsPopup: {
         left: 10,
-        flexDirection: 'row',
     },
     langSwitchPopup: {
         left: 60,
@@ -761,7 +783,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         borderRadius: 8,
         marginVertical: 4,
-        backgroundColor: '#F5F5F5',
+        backgroundColor: '#F5F5F0',
     },
     langButtonActive: {
         backgroundColor: '#4CAF50',
@@ -984,5 +1006,65 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#4CAF50',
         fontWeight: '600',
+    },
+    fontSizeButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#F0F0F0',
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 15,
+    },
+    fontButtonLabelText: {
+        marginLeft: 5,
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#001F3F',
+    },
+    popupTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginBottom: 10,
+        color: '#333',
+        textAlign: 'center',
+    },
+    fontControlsRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+    fontScaleIndicator: {
+        width: 50,
+        height: 30,
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 4,
+        marginHorizontal: 10,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#f9f9f9',
+    },
+    fontScaleText: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#333',
+    },
+    fontButton: {
+        width: 40,
+        height: 40,
+        backgroundColor: '#4CAF50',
+        borderRadius: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        shadowRadius: 1,
+        elevation: 2,
+    },
+    fontButtonText: {
+        color: '#FFF',
+        fontSize: 16,
+        fontWeight: 'bold',
     },
 });
