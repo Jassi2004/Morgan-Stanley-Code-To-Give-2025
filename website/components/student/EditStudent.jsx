@@ -315,17 +315,30 @@ const EditStudent = () => {
       if (files.avatar) {
         formDataToSend.append('avatar', files.avatar);
       }
-      if (files.UDID) {
-        formDataToSend.append('UDID', files.UDID);
+      if (files.documents) {
+        formDataToSend.append('UDID', files.documents);
       }
+
+      // Log the form data for debugging
+      console.log('Form data being sent:', {
+        studentId,
+        formDataEntries: Array.from(formDataToSend.entries())
+      });
 
       const response = await updateStudent(studentId, formDataToSend);
       
       if (response.success) {
         toast.success('Student details updated successfully');
         navigate(`/students/${studentId}`);
+      } else {
+        throw new Error(response.message || 'Failed to update student details');
       }
     } catch (error) {
+      console.error('Error updating student:', {
+        error: error.response?.data || error.message,
+        status: error.response?.status,
+        headers: error.response?.headers
+      });
       toast.error(error.message || 'Failed to update student details');
     } finally {
       setLoading(false);
@@ -699,7 +712,7 @@ const EditStudent = () => {
                           UDID: null
                         }
                       }));
-                      setFiles(prev => ({ ...prev, UDID: null }));
+                      setFiles(prev => ({ ...prev, documents: null }));
                     }}
                     className="text-red-500 hover:text-red-600"
                   >
@@ -712,7 +725,7 @@ const EditStudent = () => {
                 <span>Upload</span>
                 <input
                   type="file"
-                  onChange={(e) => handleFileChange(e, 'UDID')}
+                  onChange={(e) => handleFileChange(e, 'documents')}
                   accept=".pdf,.jpg,.jpeg,.png"
                   className="hidden"
                 />

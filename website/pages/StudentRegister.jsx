@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useRef } from "react";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -32,6 +32,115 @@ const StudentRegistrationForm = () => {
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [isProcessing, setIsProcessing] = useState(false);
+  const aadharInputRef = useRef(null);
+  
+// Enhanced OCR parsing function
+const parseAadharText = (text) => {
+  const extractedInfo = {};
+
+  // More comprehensive regex patterns
+  const patterns = {
+    name: [
+      /Name\s*:?\s*([^\n]+)/i,
+      /(?:Name|नाम)\s*:?\s*([^\n]+)/i
+    ],
+    dob: [
+      /DOB\s*:?\s*(\d{2}\/\d{2}\/\d{4})/i,
+      /Date\s+of\s+Birth\s*:?\s*(\d{2}\/\d{2}\/\d{4})/i,
+      /जन्म\s*तिथि\s*:?\s*(\d{2}\/\d{2}\/\d{4})/i
+    ],
+    gender: [
+      /Gender\s*:?\s*([^\n]+)/i,
+      /लिंग\s*:?\s*([^\n]+)/i
+    ],
+    address: [
+      /Address\s*:?\s*([^\n]+)/i,
+      /पता\s*:?\s*([^\n]+)/i
+    ]
+  };
+
+  // Helper function to find first match from multiple patterns
+  const findMatch = (patternList, text) => {
+    for (const pattern of patternList) {
+      const match = text.match(pattern);
+      if (match) return match[1].trim();
+    }
+    return null;
+  };
+
+  // Extract and process each field
+  const fullName = findMatch(patterns.name, text);
+  if (fullName) {
+    const nameParts = fullName.split(' ');
+    extractedInfo.firstName = nameParts[0] || '';
+    extractedInfo.lastName = nameParts.slice(1).join(' ') || '';
+  }
+
+  const dob = findMatch(patterns.dob, text);
+  if (dob) {
+    extractedInfo.dateOfBirth = dob;
+  }
+
+  const gender = findMatch(patterns.gender, text);
+  if (gender) {
+    extractedInfo.gender = gender.toLowerCase();
+  }
+
+  const address = findMatch(patterns.address, text);
+  if (address) {
+    extractedInfo.address = address;
+  }
+
+  return extractedInfo;
+};
+
+// Modified upload handler
+const handleAadharUpload = async (event, setFormData, setIsProcessing) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  setIsProcessing(true);
+  
+  try {
+    // Update avatar in form data
+    setFormData(prev => ({ 
+      ...prev, 
+      avatar: file 
+    }));
+
+    // Initialize Tesseract worker
+    const worker = await createWorker('eng');
+    
+    // Perform OCR
+    const { data: { text } } = await worker.recognize(file);
+    
+    // Parse extracted text
+    const extractedInfo = parseAadharText(text);
+    
+    // Update form data with extracted information
+    setFormData(prev => ({
+      ...prev,
+      ...extractedInfo
+    }));
+
+    // Terminate the worker
+    await worker.terminate();
+
+    console.log('Extracted Information:', extractedInfo);
+  } catch (error) {
+    console.error('OCR Error:', error);
+    alert('Could not process the Aadhar card. Please check the image and try again.');
+  } finally {
+    setIsProcessing(false);
+  }
+};
+
+const onAadharUpload = (event) => {
+  handleAadharUpload(event, setFormData, setIsProcessing);
+};
+
 
   const handleChange = (e) => {
     const { name, value, type, checked, files } = e.target;
@@ -376,6 +485,17 @@ const StudentRegistrationForm = () => {
         </h2>
         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
           {/* Profile Picture Upload */}
+          {/* <FileUpload
+            name="avatar"
+            label="Aadhar Card"
+            accept="image/*"
+            preview={
+              formData.avatar ? URL.createObjectURL(formData.avatar) : null
+            }
+            ref={aadharInputRef}
+            onChange={onAadharUpload}
+            disabled={isProcessing}
+          /> */}
           <FileUpload
             name="avatar"
             label="Profile Picture"

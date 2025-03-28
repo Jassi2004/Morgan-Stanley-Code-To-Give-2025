@@ -28,7 +28,7 @@ import UploadStudentData from "../components/dashboardComponents/UploadStudentDa
 import UploadEmployeeData from "../components/dashboardComponents/UploadEmployeeData";
 
 // import ChatBot from '../components/chatbotComponents/Chatbot';
-import ChatBot from "../components/chatbotComponents/Chatbot";
+import ChatBot from "../components/chatbotComponents/ChatbotSpare";
 import Folder from "../src/blocks/components/Folder";
 
 function DashBoard() {

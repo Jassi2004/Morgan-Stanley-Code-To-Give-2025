@@ -4,6 +4,7 @@ import {
     fetchStudentReportById, 
     generateMonthlyReport, 
     generateStudentQuarterlyReport,
+    generateStudentReportPDF,
     updateQuarterlyReport 
 } from "../controllers/studentReport.controller.js";
 
@@ -23,6 +24,9 @@ router.route("/fetch")
 
 router.route("/fetch-all")
 .get(fetchAllStudentReports);
+
+router.route("/pdf")
+.post(generateStudentReportPDF)
 
 export default router;
 

@@ -454,81 +454,78 @@ const approveStudent = asyncHandler(async (req, res) => {
 });
 
 const updateProfile = asyncHandler(async (req, res) => {
-  const { studentId } = req.body;
-  console.log("Received update request for student:", studentId);
-  console.log("Raw request body:", JSON.stringify(req.body, null, 2));
-
-  // Validate that StudentId is provided
-  if (!studentId) {
-    throw new ApiError(400, "Student ID is required for updating profile");
-  }
-
-  const updates = req.body;
-
-  // Parse all stringified JSON objects
-  const basicInfo = JSON.parse(updates.basicInfo || '{}');
-  const enrollmentStatus = JSON.parse(updates.enrollmentStatus || '{}');
-  const medicalInfo = JSON.parse(updates.medicalInfo || '{}');
-  const programDetails = JSON.parse(updates.programDetails || '{}');
-  const educatorInfo = JSON.parse(updates.educatorInfo || '{}');
-  const guardianDetails = JSON.parse(updates.guardianDetails || '{}');
-  const preferences = JSON.parse(updates.preferences || '{}');
-  const strengths = JSON.parse(updates.strengths || '[]');
-  const weaknesses = JSON.parse(updates.weaknesses || '[]');
-
-  console.log("Parsed data:", {
-    basicInfo,
-    enrollmentStatus,
-    medicalInfo,
-    programDetails,
-    educatorInfo,
-    guardianDetails,
-    preferences,
-    strengths,
-    weaknesses
-  });
-
-  const student = await Student.findOne({ StudentId: studentId });
-  if (!student) {
-    throw new ApiError(404, "Student not found");
-  }
-
-  console.log("Current student data:", {
-    id: student._id,
-    name: `${student.firstName} ${student.lastName}`,
-    educators: student.educators
-  });
-
-  // Handle file uploads if present
-  if (req.files) {
-    console.log("Processing file uploads:", req.files);
-    // Handle avatar upload
-    if (req.files.avatar?.[0]?.path) {
-      const avatar = await uploadOnCloudinary(req.files.avatar[0].path);
-      if (avatar?.secure_url) {
-        basicInfo.avatar = {
-          public_id: avatar.public_id,
-          secure_url: avatar.secure_url,
-        };
-        console.log("Avatar uploaded successfully:", basicInfo.avatar);
-      }
-    }
-
-    // Handle UDID upload
-    if (req.files.UDID?.[0]?.path) {
-      const UDID = await uploadOnCloudinary(req.files.UDID[0].path);
-      if (UDID?.secure_url) {
-        basicInfo.UDID = {
-          isAvailable: true,
-          public_id: UDID.public_id,
-          secure_url: UDID.secure_url,
-        };
-        console.log("UDID uploaded successfully:", basicInfo.UDID);
-      }
-    }
-  }
-
   try {
+    const { studentId } = req.body;
+    console.log("Received update request for student:", studentId);
+    console.log("Files received:", req.files);
+    console.log("Request body:", req.body);
+
+    // Validate that StudentId is provided
+    if (!studentId) {
+      throw new ApiError(400, "Student ID is required for updating profile");
+    }
+
+    const updates = req.body;
+
+    // Parse all stringified JSON objects with error handling
+    let basicInfo, enrollmentStatus, medicalInfo, programDetails, educatorInfo, guardianDetails, preferences, strengths, weaknesses;
+    
+    try {
+      basicInfo = JSON.parse(updates.basicInfo || '{}');
+      enrollmentStatus = JSON.parse(updates.enrollmentStatus || '{}');
+      medicalInfo = JSON.parse(updates.medicalInfo || '{}');
+      programDetails = JSON.parse(updates.programDetails || '{}');
+      educatorInfo = JSON.parse(updates.educatorInfo || '{}');
+      guardianDetails = JSON.parse(updates.guardianDetails || '{}');
+      preferences = JSON.parse(updates.preferences || '{}');
+      strengths = JSON.parse(updates.strengths || '[]');
+      weaknesses = JSON.parse(updates.weaknesses || '[]');
+    } catch (parseError) {
+      console.error("Error parsing JSON data:", parseError);
+      throw new ApiError(400, "Invalid JSON data in request");
+    }
+
+    console.log("Parsed data:", {
+      basicInfo,
+      enrollmentStatus,
+      medicalInfo,
+      programDetails,
+      educatorInfo,
+      guardianDetails,
+      preferences,
+      strengths,
+      weaknesses
+    });
+
+    const student = await Student.findOne({ StudentId: studentId });
+    if (!student) {
+      throw new ApiError(404, "Student not found");
+    }
+
+    // Handle file uploads if they exist
+    let avatar = student.avatar;
+    let UDID = student.UDID;
+
+    if (req.files) {
+      try {
+        if (req.files.avatar) {
+          const avatarPath = req.files.avatar[0].path;
+          const { secure_url, public_id } = await uploadOnCloudinary(avatarPath);
+          avatar = { secure_url, public_id };
+          console.log("Avatar uploaded successfully:", avatar);
+        }
+        if (req.files.UDID) {
+          const UDIDPath = req.files.UDID[0].path;
+          const { secure_url, public_id } = await uploadOnCloudinary(UDIDPath);
+          UDID = { secure_url, public_id, isAvailable: true };
+          console.log("UDID uploaded successfully:", UDID);
+        }
+      } catch (uploadError) {
+        console.error("Error uploading files:", uploadError);
+        throw new ApiError(500, "Failed to upload files");
+      }
+    }
+
     // Create update object with all fields
     const updateObject = {
       firstName: basicInfo.firstName || student.firstName,
@@ -539,8 +536,8 @@ const updateProfile = asyncHandler(async (req, res) => {
       contactNumber: basicInfo.contactNumber || student.contactNumber,
       altContactNumber: basicInfo.altContactNumber || student.altContactNumber,
       address: updates.address || student.address,
-      avatar: basicInfo.avatar || student.avatar,
-      UDID: basicInfo.UDID || student.UDID,
+      avatar: avatar,
+      UDID: UDID,
       comments: updates.comments || student.comments,
       program: programDetails.program || student.program,
       program2: programDetails.program2 || student.program2,
