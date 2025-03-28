@@ -29,6 +29,7 @@
     "expo-localization": "^16.0.1",
     "expo-random": "^14.0.1",
     "expo-secure-store": "~14.0.1",
+    "expo-speech": "^13.0.1",
     "expo-status-bar": "~2.0.1",
     "expo-web-browser": "~14.0.2",
     "framer-motion": "^12.5.0",

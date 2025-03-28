@@ -6,6 +6,7 @@ import Navbar from '../components/Navbar';
 import { fetchTranslation } from '../utils/translate';
 import { useLanguage } from '../context/LanguageContext';
 import { getUserData } from '../utils/api';
+import * as Speech from 'expo-speech';
 
 export default function Home() {
     const navigation = useNavigation();
@@ -21,6 +22,20 @@ export default function Home() {
     const [isWishSending, setIsWishSending] = useState(false);
     const [wishSent, setWishSent] = useState(false);
     const birthdayAnimation = useRef(new Animated.Value(0)).current;
+    const [activeSection, setActiveSection] = useState(null);
+    const [isSpeaking, setIsSpeaking] = useState(false);
+    const scrollViewRef = useRef(null);
+
+    // Section refs
+    const sectionRefs = {
+        welcomeSection: useRef(null),
+        birthdaySection: useRef(null),
+        articlesSection: useRef(null),
+        successStoriesSection: useRef(null),
+        scheduleSection: useRef(null),
+        appointmentsSection: useRef(null),
+        eventsSection: useRef(null),
+    };
 
     // Translation states
     const [translations, setTranslations] = useState({
@@ -46,8 +61,25 @@ export default function Home() {
         birthdayPlaceholder: "Write your birthday wish...",
         sendWish: "Send Wish",
         wishSent: "Wish sent! 🎈",
-        sendingWish: "Sending wish..."
+        sendingWish: "Sending wish...",
+        successStories: "Success Stories",
+        thisIsWelcomeSection: "This is the welcome section",
+        thisIsBirthdaySection: "This is the birthday wish section",
+        thisIsArticlesSection: "This is the articles section",
+        thisIsSuccessStoriesSection: "This is the success stories section",
+        thisIsScheduleSection: "This is the schedule section",
+        thisIsAppointmentsSection: "This is the upcoming appointments section",
+        thisIsEventsSection: "This is the upcoming events section"
     });
+
+    // Stop speaking when component unmounts
+    useEffect(() => {
+        return () => {
+            if (Speech.isSpeakingAsync()) {
+                Speech.stop();
+            }
+        };
+    }, []);
 
     // Fetch user data
     useEffect(() => {
@@ -81,6 +113,88 @@ export default function Home() {
 
         translateContent();
     }, [language]);
+
+    // Handle scroll events to detect which section is visible
+    const handleScroll = useCallback((event) => {
+        const scrollY = event.nativeEvent.contentOffset.y;
+        const screenHeight = event.nativeEvent.layoutMeasurement.height;
+        
+        // Find which section is most visible
+        let maxVisibleSection = null;
+        let maxVisibleArea = 0;
+        
+        Object.entries(sectionRefs).forEach(([sectionKey, ref]) => {
+            if (ref.current && ref.current.measure) {
+                ref.current.measure((x, y, width, height, pageX, pageY) => {
+                    // Calculate how much of the section is visible
+                    const sectionTop = pageY;
+                    const sectionBottom = pageY + height;
+                    const screenTop = scrollY;
+                    const screenBottom = scrollY + screenHeight;
+                    
+                    // Calculate visible area
+                    const visibleTop = Math.max(sectionTop, screenTop);
+                    const visibleBottom = Math.min(sectionBottom, screenBottom);
+                    const visibleHeight = Math.max(0, visibleBottom - visibleTop);
+                    
+                    // If this section has more visible area than previous max, update
+                    if (visibleHeight > maxVisibleArea) {
+                        maxVisibleArea = visibleHeight;
+                        maxVisibleSection = sectionKey;
+                    }
+                });
+            }
+        });
+        
+        // If most visible section has changed, announce it
+        if (maxVisibleSection && maxVisibleSection !== activeSection) {
+            setActiveSection(maxVisibleSection);
+            announceSection(maxVisibleSection);
+        }
+    }, [activeSection, translations]);
+
+    // Throttled scroll handler to improve performance
+    const throttledScrollHandler = useCallback(
+        (() => {
+            let lastCall = 0;
+            return (event) => {
+                const now = Date.now();
+                if (now - lastCall >= 1000) { // Only check every 1000ms
+                    lastCall = now;
+                    handleScroll(event);
+                }
+            };
+        })(),
+        [handleScroll]
+    );
+
+    // Announce current section
+    const announceSection = (sectionKey) => {
+        if (isSpeaking) return;
+        
+        const sectionAnnouncements = {
+            welcomeSection: translations.thisIsWelcomeSection,
+            birthdaySection: translations.thisIsBirthdaySection,
+            articlesSection: translations.thisIsArticlesSection,
+            successStoriesSection: translations.thisIsSuccessStoriesSection,
+            scheduleSection: translations.thisIsScheduleSection,
+            appointmentsSection: translations.thisIsAppointmentsSection,
+            eventsSection: translations.thisIsEventsSection
+        };
+        
+        const textToSpeak = sectionAnnouncements[sectionKey];
+        
+        if (textToSpeak) {
+            setIsSpeaking(true);
+            Speech.speak(textToSpeak, {
+                language: language === 'hi' ? 'hi-IN' : 'en-US',
+                rate: 0.9,
+                pitch: 1.0,
+                onDone: () => setIsSpeaking(false),
+                onError: () => setIsSpeaking(false)
+            });
+        }
+    };
 
     const panResponder = useRef(
         PanResponder.create({
@@ -144,9 +258,22 @@ export default function Home() {
         }, 2000);
     };
 
+    // Function to speak section title
+    const speakSectionTitle = (title) => {
+        if (Speech.isSpeakingAsync()) {
+            Speech.stop();
+        }
+
+        Speech.speak(title, {
+            language: language === 'hi' ? 'hi-IN' : 'en-US',
+            rate: 0.9,
+            pitch: 1.0
+        });
+    };
+
     if (isTranslating) {
         return (
-            <View style={styles.loadingContainer}>
+            <View style={styles.container}>
                 <ActivityIndicator size="large" color="#4CAF50" />
                 <Text style={styles.loadingText}>{translations.loading}</Text>
             </View>
@@ -236,21 +363,49 @@ export default function Home() {
             </View>
 
             <ScrollView 
+                ref={scrollViewRef}
                 style={[
                     styles.scrollContent,
                     styles.scrollContentWithPadding
                 ]} 
                 showsVerticalScrollIndicator={false}
+                onScroll={throttledScrollHandler}
+                scrollEventThrottle={16}
             >
                 {/* Welcome Message */}
-                <View style={styles.welcomeSection}>
+                <View 
+                    ref={sectionRefs.welcomeSection}
+                    style={styles.welcomeSection}
+                    onLayout={() => {}}
+                >
                     <Text style={[styles.welcomeText, { fontSize: scaledFont(24) }]}>
                         {translations.welcome}, {userData?.firstName || ''}
                     </Text>
+                    <View style={styles.speakSectionButtonContainer}>
+                        <TouchableOpacity
+                            style={styles.speakSectionButton}
+                            onPress={() => speakSectionTitle(translations.thisIsWelcomeSection)}
+                        >
+                            <FontAwesome name="volume-up" size={16} color="#FFFFFF" />
+                        </TouchableOpacity>
+                    </View>
                 </View>
 
                 {/* Birthday Wish Section */}
-                <View style={styles.section}>
+                <View 
+                    ref={sectionRefs.birthdaySection}
+                    style={styles.section}
+                    onLayout={() => {}}
+                >
+                    <View style={styles.sectionHeaderRow}>
+                        <Text style={[styles.sectionTitle, { fontSize: scaledFont(18) }]}>Birthday Wishes</Text>
+                        <TouchableOpacity
+                            style={styles.speakSectionButton}
+                            onPress={() => speakSectionTitle(translations.thisIsBirthdaySection)}
+                        >
+                            <FontAwesome name="volume-up" size={16} color="#FFFFFF" />
+                        </TouchableOpacity>
+                    </View>
                     <TouchableOpacity 
                         style={styles.birthdayCard}
                         onPress={toggleBirthdayWish}
@@ -315,8 +470,20 @@ export default function Home() {
                 </View>
 
                 {/* Articles Section - Moved to top */}
-                <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { fontSize: scaledFont(18) }]}>{translations.articles}</Text>
+                <View 
+                    ref={sectionRefs.articlesSection}
+                    style={styles.section}
+                    onLayout={() => {}}
+                >
+                    <View style={styles.sectionHeaderRow}>
+                        <Text style={[styles.sectionTitle, { fontSize: scaledFont(18) }]}>{translations.articles}</Text>
+                        <TouchableOpacity
+                            style={styles.speakSectionButton}
+                            onPress={() => speakSectionTitle(translations.thisIsArticlesSection)}
+                        >
+                            <FontAwesome name="volume-up" size={16} color="#FFFFFF" />
+                        </TouchableOpacity>
+                    </View>
                     <Text style={[styles.sectionSubtitle, { fontSize: scaledFont(14) }]}>{translations.todayTopPicks}</Text>
                     <ScrollView 
                         horizontal={true}
@@ -404,8 +571,20 @@ export default function Home() {
                 </View>
 
                 {/* Success Stories Section */}
-                <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { fontSize: scaledFont(18) }]}>Success Stories</Text>
+                <View 
+                    ref={sectionRefs.successStoriesSection}
+                    style={styles.section}
+                    onLayout={() => {}}
+                >
+                    <View style={styles.sectionHeaderRow}>
+                        <Text style={[styles.sectionTitle, { fontSize: scaledFont(18) }]}>Success Stories</Text>
+                        <TouchableOpacity
+                            style={styles.speakSectionButton}
+                            onPress={() => speakSectionTitle(translations.thisIsSuccessStoriesSection)}
+                        >
+                            <FontAwesome name="volume-up" size={16} color="#FFFFFF" />
+                        </TouchableOpacity>
+                    </View>
                     <Text style={[styles.sectionSubtitle, { fontSize: scaledFont(14) }]}>Inspiring journeys of people with ADHD who achieved greatness</Text>
                     <ScrollView 
                         horizontal={true}
@@ -490,141 +669,177 @@ export default function Home() {
                 </View>
 
                 {/* Schedule Section */}
-                <View style={styles.section}>
+                <View 
+                    ref={sectionRefs.scheduleSection}
+                    style={styles.section}
+                    onLayout={() => {}}
+                >
+                    <View style={styles.sectionHeaderRow}>
                         <Text style={[styles.sectionTitle, { fontSize: scaledFont(18) }]}>{translations.todaySchedule}</Text>
-                        <View style={styles.timetableContainer}>
-                            <View style={styles.timeSlot}>
-                                <View style={styles.timeColumn}>
-                                    <Text style={[styles.timeText, { fontSize: scaledFont(14) }]}>10:00 - 11:30</Text>
-                                </View>
-                                <View style={[styles.classColumn, { backgroundColor: '#E3F2FD' }]}>
-                                    <FontAwesome name="comments" size={20} color="#1976D2" />
-                                    <Text style={[styles.classText, { fontSize: scaledFont(14) }]}>{translations.communicationClass}</Text>
-                                </View>
-                            </View>
-
-                            <View style={styles.timeSlot}>
-                                <View style={styles.timeColumn}>
-                                    <Text style={[styles.timeText, { fontSize: scaledFont(14) }]}>12:00 - 14:00</Text>
-                                </View>
-                                <View style={[styles.classColumn, { backgroundColor: '#F3E5F5' }]}>
-                                    <FontAwesome name="paint-brush" size={20} color="#7B1FA2" />
-                                    <Text style={[styles.classText, { fontSize: scaledFont(14) }]}>{translations.paintingClass}</Text>
-                                </View>
-                            </View>
-
-                            <View style={styles.timeSlot}>
-                                <View style={styles.timeColumn}>
-                                    <Text style={[styles.timeText, { fontSize: scaledFont(14) }]}>15:00 - 16:00</Text>
-                                </View>
-                                <View style={[styles.classColumn, { backgroundColor: '#E8F5E9' }]}>
-                                    <FontAwesome name="music" size={20} color="#388E3C" />
-                                    <Text style={[styles.classText, { fontSize: scaledFont(14) }]}>{translations.musicTherapy}</Text>
-                                </View>
-                            </View>
-                        </View>
-
-                        <TouchableOpacity 
-                            style={[styles.attendanceButton, { marginTop: 15 }]}
-                            onPress={() => navigation.navigate('AttendanceReport')}
+                        <TouchableOpacity
+                            style={styles.speakSectionButton}
+                            onPress={() => speakSectionTitle(translations.thisIsScheduleSection)}
                         >
-                            <FontAwesome name="calendar-check-o" size={20} color="#FFF" style={styles.attendanceIcon} />
-                            <Text style={[styles.buttonText, { fontSize: scaledFont(16) }]}>{translations.checkAttendance}</Text>
+                            <FontAwesome name="volume-up" size={16} color="#FFFFFF" />
                         </TouchableOpacity>
                     </View>
+                    <View style={styles.timetableContainer}>
+                        <View style={styles.timeSlot}>
+                            <View style={styles.timeColumn}>
+                                <Text style={[styles.timeText, { fontSize: scaledFont(14) }]}>10:00 - 11:30</Text>
+                            </View>
+                            <View style={[styles.classColumn, { backgroundColor: '#E3F2FD' }]}>
+                                <FontAwesome name="comments" size={20} color="#1976D2" />
+                                <Text style={[styles.classText, { fontSize: scaledFont(14) }]}>{translations.communicationClass}</Text>
+                            </View>
+                        </View>
 
-                    {/* Upcoming Appointments - Simplified */}
-                    <View style={styles.section}>
+                        <View style={styles.timeSlot}>
+                            <View style={styles.timeColumn}>
+                                <Text style={[styles.timeText, { fontSize: scaledFont(14) }]}>12:00 - 14:00</Text>
+                            </View>
+                            <View style={[styles.classColumn, { backgroundColor: '#F3E5F5' }]}>
+                                <FontAwesome name="paint-brush" size={20} color="#7B1FA2" />
+                                <Text style={[styles.classText, { fontSize: scaledFont(14) }]}>{translations.paintingClass}</Text>
+                            </View>
+                        </View>
+
+                        <View style={styles.timeSlot}>
+                            <View style={styles.timeColumn}>
+                                <Text style={[styles.timeText, { fontSize: scaledFont(14) }]}>15:00 - 16:00</Text>
+                            </View>
+                            <View style={[styles.classColumn, { backgroundColor: '#E8F5E9' }]}>
+                                <FontAwesome name="music" size={20} color="#388E3C" />
+                                <Text style={[styles.classText, { fontSize: scaledFont(14) }]}>{translations.musicTherapy}</Text>
+                            </View>
+                        </View>
+                    </View>
+
+                    <TouchableOpacity 
+                        style={[styles.attendanceButton, { marginTop: 15 }]}
+                        onPress={() => navigation.navigate('AttendanceReport')}
+                    >
+                        <FontAwesome name="calendar-check-o" size={20} color="#FFF" style={styles.attendanceIcon} />
+                        <Text style={[styles.buttonText, { fontSize: scaledFont(16) }]}>{translations.checkAttendance}</Text>
+                    </TouchableOpacity>
+                </View>
+
+                {/* Upcoming Appointments - Simplified */}
+                <View 
+                    ref={sectionRefs.appointmentsSection}
+                    style={styles.section}
+                    onLayout={() => {}}
+                >
+                    <View style={styles.sectionHeaderRow}>
                         <Text style={[styles.sectionTitle, { fontSize: scaledFont(18) }]}>{translations.upcomingAppointments}</Text>
-                        <View style={styles.appointmentsContainer}>
-                            <View style={styles.appointmentRow}>
-                                <Text style={[styles.appointmentDate, { fontSize: scaledFont(14) }]}>May 16</Text>
-                                <View style={styles.appointmentMiddle}>
-                                    <Text style={[styles.appointmentTime, { fontSize: scaledFont(14) }]}>10:30</Text>
-                                    <Text style={[styles.appointmentPerson, { fontSize: scaledFont(14) }]}>Dr. Sarah J.</Text>
-                                </View>
-                                <Text style={[styles.appointmentType, { color: '#1976D2' }]}>{translations.speechTherapy}</Text>
+                        <TouchableOpacity
+                            style={styles.speakSectionButton}
+                            onPress={() => speakSectionTitle(translations.thisIsAppointmentsSection)}
+                        >
+                            <FontAwesome name="volume-up" size={16} color="#FFFFFF" />
+                        </TouchableOpacity>
+                    </View>
+                    <View style={styles.appointmentsContainer}>
+                        <View style={styles.appointmentRow}>
+                            <Text style={[styles.appointmentDate, { fontSize: scaledFont(14) }]}>May 16</Text>
+                            <View style={styles.appointmentMiddle}>
+                                <Text style={[styles.appointmentTime, { fontSize: scaledFont(14) }]}>10:30</Text>
+                                <Text style={[styles.appointmentPerson, { fontSize: scaledFont(14) }]}>Dr. Sarah J.</Text>
                             </View>
+                            <Text style={[styles.appointmentType, { color: '#1976D2' }]}>{translations.speechTherapy}</Text>
+                        </View>
 
-                            <View style={styles.appointmentRow}>
-                                <Text style={[styles.appointmentDate, { fontSize: scaledFont(14) }]}>May 17</Text>
-                                <View style={styles.appointmentMiddle}>
-                                    <Text style={[styles.appointmentTime, { fontSize: scaledFont(14) }]}>14:00</Text>
-                                    <Text style={[styles.appointmentPerson, { fontSize: scaledFont(14) }]}>Prof. Chen</Text>
-                                </View>
-                                <Text style={[styles.appointmentType, { color: '#7B1FA2' }]}>{translations.artEducation}</Text>
+                        <View style={styles.appointmentRow}>
+                            <Text style={[styles.appointmentDate, { fontSize: scaledFont(14) }]}>May 17</Text>
+                            <View style={styles.appointmentMiddle}>
+                                <Text style={[styles.appointmentTime, { fontSize: scaledFont(14) }]}>14:00</Text>
+                                <Text style={[styles.appointmentPerson, { fontSize: scaledFont(14) }]}>Prof. Chen</Text>
                             </View>
+                            <Text style={[styles.appointmentType, { color: '#7B1FA2' }]}>{translations.artEducation}</Text>
+                        </View>
 
-                            <View style={styles.appointmentRow}>
-                                <Text style={[styles.appointmentDate, { fontSize: scaledFont(14) }]}>May 19</Text>
-                                <View style={styles.appointmentMiddle}>
-                                    <Text style={[styles.appointmentTime, { fontSize: scaledFont(14) }]}>11:00</Text>
-                                    <Text style={[styles.appointmentPerson, { fontSize: scaledFont(14) }]}>Dr. Emily P.</Text>
-                                </View>
-                                <Text style={[styles.appointmentType, { color: '#388E3C' }]}>{translations.occupationalTherapy}</Text>
+                        <View style={styles.appointmentRow}>
+                            <Text style={[styles.appointmentDate, { fontSize: scaledFont(14) }]}>May 19</Text>
+                            <View style={styles.appointmentMiddle}>
+                                <Text style={[styles.appointmentTime, { fontSize: scaledFont(14) }]}>11:00</Text>
+                                <Text style={[styles.appointmentPerson, { fontSize: scaledFont(14) }]}>Dr. Emily P.</Text>
                             </View>
+                            <Text style={[styles.appointmentType, { color: '#388E3C' }]}>{translations.occupationalTherapy}</Text>
                         </View>
                     </View>
+                </View>
 
-                    {/* Upcoming Events Timeline */}
-                    <View style={styles.section}>
+                {/* Upcoming Events Timeline */}
+                <View 
+                    ref={sectionRefs.eventsSection}
+                    style={styles.section}
+                    onLayout={() => {}}
+                >
+                    <View style={styles.sectionHeaderRow}>
                         <Text style={[styles.sectionTitle, { fontSize: scaledFont(18) }]}>{translations.upcomingEvents}</Text>
-                        <View style={styles.timeline}>
-                            <View style={styles.timelineEvent}>
-                                <View style={[styles.timelineDot, { backgroundColor: '#4CAF50' }]} />
-                                <View style={styles.timelineLine} />
-                                <View style={styles.timelineContent}>
-                                    <Text style={[styles.timelineDate, { fontSize: scaledFont(14) }]}>May 15th</Text>
-                                    <Text style={[styles.timelineTitle, { fontSize: scaledFont(16) }]}>Sensory-Friendly Movie Screening</Text>
-                                    <Text style={[styles.timelineDescription, { fontSize: scaledFont(12) }]}>
-                                        Special screening with adjusted sound and lighting. Bring your comfort items!
-                                    </Text>
-                                </View>
+                        <TouchableOpacity
+                            style={styles.speakSectionButton}
+                            onPress={() => speakSectionTitle(translations.thisIsEventsSection)}
+                        >
+                            <FontAwesome name="volume-up" size={16} color="#FFFFFF" />
+                        </TouchableOpacity>
+                    </View>
+                    <View style={styles.timeline}>
+                        <View style={styles.timelineEvent}>
+                            <View style={[styles.timelineDot, { backgroundColor: '#4CAF50' }]} />
+                            <View style={styles.timelineLine} />
+                            <View style={styles.timelineContent}>
+                                <Text style={[styles.timelineDate, { fontSize: scaledFont(14) }]}>May 15th</Text>
+                                <Text style={[styles.timelineTitle, { fontSize: scaledFont(16) }]}>Sensory-Friendly Movie Screening</Text>
+                                <Text style={[styles.timelineDescription, { fontSize: scaledFont(12) }]}>
+                                    Special screening with adjusted sound and lighting. Bring your comfort items!
+                                </Text>
                             </View>
+                        </View>
 
-                            <View style={styles.timelineEvent}>
-                                <View style={[styles.timelineDot, { backgroundColor: '#2196F3' }]} />
-                                <View style={styles.timelineLine} />
-                                <View style={styles.timelineContent}>
-                                    <Text style={[styles.timelineDate, { fontSize: scaledFont(14) }]}>May 18th</Text>
-                                    <Text style={[styles.timelineTitle, { fontSize: scaledFont(16) }]}>Social Skills Workshop</Text>
-                                    <Text style={[styles.timelineDescription, { fontSize: scaledFont(12) }]}>
-                                        Interactive group session focusing on friendship and communication.
-                                    </Text>
-                                </View>
+                        <View style={styles.timelineEvent}>
+                            <View style={[styles.timelineDot, { backgroundColor: '#2196F3' }]} />
+                            <View style={styles.timelineLine} />
+                            <View style={styles.timelineContent}>
+                                <Text style={[styles.timelineDate, { fontSize: scaledFont(14) }]}>May 18th</Text>
+                                <Text style={[styles.timelineTitle, { fontSize: scaledFont(16) }]}>Social Skills Workshop</Text>
+                                <Text style={[styles.timelineDescription, { fontSize: scaledFont(12) }]}>
+                                    Interactive group session focusing on friendship and communication.
+                                </Text>
                             </View>
+                        </View>
 
-                            <View style={styles.timelineEvent}>
-                                <View style={[styles.timelineDot, { backgroundColor: '#9C27B0' }]} />
-                                <View style={styles.timelineLine} />
-                                <View style={styles.timelineContent}>
-                                    <Text style={[styles.timelineDate, { fontSize: scaledFont(14) }]}>May 22nd</Text>
-                                    <Text style={[styles.timelineTitle, { fontSize: scaledFont(16) }]}>Art Therapy Exhibition</Text>
-                                    <Text style={[styles.timelineDescription, { fontSize: scaledFont(12) }]}>
-                                        Showcase your artwork and meet other young artists. Quiet room available.
-                                    </Text>
-                                </View>
+                        <View style={styles.timelineEvent}>
+                            <View style={[styles.timelineDot, { backgroundColor: '#9C27B0' }]} />
+                            <View style={styles.timelineLine} />
+                            <View style={styles.timelineContent}>
+                                <Text style={[styles.timelineDate, { fontSize: scaledFont(14) }]}>May 22nd</Text>
+                                <Text style={[styles.timelineTitle, { fontSize: scaledFont(16) }]}>Art Therapy Exhibition</Text>
+                                <Text style={[styles.timelineDescription, { fontSize: scaledFont(12) }]}>
+                                    Showcase your artwork and meet other young artists. Quiet room available.
+                                </Text>
                             </View>
+                        </View>
 
-                            <View style={styles.timelineEvent}>
-                                <View style={[styles.timelineDot, { backgroundColor: '#FF9800' }]} />
-                                <View style={styles.timelineContent}>
-                                    <Text style={[styles.timelineDate, { fontSize: scaledFont(14) }]}>May 25th</Text>
-                                    <Text style={[styles.timelineTitle, { fontSize: scaledFont(16) }]}>Music & Movement Day</Text>
-                                    <Text style={[styles.timelineDescription, { fontSize: scaledFont(12) }]}>
-                                        Fun rhythmic activities and music therapy. Noise-canceling headphones provided.
-                                    </Text>
-                                </View>
+                        <View style={styles.timelineEvent}>
+                            <View style={[styles.timelineDot, { backgroundColor: '#FF9800' }]} />
+                            <View style={styles.timelineContent}>
+                                <Text style={[styles.timelineDate, { fontSize: scaledFont(14) }]}>May 25th</Text>
+                                <Text style={[styles.timelineTitle, { fontSize: scaledFont(16) }]}>Music & Movement Day</Text>
+                                <Text style={[styles.timelineDescription, { fontSize: scaledFont(12) }]}>
+                                    Fun rhythmic activities and music therapy. Noise-canceling headphones provided.
+                                </Text>
                             </View>
                         </View>
                     </View>
+                </View>
 
-                    {/* Add padding at bottom to ensure content is visible above footer */}
-                    <View style={{ height: 80 }} />
-                </ScrollView>
+                {/* Add padding at bottom to ensure content is visible above footer */}
+                <View style={{ height: 80 }} />
+            </ScrollView>
 
-                {/* Footer Navigation */}
-                <Navbar />
+            {/* Footer Navigation */}
+            <Navbar />
         </View>
     );
 }
@@ -1066,5 +1281,28 @@ const styles = StyleSheet.create({
         color: '#FFF',
         fontSize: 16,
         fontWeight: 'bold',
+    },
+    speakSectionButtonContainer: {
+        alignItems: 'flex-end',
+    },
+    speakSectionButton: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: '#4CAF50',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginLeft: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        shadowRadius: 1,
+        elevation: 2,
+    },
+    sectionHeaderRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 10,
     },
 });

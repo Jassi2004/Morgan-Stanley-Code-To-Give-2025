@@ -101,6 +101,26 @@ const StudentRegistrationForm = () => {
       "contactNumber",
     ];
 
+    const handleFileUpload = async (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+  
+      const { data } = await Tesseract.recognize(file, "eng");
+      const extractedText = data.text;
+  
+      // Basic parsing (Improve with regex for accuracy)
+      const nameMatch = extractedText.match(/Name[:\s]+([A-Za-z]+)\s+([A-Za-z]+)/);
+      const dobMatch = extractedText.match(/DOB[:\s]+(\d{2}\/\d{2}\/\d{4})/);
+      const addressMatch = extractedText.match(/Address[:\s]+(.+)/);
+  
+      setFormData({
+        firstName: nameMatch ? nameMatch[1] : "",
+        lastName: nameMatch ? nameMatch[2] : "",
+        dateOfBirth: dobMatch ? dobMatch[1] : "",
+        address: addressMatch ? addressMatch[1] : "",
+      });
+    };
+
     // Check required fields
     requiredFields.forEach((field) => {
       if (!formData[field] || formData[field].toString().trim() === "") {

@@ -6,6 +6,7 @@ import { getNotifications } from '../utils/api';
 import Navbar from '../components/Navbar';
 import { fetchTranslation } from '../utils/translate';
 import { useLanguage } from '../context/LanguageContext';
+import * as Speech from 'expo-speech';
 
 export default function Notifications() {
     const navigation = useNavigation();
@@ -15,13 +16,15 @@ export default function Notifications() {
     const [isTranslating, setIsTranslating] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState(null);
+    const [speakingId, setSpeakingId] = useState(null);
 
     // Translation states
     const [translations, setTranslations] = useState({
         title: "Notifications",
         noNotifications: "No new notifications",
         loadingText: "Loading...",
-        failedToLoad: "Failed to load notifications"
+        failedToLoad: "Failed to load notifications",
+        tapToListen: "Tap to listen"
     });
 
     // Fetch translations for UI elements
@@ -40,6 +43,15 @@ export default function Notifications() {
         };
         translateContent();
     }, [language]);
+
+    // Stop speaking when component unmounts
+    useEffect(() => {
+        return () => {
+            if (Speech.isSpeakingAsync()) {
+                Speech.stop();
+            }
+        };
+    }, []);
 
     // Translate notifications
     const translateNotifications = async (notifs) => {
@@ -113,17 +125,61 @@ export default function Notifications() {
         }
     };
 
-    const renderNotification = (notification) => (
-        <View key={notification._id} style={styles.notificationCard}>
-            <View style={styles.notificationHeader}>
-                <View style={styles.notificationDot} />
-                <Text style={styles.notificationMessage}>{notification.message}</Text>
+    const speakNotification = (notification) => {
+        // If already speaking, stop it
+        if (Speech.isSpeakingAsync()) {
+            Speech.stop();
+            
+            // If we're stopping the same notification, just reset state
+            if (speakingId === notification._id) {
+                setSpeakingId(null);
+                return;
+            }
+        }
+
+        // Speak the notification message
+        setSpeakingId(notification._id);
+        
+        Speech.speak(notification.message, {
+            language: language === 'hi' ? 'hi-IN' : 'en-US',
+            rate: 0.9,
+            pitch: 1.0,
+            onDone: () => setSpeakingId(null),
+            onError: () => setSpeakingId(null)
+        });
+    };
+
+    const renderNotification = (notification) => {
+        const isSpeaking = speakingId === notification._id;
+        
+        return (
+            <View key={notification._id} style={styles.notificationCard}>
+                <View style={styles.notificationHeader}>
+                    <View style={styles.notificationDot} />
+                    <Text style={styles.notificationMessage}>{notification.message}</Text>
+                    <TouchableOpacity 
+                        style={[styles.speakButton, isSpeaking && styles.speakButtonActive]}
+                        onPress={() => speakNotification(notification)}
+                        activeOpacity={0.7}
+                    >
+                        <FontAwesome 
+                            name={isSpeaking ? "volume-up" : "volume-off"} 
+                            size={16} 
+                            color={isSpeaking ? "#FFFFFF" : "#555555"} 
+                        />
+                    </TouchableOpacity>
+                </View>
+                <View style={styles.notificationFooter}>
+                    <Text style={styles.notificationTime}>
+                        {formatDate(notification.createdAt)}
+                    </Text>
+                    {!isSpeaking && (
+                        <Text style={styles.listenHint}>{translations.tapToListen}</Text>
+                    )}
+                </View>
             </View>
-            <Text style={styles.notificationTime}>
-                {formatDate(notification.createdAt)}
-            </Text>
-        </View>
-    );
+        );
+    };
 
     if (isLoading || isTranslating) {
         return (
@@ -254,11 +310,20 @@ const styles = StyleSheet.create({
         flex: 1,
         lineHeight: 20,
     },
+    notificationFooter: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginTop: 5,
+    },
     notificationTime: {
         fontSize: 12,
         color: '#666',
-        marginTop: 5,
-        alignSelf: 'flex-end',
+    },
+    listenHint: {
+        fontSize: 11,
+        color: '#888',
+        fontStyle: 'italic',
     },
     emptyText: {
         fontSize: 16,
@@ -277,5 +342,17 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#4CAF50',
         fontWeight: '600',
+    },
+    speakButton: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: '#f0f0f0',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginLeft: 10,
+    },
+    speakButtonActive: {
+        backgroundColor: '#4CAF50',
     },
 });
