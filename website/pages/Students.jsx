@@ -8,6 +8,8 @@ import { toast } from 'react-toastify';
 import UploadAttendanceData from "../components/dashboardComponents/UploadAttendanceData";
 import Folder from "../src/blocks/components/Folder";
 import UploadStudentData from "../components/dashboardComponents/UploadStudentData";
+import { MdOutlineFileDownload } from "react-icons/md";
+import axios from "axios";
 
 const ActionButton = ({ icon: Icon, label, onClick, colorClass = "text-[var(--color-brand)]" }) => (
   <div className="relative group">
@@ -99,6 +101,29 @@ const Students = () => {
     setSelectedStudent(student);
     setIsGenerateReportModalOpen(true);
   };
+
+  const handleDownloadPDF = async (student) => {
+    try {
+      const studentId = student?.StudentId;
+      console.log("studentId : ", studentId);
+        const response = await axios.post(
+            "http://localhost:8000/api/v1/student-report/pdf",  // Update with actual API URL
+            { studentId },
+            { responseType: "blob" }  // Important for handling binary files
+        );
+
+        // Create a Blob URL for the file
+        const url = window.URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", `Student_Report_${studentId}.pdf`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    } catch (error) {
+        console.error("Error downloading PDF:", error);
+    }
+};
 
   const handleViewReports = (student) => {
     navigate(`/reports/${student.StudentId}`);
@@ -298,6 +323,12 @@ const Students = () => {
                         icon={ClipboardList}
                         label="View Reports"
                         onClick={() => handleViewReports(student)}
+                      />
+                      <ActionButton
+                        icon={MdOutlineFileDownload}
+                        label="Download Report"
+                        className="text-white"
+                        onClick={() => handleDownloadPDF(student)}
                       />
                     </div>
                   </td>

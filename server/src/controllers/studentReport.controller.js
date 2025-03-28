@@ -6,6 +6,25 @@ import { Student } from "../models/students.model.js";
 import { Grade } from "../models/grades.model.js";
 import { monthlyReport } from "../models/monthlyReports.model.js";
 import { isValidObjectId } from "mongoose";
+import { createCanvas } from "canvas";
+import Chart from "chart.js/auto";
+import fs from "fs";
+import path from "path";
+import PDFDocument  from "pdfkit";
+import { fileURLToPath } from "url";
+// import { createCanvas } from "canvas";
+
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const publicDir = path.join(__dirname, "../../public");
+
+// ✅ Ensure `public/` directory exists
+if (!fs.existsSync(publicDir)) {
+    fs.mkdirSync(publicDir, { recursive: true });
+}
+
 
 const generateStudentQuarterlyReport = asyncHandler(async (req, res) => {
     try {
@@ -323,10 +342,128 @@ const updateQuarterlyReport = asyncHandler(async (req, res) => {
     }
 });
 
+const generateStudentReportPDF = asyncHandler(async (req, res) => {
+    try {
+        const { studentId } = req.body;
+        if (!studentId) {
+            throw new ApiError(400, "Student Id is required");
+        }
+
+        const student = await Student.findOne({ StudentId: studentId });
+        if (!student) {
+            throw new ApiError(404, "Student not found");
+        }
+
+        const report = await studentReport.findOne({ studentDetails: student._id })
+        .populate("studentDetails", "StudentId firstName lastName program")
+        .populate("assessmentReport", "assessmentName marks feedback date")
+        .populate("monthlyReports", "monthlyScore remarks timeFrame");
+
+        if (!report) {
+            throw new ApiError(404, "No report found for this student");
+        }
+
+        const fileName = `Student_Report_${student.StudentId}.pdf`;
+        const filePath = path.join("public", fileName);
+        const doc = new PDFDocument({ margin: 50 });
+        const writeStream = fs.createWriteStream(filePath);
+        doc.pipe(writeStream);
+        
+        // Header
+        doc.fontSize(20).fillColor("#007BFF").text("Student Quarterly Report", { align: "center", underline: true }).moveDown(1);
+        doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke().moveDown(0.5);
+        
+        doc.fontSize(14).fillColor("#333").text(`Name: ${student.firstName} ${student.lastName}`)
+            .text(`Student ID: ${student.StudentId}`)
+            .text(`Program: ${student.program}`).moveDown();
+
+        doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke().moveDown();
+
+        // Create Charts
+        const assessmentChart = createAssessmentChart(report.assessmentReport);
+        const monthlyChart = createMonthlyChart(report.monthlyReports);
+
+        // Insert Charts into PDF
+        doc.image(assessmentChart, { fit: [500, 300], align: "center" }).moveDown();
+        doc.image(monthlyChart, { fit: [500, 300], align: "center" }).moveDown();
+
+        doc.addPage();
+
+        // Feedback & Remarks Section
+        doc.moveDown().fontSize(16).fillColor("#007BFF").text("Feedback & Remarks", { underline: true }).moveDown(0.5);
+        
+        report.assessmentReport.forEach((assessment) => {
+            doc.fontSize(12).fillColor("#333").text(`Assessment: ${assessment.assessmentName}`);
+            doc.fontSize(12).fillColor("#333").text(`Marks: ${assessment.marks}`);
+            doc.fontSize(12).fillColor("#333").text(`Feedback: ${assessment.feedback}`).moveDown(0.5);
+        });
+
+        report.monthlyReports.forEach((monthly) => {
+            doc.fontSize(12).fillColor("#333").text(`Month: ${monthly.timeFrame.month} ${monthly.timeFrame.year}`);
+            doc.fontSize(12).fillColor("#333").text(`Remarks: ${monthly.remarks}`).moveDown(0.5);
+        });
+
+        doc.fontSize(10).fillColor("#555").text("Generated on: " + new Date().toLocaleString(), { align: "right" });
+        doc.end();
+
+        writeStream.on("finish", () => {
+            res.download(filePath, fileName, (err) => {
+                if (err) {
+                    throw new ApiError(500, "Error in sending PDF");
+                }
+            });
+        });
+        
+    } catch (err) {
+        console.error(`Error generating student report PDF: ${err}`);
+        throw new ApiError(400, "Error occurred while generating the student report pdf");
+    }
+});
+
+// Function to create Assessment Chart
+function createAssessmentChart(assessments) {
+    const canvas = createCanvas(500, 300);
+    const ctx = canvas.getContext("2d");
+    new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: assessments.map(a => a.assessmentName),
+            datasets: [{
+                label: "Marks",
+                data: assessments.map(a => a.marks),
+                backgroundColor: "#007BFF",
+            }],
+        },
+    });
+    return canvas.toBuffer();
+}
+
+// Function to create Monthly Report Chart
+function createMonthlyChart(monthlyReports) {
+    const canvas = createCanvas(500, 300);
+    const ctx = canvas.getContext("2d");
+    const labels = monthlyReports.map(m => `${m.timeFrame.month} ${m.timeFrame.year}`);
+    const data = monthlyReports.map(m => m.monthlyScore.reduce((acc, score) => acc + score.marks, 0));
+
+    new Chart(ctx, {
+        type: "line",
+        data: {
+            labels,
+            datasets: [{
+                label: "Monthly Performance",
+                data,
+                borderColor: "#28A745",
+                fill: false,
+            }],
+        },
+    });
+    return canvas.toBuffer();
+}
 export { 
     generateStudentQuarterlyReport,
     generateMonthlyReport,
     fetchStudentReportById,
     fetchAllStudentReports,
-    updateQuarterlyReport
+    updateQuarterlyReport,
+    generateStudentReportPDF
 };
